@@ -1,0 +1,23 @@
+{
+    "clangd.arguments": [
+        "--compile-commands-dir=d:\\TinyML-Hearing-Aids\\libs\\CMSIS\\DSP\\Examples\\cmsis_build\\out\\bayes\\VHT-Corstone-310\\Release"
+    ],
+    "clangd.onConfigChanged": "restart",
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "C_Cpp.formatting": "disabled",
+    "C_Cpp.errorSquiggles": "disabled",
+    "files.associations": {
+        "*.h": "c",
+        "*.c": "c",
+        "*.scf": "linker-script"
+    },
+    "search.exclude": {
+        "**/build": true,
+        "**/libs/CMSIS/DSP/Examples": true,
+        "**/libs/CMSIS/DSP/Testing": true,
+        "**/libs/CMSIS/DSP/PythonWrapper": true,
+        "**/libs/NN/Tests": true,
+        "**/libs/RTX/Examples": true
+    },
+    "debug.hideSlowPreLaunchWarning": true
+}

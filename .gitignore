@@ -1,0 +1,17 @@
+# Build output
+build/
+out/
+
+# CMake generated
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+
+# IDE — keep the shared clangd/VS Code config, ignore per-user state
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.cache/
+
+build_codex/
