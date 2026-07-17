@@ -1,43 +1,86 @@
 #!/usr/bin/env bash
 # =============================================================================
-#  build.sh - one-command build for M55M1_GestureAI (Linux / macOS / WSL)
+#  build.sh - profile-aware build for M55M1 GestureAI (Linux / macOS / WSL)
 #
-#  Usage:
-#    ./build.sh           configure + build (Release)
-#    ./build.sh clean      remove build/ then configure + build
-#    ./build.sh config     configure only
-#    ./build.sh only       build only (skip configure)
-#
-#  Requires Arm Compiler for Embedded 6.24+ on PATH, plus CMake and Ninja.
+#  Usage: ./build.sh [release|debug] [build|config|only|clean]
+#    ./build.sh                 Release: configure + build (legacy default)
+#    ./build.sh debug           Debug:   configure + build into build-debug/
+#    ./build.sh debug config    Configure Debug only
+#    ./build.sh release only    Build an existing Release tree only
+#    ./build.sh clean           Clean + rebuild Release (legacy command)
+#    ./build.sh debug clean     Clean + rebuild Debug
 # =============================================================================
-set -e
+set -euo pipefail
+
+usage() {
+    echo "Usage: ./build.sh [release|debug] [build|config|only|clean]" >&2
+    exit 2
+}
+
+PROFILE="release"
+ACTION="build"
+
+case "${1:-}" in
+    release|debug)
+        PROFILE="$1"
+        shift
+        ;;
+    build|config|only|clean)
+        ;;
+    "")
+        ;;
+    *)
+        usage
+        ;;
+esac
+
+case "${1:-}" in
+    build|config|only|clean)
+        ACTION="$1"
+        shift
+        ;;
+    "")
+        ;;
+    *)
+        usage
+        ;;
+esac
+
+[ "$#" -eq 0 ] || usage
+
+if [ "$PROFILE" = "debug" ]; then
+    BUILD_DIR="build-debug"
+    BUILD_TYPE="Debug"
+else
+    BUILD_DIR="build"
+    BUILD_TYPE="Release"
+fi
 
 PROJ_ROOT="$(cd "$(dirname "$0")" && pwd)"
+BUILD_PATH="${PROJ_ROOT}/${BUILD_DIR}"
 TC="${PROJ_ROOT}/cmake/armclang.cmake"
 
-if [ "$1" = "clean" ]; then
-    rm -rf "${PROJ_ROOT}/build"
+if [ "$ACTION" = "clean" ]; then
+    rm -rf "${BUILD_PATH}"
 fi
 
-if [ "$1" = "only" ]; then
-    cmake --build build
+if [ "$ACTION" != "only" ]; then
+    cmake -S "${PROJ_ROOT}" -B "${BUILD_PATH}" -G Ninja \
+        -DCMAKE_TOOLCHAIN_FILE="${TC}" \
+        -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" -Wno-dev
+
+    # Point clangd at the most recently configured profile.
+    if [ -f "${BUILD_PATH}/compile_commands.json" ]; then
+        ln -sfn "${BUILD_DIR}/compile_commands.json" "${PROJ_ROOT}/compile_commands.json"
+    fi
+fi
+
+if [ "$ACTION" = "config" ]; then
     exit 0
 fi
 
-cmake -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE="${TC}" -DCMAKE_BUILD_TYPE=Release -Wno-dev
-
-# Mirror build/compile_commands.json to the project root for clangd / editors
-# that only look at the root. (CMake generates it during the configure above.)
-if [ -f "${PROJ_ROOT}/build/compile_commands.json" ]; then
-    ln -sf build/compile_commands.json "${PROJ_ROOT}/compile_commands.json"
-fi
-
-if [ "$1" = "config" ]; then
-    exit 0
-fi
-
-cmake --build build
+cmake --build "${BUILD_PATH}"
 
 echo ""
-echo "Build OK. Output in build/:"
-ls -1 "${PROJ_ROOT}/build"/M55M1_*
+echo "Build OK. Output in ${BUILD_DIR}/:"
+ls -1 "${BUILD_PATH}"/M55M1_*

@@ -1,7 +1,10 @@
-# NuMaker-GestureAI-M55M1 — CMake build project
+# TinyML Hearing Aids — NuMaker-GestureAI-M55M1 firmware
 
-Self-contained firmware project for the **NuMaker-GestureAI-M55M1** board
-(chip **M55M1R2LJAE**, LQFP64, 2 MB Flash / 1.5 MB SRAM, Cortex-M55 @ 220 MHz).
+Firmware foundation for the **TinyML Hearing Aids** project on the
+**NuMaker-GestureAI-M55M1** board (chip **M55M1R2LJAE**, LQFP64, 2 MB Flash /
+1.5 MB SRAM, Cortex-M55 @ 220 MHz). The current application exercises the
+on-board DMIC microphone and provides the platform layer for TinyML audio
+capture, inference, and hearing-aid processing.
 
 Built with **CMake + Arm Compiler 6 (armclang)** — no CMSIS-Toolbox, no vcpkg,
 no Open-CMSIS-Pack tooling required. Works identically on **Windows and Linux**.
@@ -11,12 +14,12 @@ no Open-CMSIS-Pack tooling required. Works identically on **Windows and Linux**.
 ## Project layout
 
 ```
-M55M1_GestureAI_Project/
+TinyML-Hearing-Aids/
 ├── CMakeLists.txt          # build definition
 ├── cmake/
 │   └── armclang.cmake      # Arm Compiler 6 toolchain file
 ├── app/
-│   └── main.c              # Hello-World (UART5 printf) + CMSIS-DSP demo
+│   └── main.c              # DMIC microphone functional test + platform init
 ├── libs/                   # copied from BSP (self-contained)
 │   ├── CMSIS/Core/Include/ # CMSIS-Core headers (core_cm55.h, tz_context.h, ...)
 │   ├── CMSIS/DSP/          # CMSIS-DSP (Helium/MVE kernels)  [enabled by default]
@@ -79,27 +82,42 @@ ninja --version
 
 ---
 
-## Build (same commands on Windows and Linux)
+## Build profiles
 
 ### Easiest way — use the helper scripts
 
+Both scripts use the same interface:
+
+```text
+[release|debug] [build|config|only|clean]
+```
+
+- `release` uses `build/` and is the default.
+- `debug` uses `build-debug/` and adds DWARF symbols for source-level debug.
+- `build` configures then builds; `config` only configures; `only` only builds
+  an existing tree; `clean` removes only that profile tree then rebuilds it.
+
+Existing commands remain valid: no argument, `clean`, `config`, and `only`
+mean Release.
+
 **Windows** (from the project root, in cmd or PowerShell):
 ```bat
-build.bat
-```
-Variants:
-```bat
-.\build.bat clean     :: remove build then configure + build
-.\build.bat config    :: configure only
-.\build.bat only      :: build only (skip configure)
+build.bat                    :: Release configure + build
+build.bat debug              :: Debug configure + build
+build.bat debug config       :: configure Debug only
+build.bat debug only         :: build existing Debug tree only
+build.bat release clean      :: clean + rebuild Release
+build.bat debug clean        :: clean + rebuild Debug
 ```
 
 **Linux / macOS / WSL**:
 ```bash
-./build.sh           # configure + build
-./build.sh clean      # remove build/ then configure + build
-./build.sh config     # configure only
-./build.sh only      # build only
+./build.sh                    # Release configure + build
+./build.sh debug              # Debug configure + build
+./build.sh debug config       # configure Debug only
+./build.sh debug only         # build existing Debug tree only
+./build.sh release clean      # clean + rebuild Release
+./build.sh debug clean        # clean + rebuild Debug
 ```
 
 The helper scripts:
@@ -126,7 +144,7 @@ cmake -B build -G Ninja \
 cmake --build build
 ```
 
-**Output** (in `build/`):
+**Output** (in `build/` for Release or `build-debug/` for Debug):
 
 | File                  | Description                     |
 |-----------------------|---------------------------------|
@@ -141,11 +159,10 @@ cmake --build build
 
 ### Build types
 
-```bash
-cmake -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/armclang.cmake -DCMAKE_BUILD_TYPE=Debug
-```
-- `Release` — `--no_debug`, optimized for size/speed
-- `Debug`    — debug symbols, extra `--info stack,summarystack`
+- `Release` — `--no_debug`, optimized for size/speed.
+- `Debug` — DWARF symbols plus extra linker stack information. Build Debug
+  with `build.bat debug` or `./build.sh debug`; use the resulting AXF with
+  Cortex-Debug and load the matching `.axf.bin` through USB first.
 
 ### Common overrides (add to the `cmake -B build ...` line)
 
@@ -206,28 +223,33 @@ also mirror it to `./compile_commands.json` at the project root.
 
 ---
 
-## Flashing & debugging
+## USB programming and WCH-Link debugging
 
-The NuMaker-GestureAI-M55M1 board ships with an on-board debug probe.
-Flash `build/M55M1_GestureAI.bin` with any of these (pick what you have):
+The daily workflow deliberately separates programming from debugging:
 
-- **pyOCD** (CMSIS-DAP, needs an M55M1 target/pack):
-  ```bash
-  pyocd load -t m55m1 build/M55M1_GestureAI.bin
-  ```
-- **probe-rs**:
-  ```bash
-  probe-rs download --chip M55M1R2LJAE build/M55M1_GestureAI.bin
-  ```
-- **OpenOCD** with a Nuvoton cfg, or the Nuvoton **Nu-Link** + NuMicro ISP
-  Programming Tool (Windows GUI).
+1. Build the Debug firmware: `build.bat debug` or `./build.sh debug`.
+2. Copy `build-debug/M55M1_GestureAI.axf.bin` to the board USB Mass Storage
+   device named `M55M1`.
+3. Connect WCH-Link Mini to SWD on J2: `VTref`, `SWDIO`, `SWCLK`, and `GND`.
+   Do **not** cross-power the board; VTref is a reference only. NRST is not
+   required.
+4. In VS Code select `M55M1: Attach (WCH-Link)` and press F5.
 
-Debugging: `arm-none-eabi-gdb` (or `armdbg`) connecting to the gdbserver
-provided by pyOCD / probe-rs / openocd.
+The Attach configuration starts pyOCD through the WCH CMSIS-DAP probe
+`0001A0000001` at 100 kHz, uses `--connect attach`, and loads symbols from the
+Debug AXF. It performs a SWD `SYSRESETREQ`, runs to a temporary breakpoint at
+`main`, and does **not** erase or program Flash.
 
-> The exact debugger on the GestureAI board and its target name should be
-> confirmed against `Document/en-us--UM_NuMaker-GestureAI-M55M1_EN_Rev1.00.pdf`
-> shipped with the BSP. Adjust the `--chip`/`-t` value to match your probe.
+`M55M1: Launch (WCH-Link, verified)` remains intentionally locked behind the
+one-page Flash verification task. Do not bypass that gate: the override only
+permits APROM Secure (`0x00100000-0x002FFFFF`) and intentionally excludes
+LDROM and CONFIG to protect the USB bootloader and device configuration.
+
+GNU Arm GDB is used for debugging even though the firmware is compiled by Arm
+Compiler 6: GDB consumes the ARM ELF/DWARF debug information and does not need
+to be the compiler's debugger. The checked-in VS Code configuration uses the
+GDB bundled with STM32CubeCLT because it is an available `arm-none-eabi-gdb`
+binary, not because this is an STM32 target.
 
 ---
 
@@ -248,16 +270,12 @@ large Non-Secure region. A secure-only firmware (this project) loaded into the
 Non-Secure region **will not execute correctly** — the processor resets into
 Secure state and the reset handler must live in the Secure region.
 
-### Fix: erase the Flash CONFIG / NSCBA before first use
+### Recovery note
 
-Use the **NuMicro ISP Programming Tool** (Windows, with Nu-Link) to **erase
-the User Config / CONFIG** area, which resets NSCBA back to `0xFFFFFFFF`
-(whole Flash = Secure). Then flash `M55M1_GestureAI.bin`.
-
-Alternatively, flash a small Secure firmware that calls `FMC_NSCBA_Setup()`
-with `FMC_INIT_NSCBA=0` once, which clears the boundary.
-
-After that, this secure-only project works normally.
+The normal USB-load/WCH-Link Attach workflow never writes CONFIG, LDROM, or
+NSCBA. If a board is already configured with an incompatible NSCBA boundary,
+stop and back up its configuration before using a vendor recovery tool; do not
+attempt to clear CONFIG through the checked-in pyOCD target override.
 
 ---
 

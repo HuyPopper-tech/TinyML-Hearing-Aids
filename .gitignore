@@ -1,5 +1,6 @@
 # Build output
 build/
+build-debug/
 out/
 
 # CMake generated
@@ -12,7 +13,11 @@ compile_commands.json
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
 .cache/
 
 build_codex/
+__pycache__/
+*.py[cod]
 .worktrees/

@@ -36,6 +36,22 @@ set(CMAKE_ASM_COMPILER          ${ARMASM_BIN})
 set(CMAKE_AR                    ${ARMAR_BIN})
 # IMPORTANT: explicitly set the linker so CMake never picks a host ld.exe.
 set(CMAKE_LINKER                ${ARMLINK_BIN})
+# The target must be known while CMake identifies armclang. Otherwise CMake
+# falls back to an unknown compiler configuration, emits Windows `.obj` files,
+# and the Nuvoton scatter file cannot select its required `*.o` sections.
+set(CMAKE_C_COMPILER_TARGET     arm-arm-none-eabi)
+set(CMAKE_CXX_COMPILER_TARGET   arm-arm-none-eabi)
+# An unactivated AC6 installation rejects CMake's compiler-ID source before
+# emitting an object. Declare the known vendor so CMake can still load its
+# built-in ARMClang rules (armlink, armar --via=, and `.o` object names).
+set(CMAKE_C_COMPILER_ID         ARMClang)
+set(CMAKE_CXX_COMPILER_ID       ARMClang)
+set(CMAKE_C_COMPILER_ID_RUN     TRUE)
+set(CMAKE_CXX_COMPILER_ID_RUN   TRUE)
+# armasm is not armclang, but its startup object must use the `.o` suffix
+# expected by the vendor scatter file.
+set(CMAKE_ASM_OUTPUT_EXTENSION  ".o")
+set(CMAKE_ASM_OUTPUT_EXTENSION_REPLACE 1)
 
 set(CMAKE_CROSSCOMPILING        true)
 set(CMAKE_SYSTEM_NAME           Generic)
@@ -45,6 +61,16 @@ set(CMAKE_SYSTEM_PROCESSOR      cortex-m55 CACHE STRING "Cortex-M CPU")
 set(CMAKE_C_COMPILER_WORKS      1)
 set(CMAKE_CXX_COMPILER_WORKS    1)
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+
+# CMake cannot identify Armclang in this bare-metal setup, so it leaves the
+# usual Debug flags empty. Force DWARF generation for both application C and
+# C++ sources; otherwise Cortex-Debug can attach but cannot resolve source
+# breakpoints or function bounds.
+set(CMAKE_C_FLAGS_DEBUG "-g" CACHE STRING "C compiler flags for Debug builds" FORCE)
+set(CMAKE_CXX_FLAGS_DEBUG "-g" CACHE STRING "C++ compiler flags for Debug builds" FORCE)
+
+# CMake's built-in ARMClang support now owns the armar/armlink rules. It uses
+# `--create -cr`, `--via=`, and `.o` output names required by armlink/scatter.
 
 # ---- Minimum compiler version check ----------------------------------------
 set(MIN_ARM_CLANG_VERSION 6.16)
