@@ -1,4 +1,4 @@
-"""Static contract checks for the opt-in PF0/PF1 UART0 test firmware."""
+"""Static contract checks for the PF0/PF1 UART0 firmware in app/main.c."""
 
 from __future__ import annotations
 
@@ -10,20 +10,14 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class PF01UartFirmwareTests(unittest.TestCase):
-    def test_pf01_uart_mode_is_opt_in_and_keeps_dmic_as_the_default(self):
+    def test_main_uses_uart0_on_pf0_and_pf1_without_a_firmware_mode_switch(self):
         cmake = (REPO_ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
+        source = (REPO_ROOT / "app" / "main.c").read_text(encoding="utf-8")
 
-        self.assertIn('set(M55M1_FIRMWARE_MODE "dmic" CACHE STRING', cmake)
-        self.assertIn('if(M55M1_FIRMWARE_MODE STREQUAL "dmic")', cmake)
-        self.assertIn('${PROJ_ROOT}/app/main.c', cmake)
-        self.assertIn('elseif(M55M1_FIRMWARE_MODE STREQUAL "pf01_uart")', cmake)
-        self.assertIn('${PROJ_ROOT}/app/pf01_uart_test.c', cmake)
-        self.assertIn('Unsupported M55M1_FIRMWARE_MODE', cmake)
-
-    def test_pf01_uart_test_uses_uart0_and_never_restores_ice(self):
-        source_path = REPO_ROOT / "app" / "pf01_uart_test.c"
-        self.assertTrue(source_path.exists())
-        source = source_path.read_text(encoding="utf-8")
+        self.assertNotIn("M55M1_FIRMWARE_MODE", cmake)
+        self.assertIn("set(M55M1_APP_SOURCES ${PROJ_ROOT}/app/main.c)", cmake)
+        self.assertIn('"PF0=UART0_TXD, PF1=UART0_RXD, 115200-8-N-1\\r\\n"', source)
+        self.assertNotIn('"PF0=UART0_TXD, PF1=UART0_RXD, 115200-8-N-1\\\\r\\\\n"', source)
 
         for required in (
             "SET_UART0_TXD_PF0();",

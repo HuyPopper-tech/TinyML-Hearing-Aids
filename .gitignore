@@ -1,7 +1,6 @@
 # Build output
 build/
 build-debug/
-build-pf01-uart/
 out/
 
 # CMake generated
