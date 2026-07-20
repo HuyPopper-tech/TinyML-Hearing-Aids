@@ -11,6 +11,8 @@ project(M55M1_GestureAI VERSION 1.0.0 LANGUAGES C CXX ASM)
 
 # Build options (override with -D<name>=<value>).
 set(M55M1_DEBUG_UART_IDX 5 CACHE STRING "Debug UART index (0 or 5)")
+set(M55M1_FIRMWARE_MODE "dmic" CACHE STRING "Application firmware: dmic or pf01_uart")
+set_property(CACHE M55M1_FIRMWARE_MODE PROPERTY STRINGS dmic pf01_uart)
 set(M55_CPU "cortex-m55" CACHE STRING "-mcpu value")
 set(M55M1_STACK_SIZE "" CACHE STRING "Stack size override, e.g. 0x1000")
 set(M55M1_HEAP_SIZE "" CACHE STRING "Heap size override, e.g. 0x1000")
@@ -109,7 +111,14 @@ if(M55M1_ENABLE_RTOS2)
         ${M55M1_INC_DIRS})
 endif()
 
-set(M55M1_APP_SOURCES ${PROJ_ROOT}/app/main.c)
+if(M55M1_FIRMWARE_MODE STREQUAL "dmic")
+    set(M55M1_APP_SOURCES ${PROJ_ROOT}/app/main.c)
+elseif(M55M1_FIRMWARE_MODE STREQUAL "pf01_uart")
+    set(M55M1_APP_SOURCES ${PROJ_ROOT}/app/pf01_uart_test.c)
+else()
+    message(FATAL_ERROR "Unsupported M55M1_FIRMWARE_MODE: ${M55M1_FIRMWARE_MODE}")
+endif()
+
 if(M55M1_ENABLE_NPU)
     list(APPEND M55M1_APP_SOURCES
         ${PROJ_ROOT}/app/npu/command_stream.cpp
