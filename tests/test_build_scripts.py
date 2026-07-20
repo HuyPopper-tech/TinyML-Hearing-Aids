@@ -35,6 +35,17 @@ class BuildScriptTests(unittest.TestCase):
         self.assertIn('BUILD_DIR="build"', script)
         self.assertIn('BUILD_TYPE="Release"', script)
 
+    def test_clangd_uses_the_root_database_updated_by_the_active_build_profile(self):
+        settings = (REPO_ROOT / ".vscode" / "settings.json").read_text(encoding="utf-8")
+        clangd_config = (REPO_ROOT / ".clangd").read_text(encoding="utf-8")
+
+        self.assertNotIn("--compile-commands-dir", settings)
+        self.assertNotIn("CompilationDatabase:", clangd_config)
+        self.assertIn('copy /y "%BUILD_PATH%\\compile_commands.json" "%PROJ_ROOT%\\compile_commands.json"',
+                      (REPO_ROOT / "build.bat").read_text(encoding="utf-8"))
+        self.assertIn('ln -sfn "${BUILD_DIR}/compile_commands.json" "${PROJ_ROOT}/compile_commands.json"',
+                      (REPO_ROOT / "build.sh").read_text(encoding="utf-8"))
+
 
 
 if __name__ == "__main__":

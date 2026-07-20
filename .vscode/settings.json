@@ -1,7 +1,4 @@
 {
-    "clangd.arguments": [
-        "--compile-commands-dir=d:\\TinyML-Hearing-Aids\\libs\\CMSIS\\DSP\\Examples\\cmsis_build\\out\\bayes\\VHT-Corstone-310\\Release"
-    ],
     "clangd.onConfigChanged": "restart",
     "C_Cpp.intelliSenseEngine": "disabled",
     "C_Cpp.formatting": "disabled",
