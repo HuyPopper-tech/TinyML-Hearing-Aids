@@ -230,11 +230,14 @@ the same pins can instead operate as UART0, build the opt-in `pf01_uart`
 firmware mode:
 
 ```powershell
-cmake --preset m55m1-debug -DM55M1_FIRMWARE_MODE=pf01_uart
-cmake --build --preset m55m1-debug
+build.bat pf01_uart
 ```
 
-Load `build-debug/M55M1_GestureAI.axf.bin` through the board's USB bootloader,
+On Linux, macOS, or WSL, use `./build.sh pf01_uart` instead. Both helpers use
+the dedicated `build-pf01-uart/` directory and do not overwrite the DMIC
+Release or Debug build trees.
+
+Load `build-pf01-uart/M55M1_GestureAI.axf.bin` through the board's USB bootloader,
 then connect a **3.3 V** USB-to-TTL adapter as follows:
 
 | USB-to-TTL adapter | Board J2 pin | Signal |
@@ -250,7 +253,7 @@ UART0_RXD but is not required for this transmit-only observation.
 Disconnect the WCH-Link while this test runs: PF0/PF1 are no longer the SWD
 transport. This first test deliberately does not restore ICE/SWD; use the USB
 bootloader to load the default firmware again, then configure with
-`-DM55M1_FIRMWARE_MODE=dmic` for subsequent normal builds.
+`build.bat debug` or `./build.sh debug` for subsequent normal builds.
 
 ## USB programming and WCH-Link debugging
 

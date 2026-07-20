@@ -2,26 +2,28 @@
 # =============================================================================
 #  build.sh - profile-aware build for M55M1 GestureAI (Linux / macOS / WSL)
 #
-#  Usage: ./build.sh [release|debug] [build|config|only|clean]
+#  Usage: ./build.sh [release|debug|pf01_uart] [build|config|only|clean]
 #    ./build.sh                 Release: configure + build (legacy default)
 #    ./build.sh debug           Debug:   configure + build into build-debug/
 #    ./build.sh debug config    Configure Debug only
 #    ./build.sh release only    Build an existing Release tree only
 #    ./build.sh clean           Clean + rebuild Release (legacy command)
 #    ./build.sh debug clean     Clean + rebuild Debug
+#    ./build.sh pf01_uart       Build PF0/PF1 UART0 test into build-pf01-uart/
 # =============================================================================
 set -euo pipefail
 
 usage() {
-    echo "Usage: ./build.sh [release|debug] [build|config|only|clean]" >&2
+    echo "Usage: ./build.sh [release|debug|pf01_uart] [build|config|only|clean]" >&2
     exit 2
 }
 
 PROFILE="release"
 ACTION="build"
+FIRMWARE_MODE="dmic"
 
 case "${1:-}" in
-    release|debug)
+    release|debug|pf01_uart)
         PROFILE="$1"
         shift
         ;;
@@ -51,6 +53,10 @@ esac
 if [ "$PROFILE" = "debug" ]; then
     BUILD_DIR="build-debug"
     BUILD_TYPE="Debug"
+elif [ "$PROFILE" = "pf01_uart" ]; then
+    BUILD_DIR="build-pf01-uart"
+    BUILD_TYPE="Debug"
+    FIRMWARE_MODE="pf01_uart"
 else
     BUILD_DIR="build"
     BUILD_TYPE="Release"
@@ -67,7 +73,8 @@ fi
 if [ "$ACTION" != "only" ]; then
     cmake -S "${PROJ_ROOT}" -B "${BUILD_PATH}" -G Ninja \
         -DCMAKE_TOOLCHAIN_FILE="${TC}" \
-        -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" -Wno-dev
+        -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+        -DM55M1_FIRMWARE_MODE="${FIRMWARE_MODE}" -Wno-dev
 
     # Point clangd at the most recently configured profile.
     if [ -f "${BUILD_PATH}/compile_commands.json" ]; then
