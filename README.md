@@ -223,6 +223,35 @@ also mirror it to `./compile_commands.json` at the project root.
 
 ---
 
+## PF0/PF1 UART0 hardware test
+
+The normal firmware keeps the J2 ICE header available for SWD.  To test that
+the same pins can instead operate as UART0, build the opt-in `pf01_uart`
+firmware mode:
+
+```powershell
+cmake --preset m55m1-debug -DM55M1_FIRMWARE_MODE=pf01_uart
+cmake --build --preset m55m1-debug
+```
+
+Load `build-debug/M55M1_GestureAI.axf.bin` through the board's USB bootloader,
+then connect a **3.3 V** USB-to-TTL adapter as follows:
+
+| USB-to-TTL adapter | Board J2 pin | Signal |
+|---|---|---|
+| RX | J2.2 | PF0 / UART0_TXD |
+| GND | J2.5 | VSS |
+| VCC | Do not connect | Board remains USB-powered |
+
+Open the terminal at **115200-8-N-1**. The board repeats
+`PF0=UART0_TXD, PF1=UART0_RXD, 115200-8-N-1`. PF1/J2.3 is configured as
+UART0_RXD but is not required for this transmit-only observation.
+
+Disconnect the WCH-Link while this test runs: PF0/PF1 are no longer the SWD
+transport. This first test deliberately does not restore ICE/SWD; use the USB
+bootloader to load the default firmware again, then configure with
+`-DM55M1_FIRMWARE_MODE=dmic` for subsequent normal builds.
+
 ## USB programming and WCH-Link debugging
 
 The daily workflow deliberately separates programming from debugging:

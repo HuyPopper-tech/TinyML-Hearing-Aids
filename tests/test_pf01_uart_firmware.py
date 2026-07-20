@@ -20,6 +20,24 @@ class PF01UartFirmwareTests(unittest.TestCase):
         self.assertIn('${PROJ_ROOT}/app/pf01_uart_test.c', cmake)
         self.assertIn('Unsupported M55M1_FIRMWARE_MODE', cmake)
 
+    def test_pf01_uart_test_uses_uart0_and_never_restores_ice(self):
+        source_path = REPO_ROOT / "app" / "pf01_uart_test.c"
+        self.assertTrue(source_path.exists())
+        source = source_path.read_text(encoding="utf-8")
+
+        for required in (
+            "SET_UART0_TXD_PF0();",
+            "SET_UART0_RXD_PF1();",
+            "CLK_EnableModuleClock(UART0_MODULE);",
+            "CLK_UARTSEL0_UART0SEL_HIRC",
+            "UART_Open(UART0, 115200UL);",
+            "UART_Write(UART0,",
+        ):
+            self.assertIn(required, source)
+
+        for forbidden in ("SET_ICE_DAT_PF0", "SET_ICE_CLK_PF1", "DPM_SetDebug"):
+            self.assertNotIn(forbidden, source)
+
 
 if __name__ == "__main__":
     unittest.main()
