@@ -1,45 +1,67 @@
-/**************************************************************************//**
- * @file    main.c
- * @brief   Hardware test for reusing the J2 ICE pins as UART0.
+/**
+ * @file main.c
+ * @brief Normal low-latency MP34DT05-to-TLV320DAC3100 passthrough firmware.
+ * @author Bui Minh Huy
+ * @date 2026-07-21
  *
- * Connect a 3.3 V USB-to-TTL adapter RX input to J2.2 (PF0) and its GND to
- * J2.5. This firmware deliberately leaves PF0/PF1 assigned to UART0; it does
- * not restore SWD/ICE. Disconnect an attached SWD probe while it runs.
- *****************************************************************************/
+ * This is the TinyML audio-transport baseline. It deliberately contains no
+ * UART logging, DSP, AGC, or inference work: applications add processing
+ * between capture and submit while preserving the selected 10 ms profile.
+ */
 
 #include <stdint.h>
 
-#include "NuMicro.h"
+#include "board/m55m1_tlv320dac3100_test.h"
+#include "drivers/tlv320dac3100/tlv320dac3100.h"
 
-static const uint8_t g_au8Banner[] =
-    "PF0=UART0_TXD, PF1=UART0_RXD, 115200-8-N-1\r\n";
+/** Change this init-time selection when validating the 32 kHz transport profile. */
+#define APP_AUDIO_PROFILE TLV320DAC3100_AUDIO_PROFILE_16KHZ
 
-static void UART0PF01_Init(void)
+static int16_t g_dmic_block[TLV320DAC3100_MAX_SAMPLES_PER_BLOCK];
+
+/** @brief Stop safely before audio starts when a mandatory hardware boundary failed. */
+static void dmic_passthrough_halt(void)
 {
-    SYS_UnlockReg();
-
-    CLK_EnableXtalRC(CLK_SRCCTL_HIRCEN_Msk);
-    CLK_WaitClockReady(CLK_STATUS_HIRCSTB_Msk);
-    CLK_SetModuleClock(UART0_MODULE, CLK_UARTSEL0_UART0SEL_HIRC,
-                       CLK_UARTDIV0_UART0DIV(1));
-    CLK_EnableModuleClock(UART0_MODULE);
-    CLK_EnableModuleClock(GPIOF_MODULE);
-    SET_UART0_TXD_PF0();
-    SET_UART0_RXD_PF1();
-
-    SYS_LockReg();
-
-    UART_Open(UART0, 115200UL);
+    for (;;) { }
 }
 
+/** @brief Capture one 10 ms microphone block and forward it unchanged to headphone playback. */
 int main(void)
 {
-    UART0PF01_Init();
+    const tlv320dac3100_audio_profile_t profile = APP_AUDIO_PROFILE;
+    const uint16_t sample_count = tlv320dac3100_profile_samples_per_block(profile);
+    tlv320dac3100_config_t config;
+    tlv320dac3100_status_t status;
+
+    if ((sample_count == 0U) ||
+        (m55m1_tlv320dac3100_test_board_init(profile, &config, NULL, NULL) !=
+         M55M1_TLV320DAC3100_BOARD_INIT_OK))
+    {
+        dmic_passthrough_halt();
+    }
+    if (tlv320dac3100_init(&config) != TLV320DAC3100_STATUS_OK)
+    {
+        dmic_passthrough_halt();
+    }
+    if (tlv320dac3100_start() != TLV320DAC3100_STATUS_OK)
+    {
+        dmic_passthrough_halt();
+    }
+    if (!m55m1_tlv320dac3100_test_dmic_start(profile))
+    {
+        dmic_passthrough_halt();
+    }
 
     for (;;)
     {
-        (void)UART_Write(UART0, g_au8Banner, sizeof(g_au8Banner) - 1UL);
-        UART_WAIT_TX_EMPTY(UART0);
-        CLK_SysTickDelay(1000000UL);
+        if (m55m1_tlv320dac3100_test_dmic_take_block(g_dmic_block, sample_count))
+        {
+            status = tlv320dac3100_submit_mono_block(g_dmic_block, sample_count);
+            if ((status != TLV320DAC3100_STATUS_OK) &&
+                (status != TLV320DAC3100_STATUS_BUSY))
+            {
+                dmic_passthrough_halt();
+            }
+        }
     }
 }

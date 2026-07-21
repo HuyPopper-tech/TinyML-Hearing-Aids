@@ -34,6 +34,7 @@ endforeach()
 list(REMOVE_DUPLICATES M55M1_STDDRIVER_INC_DIRS)
 
 set(M55M1_INC_DIRS
+    ${PROJ_ROOT}
     ${PROJ_ROOT}/libs/CMSIS/Core/Include
     ${PROJ_ROOT}/libs/Device/Nuvoton/M55M1/Include
     ${M55M1_STDDRIVER_INC_DIRS})
@@ -109,7 +110,10 @@ if(M55M1_ENABLE_RTOS2)
         ${M55M1_INC_DIRS})
 endif()
 
-set(M55M1_APP_SOURCES ${PROJ_ROOT}/app/main.c)
+set(M55M1_APP_SOURCES
+    ${PROJ_ROOT}/app/main.c
+    ${PROJ_ROOT}/drivers/tlv320dac3100/tlv320dac3100.c
+    ${PROJ_ROOT}/board/m55m1_tlv320dac3100_test.c)
 
 if(M55M1_ENABLE_NPU)
     list(APPEND M55M1_APP_SOURCES
