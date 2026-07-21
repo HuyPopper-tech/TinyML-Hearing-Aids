@@ -16,5 +16,8 @@
         "**/libs/NN/Tests": true,
         "**/libs/RTX/Examples": true
     },
-    "debug.hideSlowPreLaunchWarning": true
+    "debug.hideSlowPreLaunchWarning": true,
+    "clangd.arguments": [
+        "--compile-commands-dir=d:\\TinyML-Hearing-Aids\\libs\\CMSIS\\DSP\\Examples\\cmsis_build\\out\\bayes\\VHT-Corstone-310\\Release"
+    ]
 }
