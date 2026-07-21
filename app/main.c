@@ -15,7 +15,7 @@
 #include "drivers/tlv320dac3100/tlv320dac3100.h"
 
 /** Change this init-time selection when validating the 32 kHz transport profile. */
-#define APP_AUDIO_PROFILE TLV320DAC3100_AUDIO_PROFILE_16KHZ
+#define APP_AUDIO_PROFILE TLV320DAC3100_AUDIO_PROFILE_32KHZ
 
 static int16_t g_dmic_block[TLV320DAC3100_MAX_SAMPLES_PER_BLOCK];
 
