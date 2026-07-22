@@ -192,7 +192,7 @@ server **clangd** reads it to power:
 
 - **Ctrl+click** on a function / macro / header → jump to its definition
 - Hover for docs/signatures, autocomplete, rename, find references
-- In-editor diagnostics (with the `--clang-tidy` flag in `.vscode/settings.json`)
+- In-editor diagnostics
 
 After a configure, `build/compile_commands.json` exists and the helper scripts
 also mirror it to `./compile_commands.json` at the project root.
@@ -200,9 +200,8 @@ also mirror it to `./compile_commands.json` at the project root.
 ### One-time VS Code setup
 
 1. Install the **clangd** extension (`llvm-vs-code-extensions.vscode-clangd`).
-   VS Code will prompt for it on first open (see `.vscode/extensions.json`).
-   **Do not** also use the Microsoft C/C++ extension's IntelliSense —
-   `.vscode/settings.json` already disables it to avoid double-indexing.
+   If you also use the Microsoft C/C++ extension, disable its IntelliSense for
+   this workspace to avoid double-indexing.
 2. Open the project folder in VS Code. clangd starts, reads `.clangd` +
    `compile_commands.json`, and begins a background index.
 3. Build once (`./build.sh`) so the database is current, then Ctrl+click works
@@ -212,9 +211,7 @@ also mirror it to `./compile_commands.json` at the project root.
 
 | File | Role |
 |---|---|
-| `.clangd` | clangd config: points at `build/compile_commands.json`, strips a few armclang-only flags so vanilla clangd parses cleanly, suppresses the benign f16-infinity note |
-| `.vscode/settings.json` | enables clangd args (`--background-index`, `--clang-tidy`, ...), disables MS IntelliSense, excludes build/test dirs from search |
-| `.vscode/extensions.json` | recommends clangd + cmake-tools + cortex-debug |
+| `.clangd` | clangd config: strips a few armclang-only flags so vanilla clangd parses cleanly and suppresses the benign f16-infinity note |
 | `compile_commands.json` | generated (symlinked to `build/`); gitignored because it holds machine-specific absolute paths |
 
 > armclang is clang-based, so clangd understands `--target=arm-arm-none-eabi`,
