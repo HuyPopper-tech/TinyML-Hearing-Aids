@@ -15,9 +15,10 @@ set(M55_CPU "cortex-m55" CACHE STRING "-mcpu value")
 set(M55M1_STACK_SIZE "" CACHE STRING "Stack size override, e.g. 0x1000")
 set(M55M1_HEAP_SIZE "" CACHE STRING "Heap size override, e.g. 0x1000")
 option(M55M1_ENABLE_DSP   "Build & link CMSIS-DSP" ON)
-option(M55M1_ENABLE_NN    "Build & link CMSIS-NN (requires DSP)" OFF)
+option(M55M1_ENABLE_NN    "Build & link CMSIS-NN (requires DSP)" ON)
 option(M55M1_ENABLE_RTOS2 "Build & link CMSIS-RTOS2/RTX" OFF)
 option(M55M1_ENABLE_NPU   "Build the Arm Ethos-U55 NPU self-test" ON)
+option(M55M1_ENABLE_TFLM  "Build & link TensorFlow Lite Micro with Ethos-U" ON)
 
 # The toolchain file consumes this cache variable.
 set(M55_CPU "${M55_CPU}" CACHE STRING "-mcpu value" FORCE)
@@ -91,6 +92,14 @@ if(M55M1_ENABLE_NN)
     target_link_libraries(CMSISNN PUBLIC CMSISDSP)
 endif()
 
+if(M55M1_ENABLE_TFLM)
+    if(NOT M55M1_ENABLE_NN)
+        message(FATAL_ERROR "M55M1_ENABLE_TFLM=ON requires M55M1_ENABLE_NN=ON")
+    endif()
+
+    include(${PROJ_ROOT}/cmake/tensorflow_lite_micro.cmake)
+endif()
+
 if(M55M1_ENABLE_RTOS2)
     set(RTOS2_ROOT ${PROJ_ROOT}/libs/RTOS2)
     set(RTX_ROOT ${PROJ_ROOT}/libs/RTX)
@@ -138,6 +147,9 @@ if(M55M1_ENABLE_NN)
 elseif(M55M1_ENABLE_DSP)
     target_link_libraries(${ELF_NAME} PRIVATE CMSISDSP)
 endif()
+if(M55M1_ENABLE_TFLM)
+    target_link_libraries(${ELF_NAME} PRIVATE TensorFlowLiteMicro)
+endif()
 if(M55M1_ENABLE_RTOS2)
     target_link_libraries(${ELF_NAME} PRIVATE CMSISRTOS2)
 endif()
@@ -156,4 +168,4 @@ add_bin_generation_command(
     TARGET ${ELF_NAME}
     OUTPUT_BIN "${CMAKE_BINARY_DIR}/${ELF_NAME}.bin")
 
-message(STATUS "M55M1_GestureAI: UART${M55M1_DEBUG_UART_IDX}, all StdDriver sources, DSP=${M55M1_ENABLE_DSP}, NN=${M55M1_ENABLE_NN}, RTOS2=${M55M1_ENABLE_RTOS2}, NPU self-test=${M55M1_ENABLE_NPU}")
+message(STATUS "M55M1_GestureAI: UART${M55M1_DEBUG_UART_IDX}, all StdDriver sources, DSP=${M55M1_ENABLE_DSP}, NN=${M55M1_ENABLE_NN}, RTOS2=${M55M1_ENABLE_RTOS2}, NPU self-test=${M55M1_ENABLE_NPU}, TFLM=${M55M1_ENABLE_TFLM}")
