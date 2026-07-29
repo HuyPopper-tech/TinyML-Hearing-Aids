@@ -49,6 +49,13 @@ list(APPEND M55M1_TFLM_SOURCES
     "${TFLM_THIRD_PARTY_ROOT}/kissfft/kiss_fft.c"
     "${TFLM_THIRD_PARTY_ROOT}/kissfft/tools/kiss_fftr.c")
 
+# KissFFT headers intentionally declare C++ linkage when included by TFLM and
+# the ERB-GRU service, so compile its implementation with the same linkage.
+set_source_files_properties(
+    "${TFLM_THIRD_PARTY_ROOT}/kissfft/kiss_fft.c"
+    "${TFLM_THIRD_PARTY_ROOT}/kissfft/tools/kiss_fftr.c"
+    PROPERTIES LANGUAGE CXX)
+
 add_library(TensorFlowLiteMicro STATIC ${M55M1_TFLM_SOURCES})
 set_property(TARGET TensorFlowLiteMicro PROPERTY CXX_STANDARD 11)
 target_include_directories(TensorFlowLiteMicro PUBLIC
