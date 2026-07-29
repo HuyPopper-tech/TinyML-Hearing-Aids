@@ -18,6 +18,11 @@ void SetDebugUartMFP(void)
     SET_UART1_TXD_PA3();
 }
 
+void InitDebugUart(void)
+{
+    UART_Open(UART1, 115200U);
+}
+
 void m55m1_debug_uart_init(void)
 {
     if (g_debug_uart_initialized)

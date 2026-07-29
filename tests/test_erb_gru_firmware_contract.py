@@ -138,10 +138,22 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
     def test_board_owns_uart1_pinmux_without_vendored_change(self):
         board = self.read("board/m55m1_debug_uart.c")
         vendor = self.read("libs/Device/Nuvoton/M55M1/Source/system_M55M1.c")
+        cmake = self.read("CMakeLists.txt")
         self.assertRegex(board, r"void SetDebugUartMFP\(void\)")
         self.assertIn("SET_UART1_RXD_PA2()", board)
         self.assertIn("SET_UART1_TXD_PA3()", board)
+        self.assertRegex(board, r"void InitDebugUart\(void\)")
+        self.assertIn("UART_Open(UART1, 115200U)", board)
+        self.assertIn("PROPERTIES COMPILE_DEFINITIONS DEBUG_ENABLE_SEMIHOST=0", cmake)
         self.assertNotIn("DEBUG_PORT_UART_IDX  == 1", vendor)
+
+    def test_inference_resolver_has_no_process_exit_destructor(self):
+        inference = self.read("services/erb_gru/erb_gru_inference.cpp")
+
+        self.assertIn("g_resolver_storage[sizeof(tflite::MicroMutableOpResolver<1>)]", inference)
+        self.assertIn("tflite::MicroMutableOpResolver<1> *g_resolver", inference)
+        self.assertIn("new (g_resolver_storage) tflite::MicroMutableOpResolver<1>()", inference)
+        self.assertNotIn("tflite::MicroMutableOpResolver<1> g_resolver;", inference)
 
     def test_float_constants_are_valid_c_literals(self):
         for path in (

@@ -86,6 +86,9 @@ set(M55M1_DEFS
 set(M55M1_DEVICE_SOURCES
     ${PROJ_ROOT}/libs/Device/Nuvoton/M55M1/Source/startup_M55M1.c
     ${PROJ_ROOT}/libs/Device/Nuvoton/M55M1/Source/system_M55M1.c)
+# UART1 pinmux is project-owned. Compile the vendor weak UART helpers empty so
+# their unsupported UART1 preprocessor branch cannot fail before link override.
+set_source_files_properties(${PROJ_ROOT}/libs/Device/Nuvoton/M55M1/Source/system_M55M1.c PROPERTIES COMPILE_DEFINITIONS DEBUG_ENABLE_SEMIHOST=0)
 
 # Always compile the complete Nuvoton Standard Driver tree.  When a driver is
 # added under src/, CMake regenerates the build and includes it automatically.
