@@ -10,9 +10,13 @@
  */
 
 #include <stdint.h>
+#if M55M1_ERB_GRU_DIAGNOSTICS
 #include <stdio.h>
+#endif
 
+#if M55M1_ERB_GRU_DIAGNOSTICS
 #include "board/m55m1_debug_uart.h"
+#endif
 #include "board/m55m1_tlv320dac3100_test.h"
 #include "drivers/tlv320dac3100/tlv320dac3100.h"
 
@@ -22,9 +26,14 @@
 #ifndef MODEL_GOLDEN_TEST_DATA
 #define MODEL_GOLDEN_TEST_DATA 0
 #endif
+#ifndef M55M1_ERB_GRU_DIAGNOSTICS
+#define M55M1_ERB_GRU_DIAGNOSTICS 0
+#endif
 
 #if M55M1_ENABLE_ERB_GRU
+#if M55M1_ERB_GRU_DIAGNOSTICS
 #include "services/audio_telemetry.h"
+#endif
 #include "services/erb_gru/erb_gru_audio_enhancer.h"
 #include "services/erb_gru/erb_gru_inference.h"
 #if MODEL_GOLDEN_TEST_DATA
@@ -37,16 +46,24 @@
 static int16_t g_dmic_block[TLV320DAC3100_MAX_SAMPLES_PER_BLOCK];
 #if M55M1_ENABLE_ERB_GRU
 static int16_t g_enhanced_block[ERB_GRU_AUDIO_HOP_SAMPLES];
+#if M55M1_ERB_GRU_DIAGNOSTICS
 static audio_telemetry_snapshot_t g_telemetry;
+#endif
 #endif
 
 static void audio_halt(const char *stage, int status)
 {
+#if M55M1_ERB_GRU_DIAGNOSTICS
     printf("[FAIL] %s (status=%d)\n", stage, status);
+#else
+    (void)stage;
+    (void)status;
+#endif
     for (;;) {
     }
 }
 
+#if M55M1_ERB_GRU_DIAGNOSTICS
 static const char *audio_board_stage_name(m55m1_tlv320dac3100_board_stage_t stage)
 {
     switch (stage) {
@@ -92,8 +109,9 @@ static void audio_board_progress(m55m1_tlv320dac3100_board_stage_t stage, void *
     (void)context;
     printf("[BOOT] board stage=%d (%s)\n", (int)stage, audio_board_stage_name(stage));
 }
+#endif
 
-#if M55M1_ENABLE_ERB_GRU
+#if M55M1_ENABLE_ERB_GRU && M55M1_ERB_GRU_DIAGNOSTICS
 static void audio_update_telemetry(
     uint32_t elapsed_cycles, erb_gru_audio_result_t result)
 {
@@ -136,23 +154,31 @@ int main(void)
     m55m1_tlv320dac3100_board_init_result_t board_status;
     m55m1_tlv320dac3100_clock_snapshot_t clocks;
 
+#if M55M1_ERB_GRU_DIAGNOSTICS
     m55m1_debug_uart_init();
     printf("\n[BOOT] ERB-GRU firmware starting\n");
     printf("[BOOT] audio profile=%u Hz, hop=%u samples\n",
            16000U, (unsigned int)sample_count);
+#endif
     if (sample_count == 0U) {
         audio_halt("invalid audio profile", -1);
     }
 
+#if M55M1_ERB_GRU_DIAGNOSTICS
     printf("[BOOT] board clock and pin setup\n");
     board_status = m55m1_tlv320dac3100_test_board_init_with_progress(
         profile, &config, NULL, NULL, audio_board_progress, NULL);
+#else
+    board_status = m55m1_tlv320dac3100_test_board_init(
+        profile, &config, NULL, NULL);
+#endif
     if (board_status != M55M1_TLV320DAC3100_BOARD_INIT_OK) {
         audio_halt("board initialization", (int)board_status);
     }
     if (!m55m1_tlv320dac3100_test_get_clock_snapshot(&clocks)) {
         audio_halt("board clock snapshot", -1);
     }
+#if M55M1_ERB_GRU_DIAGNOSTICS
     printf("[BOOT] clocks core_hz=%lu apll0_hz=%lu apll1_hz=%lu "
            "i2s_src_hz=%lu mclk_hz=%lu\n",
            (unsigned long)clocks.core_hz,
@@ -160,12 +186,15 @@ int main(void)
            (unsigned long)clocks.apll1_hz,
            (unsigned long)clocks.i2s_src_hz,
            (unsigned long)clocks.mclk_hz);
+#endif
     status = tlv320dac3100_init(&config);
     if (status != TLV320DAC3100_STATUS_OK) {
         audio_halt("codec initialization", (int)status);
     }
+#if M55M1_ERB_GRU_DIAGNOSTICS
     printf("[BOOT] codec initialized\n");
     printf("[BOOT] output gain=%d dB\n", M55M1_TLV320DAC3100_SAFE_MAX_GAIN_DB);
+#endif
 
 #if M55M1_ENABLE_ERB_GRU
     if (!erb_gru_audio_enhancer_init()) {
@@ -185,19 +214,25 @@ int main(void)
         }
     }
 #endif
+#if M55M1_ERB_GRU_DIAGNOSTICS
     audio_telemetry_init();
     printf("[BOOT] Ethos-U55 and TFLM initialized\n");
     printf("[ERB-GRU] 16 kHz Ethos-U55 inference enabled\n");
 #endif
+#endif
 
+#if M55M1_ERB_GRU_DIAGNOSTICS
     printf("[BOOT] starting I2S DAC and DMIC; polling UART disabled\n");
+#endif
     status = tlv320dac3100_start();
     if (status != TLV320DAC3100_STATUS_OK) {
         audio_halt("I2S DAC start", (int)status);
     }
     if (!m55m1_tlv320dac3100_test_dmic_start(profile)) {
 #if M55M1_ENABLE_ERB_GRU
+#if M55M1_ERB_GRU_DIAGNOSTICS
         audio_telemetry_fatal("DMIC capture start", -1);
+#endif
 #endif
         for (;;) {
         }
@@ -228,22 +263,28 @@ int main(void)
                 });
 #endif
             if (status == TLV320DAC3100_STATUS_BUSY) {
+#if M55M1_ERB_GRU_DIAGNOSTICS
                 ++g_telemetry.dac_busy;
+#endif
             } else if (status != TLV320DAC3100_STATUS_OK) {
+#if M55M1_ERB_GRU_DIAGNOSTICS
                 audio_telemetry_fatal("DAC submit", (int)status);
+#endif
                 for (;;) {
                 }
             }
+#if M55M1_ERB_GRU_DIAGNOSTICS
             ++g_telemetry.frame_count;
             audio_update_telemetry(
                 m55m1_tlv320dac3100_test_cycles_elapsed(
                     enhance_start, m55m1_tlv320dac3100_test_cycles_now()),
                 result);
+#endif
 #else
             status = tlv320dac3100_submit_mono_block(g_dmic_block, sample_count);
 #endif
         }
-#if M55M1_ENABLE_ERB_GRU
+#if M55M1_ENABLE_ERB_GRU && M55M1_ERB_GRU_DIAGNOSTICS
         audio_telemetry_poll(
             &g_telemetry, m55m1_tlv320dac3100_test_dmic_block_pending());
 #endif

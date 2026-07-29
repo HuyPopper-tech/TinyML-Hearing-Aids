@@ -21,6 +21,11 @@ MODEL_HEADER_PATTERN = re.compile(
 )
 HEX_BYTE_PATTERN = re.compile(r"0x([0-9a-fA-F]{2})")
 INVALID_C_FLOAT_PATTERN = re.compile(r"(?<![.\w])(-?)(0|1)f(?=[,;])")
+VELA_CPU_OPERATORS_PATTERN = re.compile(r"^CPU operators\s*=\s*(\d+)", re.MULTILINE)
+VELA_NPU_OPERATORS_PATTERN = re.compile(r"^NPU operators\s*=\s*(\d+)", re.MULTILINE)
+VELA_MACS_PATTERN = re.compile(
+    r"^Neural network macs\s+(\d+)\s+MACs/batch", re.MULTILINE
+)
 
 
 def sha256_file(path: Path) -> str:
@@ -146,7 +151,30 @@ def verify_contracts(
         raise ValueError(f"unexpected Vela output indices: {vela['outputs']}")
 
 
-def verify_package(package: Path) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+def parse_vela_performance(report: str) -> dict[str, int]:
+    cpu_match = VELA_CPU_OPERATORS_PATTERN.search(report)
+    npu_match = VELA_NPU_OPERATORS_PATTERN.search(report)
+    macs_match = VELA_MACS_PATTERN.search(report)
+    if (cpu_match is None) or (npu_match is None) or (macs_match is None):
+        raise ValueError("Vela report is missing operator or MAC metadata")
+
+    performance = {
+        "cpu_operator_count": int(cpu_match.group(1)),
+        "npu_operator_count": int(npu_match.group(1)),
+        "macs_per_inference": int(macs_match.group(1)),
+    }
+    if (
+        performance["cpu_operator_count"] != 0
+        or performance["npu_operator_count"] == 0
+        or performance["macs_per_inference"] == 0
+    ):
+        raise ValueError(f"invalid Vela performance metadata: {performance}")
+    return performance
+
+
+def verify_package(
+    package: Path,
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, int]]:
     manifest = json.loads((package / "integration_manifest.json").read_text(encoding="utf-8"))
 
     for entry in manifest["model_files"].values():
@@ -184,11 +212,12 @@ def verify_package(package: Path) -> tuple[dict[str, Any], dict[str, Any], dict[
         "Accelerator configuration               Ethos_U55_256" not in report
     ):
         raise ValueError("Vela report does not prove a CPU-free Ethos-U55-256 partition")
+    performance = parse_vela_performance(report)
 
     pre_vela = inspect_tflite(package / manifest["model_files"]["pre_vela_tflite"]["path"])
     vela = inspect_tflite(package / manifest["model_files"]["vela_tflite"]["path"])
     verify_contracts(manifest, pre_vela, vela)
-    return manifest, pre_vela, vela
+    return manifest, pre_vela, vela, performance
 
 
 def c_float(value: float) -> str:
@@ -296,7 +325,10 @@ def package_version(manifest: dict[str, Any]) -> str:
 
 
 def render_contract(
-    manifest: dict[str, Any], vela: dict[str, Any], version: str
+    manifest: dict[str, Any],
+    vela: dict[str, Any],
+    version: str,
+    performance: dict[str, int],
 ) -> str:
     model = manifest["model_files"]["vela_tflite"]
     digest = str(model["sha256"])
@@ -319,6 +351,9 @@ def render_contract(
 #define ERB_GRU_MODEL_BYTES {int(model["bytes"])}U
 #define ERB_GRU_MODEL_SHA256 "{digest}"
 static const unsigned char erb_gru_model_sha256[32] = {{{digest_bytes}}};
+#define ERB_GRU_MACS_PER_INFERENCE {performance["macs_per_inference"]}U
+#define ERB_GRU_NPU_OPERATOR_COUNT {performance["npu_operator_count"]}U
+#define ERB_GRU_CPU_OPERATOR_COUNT {performance["cpu_operator_count"]}U
 
 #define ERB_GRU_BATCH_SIZE 1
 #define ERB_GRU_STATE_SIZE 64
@@ -388,6 +423,7 @@ def generated_outputs(
     manifest: dict[str, Any],
     pre_vela: dict[str, Any],
     vela: dict[str, Any],
+    performance: dict[str, int],
 ) -> dict[str, bytes]:
     vela_path = package / manifest["model_files"]["vela_tflite"]["path"]
     header_path = package / manifest["model_files"]["model_header"]["path"]
@@ -406,7 +442,7 @@ def generated_outputs(
         )
     outputs = {
         "erb_gru_deploy_contract.h": render_contract(
-            manifest, vela, version
+            manifest, vela, version, performance
         ).encode("utf-8"),
         "erb_gru_assets.h": render_assets_header().encode("utf-8"),
         "erb_gru_model_data.h": render_model_data_header(version).encode("utf-8"),
@@ -444,6 +480,7 @@ def generated_outputs(
         "vela_contract": vela,
         "raw_manifest_indices_are_pre_vela": True,
         "model_header_matches_vela": header_matches,
+        "vela_performance": performance,
         "tooling_environment": {
             "tensorflow": pre_vela["tensorflow_version"],
             "manifest_tensorflow": manifest["dependency_versions"]["tensorflow"],
@@ -480,8 +517,10 @@ def main() -> int:
     arguments = parser.parse_args()
 
     try:
-        manifest, pre_vela, vela = verify_package(arguments.package)
-        outputs = generated_outputs(arguments.package, manifest, pre_vela, vela)
+        manifest, pre_vela, vela, performance = verify_package(arguments.package)
+        outputs = generated_outputs(
+            arguments.package, manifest, pre_vela, vela, performance
+        )
         write_or_check(arguments.output, outputs, arguments.check)
     except (KeyError, OSError, ValueError) as error:
         print(f"ERB-GRU asset generation failed: {error}", file=sys.stderr)

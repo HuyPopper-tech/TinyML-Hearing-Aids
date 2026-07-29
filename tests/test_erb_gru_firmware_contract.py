@@ -29,6 +29,22 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
             self.assertIn(required, cmake)
         self.assertNotIn("drivers/ethosu_tflm", cmake)
 
+    def test_diagnostics_flag_gates_all_runtime_logging_sources(self):
+        cmake = self.read("CMakeLists.txt")
+        app = self.read("app/main.c")
+
+        self.assertIn(
+            'option(M55M1_ERB_GRU_DIAGNOSTICS "Build 1 Hz ERB-GRU diagnostics" OFF)',
+            cmake,
+        )
+        self.assertIn("if(M55M1_ERB_GRU_DIAGNOSTICS)", cmake)
+        self.assertIn(
+            "M55M1_ERB_GRU_DIAGNOSTICS=${M55M1_ERB_GRU_DIAGNOSTICS_VALUE}",
+            cmake,
+        )
+        self.assertIn("Golden scenarios require M55M1_ERB_GRU_DIAGNOSTICS=ON", cmake)
+        self.assertIn("#if M55M1_ERB_GRU_DIAGNOSTICS", app)
+
     def test_generated_contract_uses_vela_ordinals_and_raw_indices(self):
         contract = self.read("models/erb_gru/generated/erb_gru_deploy_contract.h")
         for required in (

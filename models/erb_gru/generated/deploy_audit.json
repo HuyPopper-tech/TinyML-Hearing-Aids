@@ -373,5 +373,10 @@
       }
     ],
     "tensorflow_version": "2.20.0"
+  },
+  "vela_performance": {
+    "cpu_operator_count": 0,
+    "macs_per_inference": 45056,
+    "npu_operator_count": 30
   }
 }

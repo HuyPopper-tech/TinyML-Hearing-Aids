@@ -69,6 +69,9 @@ class ErbGruAssetGenerationTests(unittest.TestCase):
             self.assertIn("#define ERB_GRU_OUTPUT_GAIN_INDEX 8", contract)
             self.assertIn("#define ERB_GRU_STATE1_ZERO_POINT -1", contract)
             self.assertIn("#define ERB_GRU_STATE2_ZERO_POINT 0", contract)
+            self.assertIn("#define ERB_GRU_MACS_PER_INFERENCE 45056U", contract)
+            self.assertIn("#define ERB_GRU_NPU_OPERATOR_COUNT 30U", contract)
+            self.assertIn("#define ERB_GRU_CPU_OPERATOR_COUNT 0U", contract)
 
             audit = json.loads((output / "deploy_audit.json").read_text(encoding="utf-8"))
             self.assertEqual(audit["deploy_model"]["bytes"], 59232)
@@ -85,6 +88,14 @@ class ErbGruAssetGenerationTests(unittest.TestCase):
                 [7, 6, 8],
             )
             self.assertTrue(audit["model_header_matches_vela"])
+            self.assertEqual(
+                audit["vela_performance"],
+                {
+                    "cpu_operator_count": 0,
+                    "macs_per_inference": 45056,
+                    "npu_operator_count": 30,
+                },
+            )
 
             golden_path = output / "golden" / "golden_sine_1khz.h"
             self.assertTrue(golden_path.is_file())

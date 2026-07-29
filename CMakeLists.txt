@@ -24,6 +24,7 @@ option(M55M1_ENABLE_RTOS2 "Build & link CMSIS-RTOS2/RTX" OFF)
 option(M55M1_ENABLE_NPU   "Build the Arm Ethos-U55 NPU self-test" OFF)
 option(M55M1_ENABLE_TFLM  "Build & link TensorFlow Lite Micro with Ethos-U" ON)
 option(M55M1_ENABLE_ERB_GRU "Build the 16 kHz ERB-GRU Ethos-U55 hearing-aid firmware" ON)
+option(M55M1_ERB_GRU_DIAGNOSTICS "Build 1 Hz ERB-GRU diagnostics" OFF)
 set(M55M1_ERB_GRU_INPUT_GAIN_DB "0" CACHE STRING "ERB-GRU PCM input gain: 0 production, 12 diagnostic")
 set_property(CACHE M55M1_ERB_GRU_INPUT_GAIN_DB PROPERTY STRINGS 0 12)
 set(M55M1_ERB_GRU_GOLDEN_SCENARIO "" CACHE STRING
@@ -43,6 +44,13 @@ endif()
 if(NOT M55M1_ERB_GRU_FAULT_INJECTION MATCHES
    "^(OFF|INVOKE_FAIL|INVOKE_SLOW|DAC_BUSY)$")
     message(FATAL_ERROR "Invalid M55M1_ERB_GRU_FAULT_INJECTION")
+endif()
+if(NOT M55M1_ERB_GRU_GOLDEN_SCENARIO STREQUAL "" AND
+   NOT M55M1_ERB_GRU_DIAGNOSTICS)
+    message(FATAL_ERROR "Golden scenarios require M55M1_ERB_GRU_DIAGNOSTICS=ON")
+endif()
+if(M55M1_ERB_GRU_DIAGNOSTICS AND NOT M55M1_ENABLE_ERB_GRU)
+    message(FATAL_ERROR "M55M1_ERB_GRU_DIAGNOSTICS=ON requires M55M1_ENABLE_ERB_GRU=ON")
 endif()
 string(TOUPPER "${CMAKE_BUILD_TYPE}" M55M1_BUILD_TYPE_UPPER)
 if(M55M1_BUILD_TYPE_UPPER STREQUAL "RELEASE" AND
@@ -162,12 +170,16 @@ endif()
 
 set(M55M1_APP_SOURCES
     ${PROJ_ROOT}/app/main.c
-    ${PROJ_ROOT}/board/m55m1_debug_uart.c
-    ${PROJ_ROOT}/common/fixed_byte_ring.c
-    ${PROJ_ROOT}/drivers/debug_uart_tx/debug_uart_tx.c
     ${PROJ_ROOT}/drivers/tlv320dac3100/tlv320dac3100.c
-    ${PROJ_ROOT}/board/m55m1_tlv320dac3100_test.c
-    ${PROJ_ROOT}/services/audio_telemetry.c)
+    ${PROJ_ROOT}/board/m55m1_tlv320dac3100_test.c)
+
+if(M55M1_ERB_GRU_DIAGNOSTICS)
+    list(APPEND M55M1_APP_SOURCES
+        ${PROJ_ROOT}/board/m55m1_debug_uart.c
+        ${PROJ_ROOT}/common/fixed_byte_ring.c
+        ${PROJ_ROOT}/drivers/debug_uart_tx/debug_uart_tx.c
+        ${PROJ_ROOT}/services/audio_telemetry.c)
+endif()
 
 if(M55M1_ENABLE_ERB_GRU)
     list(APPEND M55M1_APP_SOURCES
@@ -193,6 +205,14 @@ add_executable(${ELF_NAME}
     ${M55M1_DEVICE_SOURCES}
     ${M55M1_STDDRIVER_SOURCES}
     ${M55M1_APP_SOURCES})
+if(M55M1_ERB_GRU_DIAGNOSTICS)
+    set(M55M1_ERB_GRU_DIAGNOSTICS_VALUE 1)
+else()
+    set(M55M1_ERB_GRU_DIAGNOSTICS_VALUE 0)
+endif()
+target_compile_definitions(${ELF_NAME} PRIVATE
+    M55M1_ERB_GRU_DIAGNOSTICS=${M55M1_ERB_GRU_DIAGNOSTICS_VALUE}
+    M55M1_STACK_SIZE_BYTES=${M55M1_STACK_SIZE})
 if(M55M1_ENABLE_ERB_GRU)
     set(M55M1_ERB_GRU_FAULT_INVOKE_FAIL 0)
     set(M55M1_ERB_GRU_FAULT_INVOKE_SLOW 0)
@@ -261,4 +281,4 @@ add_bin_generation_command(
     TARGET ${ELF_NAME}
     OUTPUT_BIN "${CMAKE_BINARY_DIR}/${ELF_NAME}.bin")
 
-message(STATUS "M55M1_GestureAI: UART${M55M1_DEBUG_UART_IDX}, DSP=${M55M1_ENABLE_DSP}, NN=${M55M1_ENABLE_NN}, RTOS2=${M55M1_ENABLE_RTOS2}, NPU self-test=${M55M1_ENABLE_NPU}, ERB-GRU=${M55M1_ENABLE_ERB_GRU}, TFLM=${M55M1_ENABLE_TFLM}, ERB gain=${M55M1_ERB_GRU_INPUT_GAIN_DB}dB, golden=${M55M1_ERB_GRU_GOLDEN_SCENARIO}, fault=${M55M1_ERB_GRU_FAULT_INJECTION}")
+message(STATUS "M55M1_GestureAI: UART${M55M1_DEBUG_UART_IDX}, DSP=${M55M1_ENABLE_DSP}, NN=${M55M1_ENABLE_NN}, RTOS2=${M55M1_ENABLE_RTOS2}, NPU self-test=${M55M1_ENABLE_NPU}, ERB-GRU=${M55M1_ENABLE_ERB_GRU}, diagnostics=${M55M1_ERB_GRU_DIAGNOSTICS}, TFLM=${M55M1_ENABLE_TFLM}, ERB gain=${M55M1_ERB_GRU_INPUT_GAIN_DB}dB, golden=${M55M1_ERB_GRU_GOLDEN_SCENARIO}, fault=${M55M1_ERB_GRU_FAULT_INJECTION}")
