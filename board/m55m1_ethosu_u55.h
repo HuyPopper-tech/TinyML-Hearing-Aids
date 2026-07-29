@@ -21,6 +21,11 @@ void m55m1_ethosu_u55_board_enable_irq(void);
 /** @brief Return the board SysTick counter used for foreground inference profiling. */
 uint32_t m55m1_ethosu_u55_board_cycles_now(void);
 
+/** @brief Return wrap-safe elapsed SysTick cycles for Ethos-U timing. */
+uint32_t m55m1_ethosu_u55_board_cycles_elapsed(
+    uint32_t start_cycle,
+    uint32_t end_cycle);
+
 #ifdef __cplusplus
 }
 #endif

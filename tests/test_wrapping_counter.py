@@ -60,8 +60,11 @@ class WrappingCounterTests(unittest.TestCase):
             self.assertEqual(run_result.returncode, 0, run_result.stderr)
 
     def test_realtime_consumers_use_board_elapsed_api(self):
-        board_header = (
+        audio_board_header = (
             ROOT / "board" / "m55m1_tlv320dac3100_test.h"
+        ).read_text(encoding="utf-8")
+        ethosu_board_header = (
+            ROOT / "board" / "m55m1_ethosu_u55.h"
         ).read_text(encoding="utf-8")
         ethosu = (ROOT / "drivers" / "ethosu_u55" / "ethosu_u55.c").read_text(
             encoding="utf-8"
@@ -72,10 +75,20 @@ class WrappingCounterTests(unittest.TestCase):
         app = (ROOT / "app" / "main.c").read_text(encoding="utf-8")
 
         self.assertIn(
-            "m55m1_tlv320dac3100_test_cycles_elapsed", board_header
+            "m55m1_tlv320dac3100_test_cycles_elapsed", audio_board_header
         )
         self.assertIn(
-            "m55m1_tlv320dac3100_test_cycles_elapsed(start_cycle,",
+            "m55m1_ethosu_u55_board_cycles_elapsed", ethosu_board_header
+        )
+        self.assertRegex(
+            ethosu,
+            re.compile(
+                r"m55m1_ethosu_u55_board_cycles_elapsed\(\s*start_cycle,",
+                re.MULTILINE,
+            ),
+        )
+        self.assertNotIn(
+            "m55m1_tlv320dac3100_test_cycles_elapsed",
             ethosu,
         )
         self.assertRegex(
