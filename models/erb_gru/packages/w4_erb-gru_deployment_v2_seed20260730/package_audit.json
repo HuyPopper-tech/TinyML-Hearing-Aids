@@ -1,0 +1,8 @@
+{
+  "model_name": "erb_gru",
+  "required_files": 10,
+  "model_hashes_verified": 4,
+  "golden_scenarios_verified": 5,
+  "board_estimates_valid": false,
+  "passed": true
+}

@@ -1,0 +1,933 @@
+{
+  "silence": {
+    "header": "golden_silence.h",
+    "arrays": {
+      "erb_gru_silence_pcm_input": {
+        "symbol": "erb_gru_silence_pcm_input",
+        "shape": [
+          4000
+        ],
+        "dtype": "float32",
+        "sha256": "f85f2c34eb2843d2aa5951ee6e8e76985655b2e3ae2cbdd76bdfd654ecf19997"
+      },
+      "erb_gru_silence_windowed_pcm": {
+        "symbol": "erb_gru_silence_windowed_pcm",
+        "shape": [
+          24,
+          320
+        ],
+        "dtype": "float32",
+        "sha256": "4c7eea521d2218c5965fd3666c694a967a939e29a6928d528b6ed1101176b8ac"
+      },
+      "erb_gru_silence_fft_real": {
+        "symbol": "erb_gru_silence_fft_real",
+        "shape": [
+          24,
+          161
+        ],
+        "dtype": "float32",
+        "sha256": "46db9d9a644d1dbd759afd9407f4551ee6b5907345e9e4137da84c06a76ffca6"
+      },
+      "erb_gru_silence_fft_imag": {
+        "symbol": "erb_gru_silence_fft_imag",
+        "shape": [
+          24,
+          161
+        ],
+        "dtype": "float32",
+        "sha256": "6eae74d32b14bc2d6bd34a9d2c942e553a43cce439f74c57090d015df247ab0b"
+      },
+      "erb_gru_silence_magnitude": {
+        "symbol": "erb_gru_silence_magnitude",
+        "shape": [
+          24,
+          161
+        ],
+        "dtype": "float32",
+        "sha256": "46db9d9a644d1dbd759afd9407f4551ee6b5907345e9e4137da84c06a76ffca6"
+      },
+      "erb_gru_silence_erb_feature": {
+        "symbol": "erb_gru_silence_erb_feature",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "float32",
+        "sha256": "289534f71ac40169acb4d724736c78839db546ca6114b0e344feaaf7fb6c5632"
+      },
+      "erb_gru_silence_erb_feature_int8": {
+        "symbol": "erb_gru_silence_erb_feature_int8",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "int8",
+        "sha256": "7f3e5e4e65eca4390e9242558012bc9bdad133d7ac9f6aed53fa156a2288f73b"
+      },
+      "erb_gru_silence_state1": {
+        "symbol": "erb_gru_silence_state1",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "d0ef801efe7286356893d5afe734adaa2dafc80a5c7b15f47bf729b3b3aa6dd0"
+      },
+      "erb_gru_silence_state1_int8": {
+        "symbol": "erb_gru_silence_state1_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "6de22bf2c572cec8c9a7052eebfbc2c63c702c8b29276007ddc24fde5c0def45"
+      },
+      "erb_gru_silence_state2": {
+        "symbol": "erb_gru_silence_state2",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "790c585b41278c36ff33ab76f57080fe96c4e6514f14087f7b87190886a026fa"
+      },
+      "erb_gru_silence_state2_int8": {
+        "symbol": "erb_gru_silence_state2_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "777cb4c1c8a0f79a84649b3da98c4c414c3e81d7ab47f22cdcd977c5bede0887"
+      },
+      "erb_gru_silence_gain": {
+        "symbol": "erb_gru_silence_gain",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "float32",
+        "sha256": "f6222aa8ee0281e5329ed77a1908420e3d74dfebf0da3a922e185aa80606c016"
+      },
+      "erb_gru_silence_gain_int8": {
+        "symbol": "erb_gru_silence_gain_int8",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "int8",
+        "sha256": "f897d77d78f4e36c3c9454163f0c25443d53ba9d4f244e780f12421df04c7959"
+      },
+      "erb_gru_silence_next_state1": {
+        "symbol": "erb_gru_silence_next_state1",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "bc09a4b69d89efca7c56caae3f754c7a2245b04d57da03123ccc306418ba0a11"
+      },
+      "erb_gru_silence_next_state1_int8": {
+        "symbol": "erb_gru_silence_next_state1_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "bdc07a77eba3b9db266359710c1e046570f4dacc7de9af0ca5aea67794d270b9"
+      },
+      "erb_gru_silence_next_state2": {
+        "symbol": "erb_gru_silence_next_state2",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "001ed6589af76bbf78d6243257f0a0bad1ddc05d2185593714d50644dd77b5e3"
+      },
+      "erb_gru_silence_next_state2_int8": {
+        "symbol": "erb_gru_silence_next_state2_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "52b51fd75a89a97da3deae22d0057eefd5e214cd2541ce4ebddd71acd5502e6b"
+      },
+      "erb_gru_silence_pcm_output": {
+        "symbol": "erb_gru_silence_pcm_output",
+        "shape": [
+          4000
+        ],
+        "dtype": "float32",
+        "sha256": "f85f2c34eb2843d2aa5951ee6e8e76985655b2e3ae2cbdd76bdfd654ecf19997"
+      },
+      "erb_gru_silence_pcm_input_int16": {
+        "symbol": "erb_gru_silence_pcm_input_int16",
+        "shape": [
+          4000
+        ],
+        "dtype": "int16",
+        "sha256": "668946bab9868b28489bb906205ee1026045c8bcd3ca62a1bdf733c65491351b"
+      },
+      "erb_gru_silence_pcm_output_int16": {
+        "symbol": "erb_gru_silence_pcm_output_int16",
+        "shape": [
+          4000
+        ],
+        "dtype": "int16",
+        "sha256": "668946bab9868b28489bb906205ee1026045c8bcd3ca62a1bdf733c65491351b"
+      }
+    },
+    "header_sha256": "f501fe566f2bf5cb5058690c0c9f2698af8755315b971f7ab421dea84f8033b5"
+  },
+  "sine_1khz": {
+    "header": "golden_sine_1khz.h",
+    "arrays": {
+      "erb_gru_sine_1khz_pcm_input": {
+        "symbol": "erb_gru_sine_1khz_pcm_input",
+        "shape": [
+          4000
+        ],
+        "dtype": "float32",
+        "sha256": "7d4d82e8a531e702be9b5fe75d6ffe92eeacb489104ba77579c5f79db182d5b9"
+      },
+      "erb_gru_sine_1khz_windowed_pcm": {
+        "symbol": "erb_gru_sine_1khz_windowed_pcm",
+        "shape": [
+          24,
+          320
+        ],
+        "dtype": "float32",
+        "sha256": "3955b1de53a48a60ca880fc4d040a8918bd10dd84c8537df1ab45206215cbaa3"
+      },
+      "erb_gru_sine_1khz_fft_real": {
+        "symbol": "erb_gru_sine_1khz_fft_real",
+        "shape": [
+          24,
+          161
+        ],
+        "dtype": "float32",
+        "sha256": "e269cd4b684daecd6b36d5bbc7585f752a330a684843e7da7c15316f72c88a80"
+      },
+      "erb_gru_sine_1khz_fft_imag": {
+        "symbol": "erb_gru_sine_1khz_fft_imag",
+        "shape": [
+          24,
+          161
+        ],
+        "dtype": "float32",
+        "sha256": "49ab39d9f1324a2f6566b1247648ab1b7960341c816dc595c0405eaaecb658b4"
+      },
+      "erb_gru_sine_1khz_magnitude": {
+        "symbol": "erb_gru_sine_1khz_magnitude",
+        "shape": [
+          24,
+          161
+        ],
+        "dtype": "float32",
+        "sha256": "8ed0feb40f3f7f92a38ada78ac006f32557242f0084da23e2bdc14ab5885d834"
+      },
+      "erb_gru_sine_1khz_erb_feature": {
+        "symbol": "erb_gru_sine_1khz_erb_feature",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "float32",
+        "sha256": "d625b9037b0cc0d8c5ea8ed4c6afd640edcf81d84048e6a0e113aac2c4792985"
+      },
+      "erb_gru_sine_1khz_erb_feature_int8": {
+        "symbol": "erb_gru_sine_1khz_erb_feature_int8",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "int8",
+        "sha256": "54cbe1776407cef544b70f2d680ad6cf01841998f8cf61e2505f8c707362f344"
+      },
+      "erb_gru_sine_1khz_state1": {
+        "symbol": "erb_gru_sine_1khz_state1",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "c5d8ec240fb0e0fee74f29b6fc4423b29b629d328eb1ec7204f730e935b86d87"
+      },
+      "erb_gru_sine_1khz_state1_int8": {
+        "symbol": "erb_gru_sine_1khz_state1_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "b828c2e6514851787cfe37ba41fde941502107d514ad3d5721c8f597ba459b5d"
+      },
+      "erb_gru_sine_1khz_state2": {
+        "symbol": "erb_gru_sine_1khz_state2",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "4b0ce84102ce9eb727f1efb2340cd184bc13b9f22129d65e7bc16b23db717b2d"
+      },
+      "erb_gru_sine_1khz_state2_int8": {
+        "symbol": "erb_gru_sine_1khz_state2_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "294002e2558115bd04813d20d1060e1604f245d1ddfb76686203075a43157b8b"
+      },
+      "erb_gru_sine_1khz_gain": {
+        "symbol": "erb_gru_sine_1khz_gain",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "float32",
+        "sha256": "0f750e27bdfba26e535991101c8a8a5694bc6bf82a76809d76b86956f4b1793f"
+      },
+      "erb_gru_sine_1khz_gain_int8": {
+        "symbol": "erb_gru_sine_1khz_gain_int8",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "int8",
+        "sha256": "71ce532ba8f717df3ea744a41164e28f21919500a5e1baee9dbab2b3e4669ce0"
+      },
+      "erb_gru_sine_1khz_next_state1": {
+        "symbol": "erb_gru_sine_1khz_next_state1",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "dea339cd9124b7b93d187a6d9148dbe4ae4361525dd1df118837b555a0fbeb1e"
+      },
+      "erb_gru_sine_1khz_next_state1_int8": {
+        "symbol": "erb_gru_sine_1khz_next_state1_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "4eca0e2de10e9656d5b957e86c121119d09b5eb208e6fde1ffbf1a80655962de"
+      },
+      "erb_gru_sine_1khz_next_state2": {
+        "symbol": "erb_gru_sine_1khz_next_state2",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "aca579e147abb24e67891b6f94f21c0e6705e11f1fb1ac8e3d3ef17f78b705b9"
+      },
+      "erb_gru_sine_1khz_next_state2_int8": {
+        "symbol": "erb_gru_sine_1khz_next_state2_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "878276e9f365e6e5bceede06baf6cacc16d0106666be294737ac469a79c57ca7"
+      },
+      "erb_gru_sine_1khz_pcm_output": {
+        "symbol": "erb_gru_sine_1khz_pcm_output",
+        "shape": [
+          4000
+        ],
+        "dtype": "float32",
+        "sha256": "2d66053a8ce510e923a4316dfea3835f87df0934802d2c20883e576e94416545"
+      },
+      "erb_gru_sine_1khz_pcm_input_int16": {
+        "symbol": "erb_gru_sine_1khz_pcm_input_int16",
+        "shape": [
+          4000
+        ],
+        "dtype": "int16",
+        "sha256": "5f94ac5a27b1ba66f0502a1edaed063677aaed7189ed9ec56509c1bc4a0e4ba9"
+      },
+      "erb_gru_sine_1khz_pcm_output_int16": {
+        "symbol": "erb_gru_sine_1khz_pcm_output_int16",
+        "shape": [
+          4000
+        ],
+        "dtype": "int16",
+        "sha256": "fe954985c040415aeef1be384a741be0f952c31654ed787df528e1b3ad01fca3"
+      }
+    },
+    "header_sha256": "07b34a0d2d40f4a3616aabe6cc4f45919b0a9a35771abeb5e8e1e3e27a52c06a"
+  },
+  "clean_speech": {
+    "header": "golden_clean_speech.h",
+    "arrays": {
+      "erb_gru_clean_speech_pcm_input": {
+        "symbol": "erb_gru_clean_speech_pcm_input",
+        "shape": [
+          4000
+        ],
+        "dtype": "float32",
+        "sha256": "e0b3791c0a59f39664a9be8b7f277a8b837b49db85c3c2bb093e6181ec154b76"
+      },
+      "erb_gru_clean_speech_windowed_pcm": {
+        "symbol": "erb_gru_clean_speech_windowed_pcm",
+        "shape": [
+          24,
+          320
+        ],
+        "dtype": "float32",
+        "sha256": "14cb6232b6cdcde88b7745a1557d14ba368d92d0dcc8924554f832ddddea176c"
+      },
+      "erb_gru_clean_speech_fft_real": {
+        "symbol": "erb_gru_clean_speech_fft_real",
+        "shape": [
+          24,
+          161
+        ],
+        "dtype": "float32",
+        "sha256": "c767a4fa6a38eda18afe18c1ca26c6c636f9bf56b85ee654065eb9da8344652e"
+      },
+      "erb_gru_clean_speech_fft_imag": {
+        "symbol": "erb_gru_clean_speech_fft_imag",
+        "shape": [
+          24,
+          161
+        ],
+        "dtype": "float32",
+        "sha256": "03fd2f7b3a6bd325ca148a21ad6cd7f72bcbf7cd58b0fbb9188ec912c4bfe26f"
+      },
+      "erb_gru_clean_speech_magnitude": {
+        "symbol": "erb_gru_clean_speech_magnitude",
+        "shape": [
+          24,
+          161
+        ],
+        "dtype": "float32",
+        "sha256": "5453066f1da1ea4c301116e05508e3eccdc9679a24bfe4e9e4019e97a4363f02"
+      },
+      "erb_gru_clean_speech_erb_feature": {
+        "symbol": "erb_gru_clean_speech_erb_feature",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "float32",
+        "sha256": "68af6e7c7fc6fc6eec551a6b653066000cc0895563414ccc13f668269e9244c1"
+      },
+      "erb_gru_clean_speech_erb_feature_int8": {
+        "symbol": "erb_gru_clean_speech_erb_feature_int8",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "int8",
+        "sha256": "a124ae5ce77c23d17ac12d1ebbcf970c407438ab508ff201317baedd64c8dd39"
+      },
+      "erb_gru_clean_speech_state1": {
+        "symbol": "erb_gru_clean_speech_state1",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "a540db0719fee2776b20a47d6e8c31242ab5acfc905413110d9d692f24960cd6"
+      },
+      "erb_gru_clean_speech_state1_int8": {
+        "symbol": "erb_gru_clean_speech_state1_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "36159ee1195f85c22e424545907d0f8e6be18dd15b446a48a41304772dd3f623"
+      },
+      "erb_gru_clean_speech_state2": {
+        "symbol": "erb_gru_clean_speech_state2",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "62dd285ca70142922f596febe129610ca1f2c3deb925745df3b1d92040d60d43"
+      },
+      "erb_gru_clean_speech_state2_int8": {
+        "symbol": "erb_gru_clean_speech_state2_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "78b7e0be0a8812c5fc7908a5d7a3e54ed7887177a0c0b7fc4d1c7a32b4f4b09f"
+      },
+      "erb_gru_clean_speech_gain": {
+        "symbol": "erb_gru_clean_speech_gain",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "float32",
+        "sha256": "42c16bd5dd84f46fde0ceff1aef7c799dca2962e7ae70bb461b76668faf6d5ce"
+      },
+      "erb_gru_clean_speech_gain_int8": {
+        "symbol": "erb_gru_clean_speech_gain_int8",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "int8",
+        "sha256": "39989e571298ea72b79dcc1bb59fb7f30630b90d40a432ab7bbd61ee4faae426"
+      },
+      "erb_gru_clean_speech_next_state1": {
+        "symbol": "erb_gru_clean_speech_next_state1",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "9a96f097f343a47ed016e8266fe6de4c0f83dd17bb8196a3b74de54a0f49a4d8"
+      },
+      "erb_gru_clean_speech_next_state1_int8": {
+        "symbol": "erb_gru_clean_speech_next_state1_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "82abc97496422ccddf05f86e4cff602a0ce183255b567976cef7b6c9bec835ac"
+      },
+      "erb_gru_clean_speech_next_state2": {
+        "symbol": "erb_gru_clean_speech_next_state2",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "68796b4019041ae9595eefd24a0b17a0c49bbcbfd4bfd1b145f9fb7f0b5805bd"
+      },
+      "erb_gru_clean_speech_next_state2_int8": {
+        "symbol": "erb_gru_clean_speech_next_state2_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "97a5c19d55bf972b0a1b31c7f0411be8bf94f28a7f0575e596bc531f811224d7"
+      },
+      "erb_gru_clean_speech_pcm_output": {
+        "symbol": "erb_gru_clean_speech_pcm_output",
+        "shape": [
+          4000
+        ],
+        "dtype": "float32",
+        "sha256": "931570e4ea115474e991d8a4801b21dae3001026bb8777c95378a6fb5b260200"
+      },
+      "erb_gru_clean_speech_pcm_input_int16": {
+        "symbol": "erb_gru_clean_speech_pcm_input_int16",
+        "shape": [
+          4000
+        ],
+        "dtype": "int16",
+        "sha256": "dc3a4547b5e513fd12b4d36a985215d993101a53deedc49901ce4406e6b76dd4"
+      },
+      "erb_gru_clean_speech_pcm_output_int16": {
+        "symbol": "erb_gru_clean_speech_pcm_output_int16",
+        "shape": [
+          4000
+        ],
+        "dtype": "int16",
+        "sha256": "2a1af2e0db8b7be688b2dba578b9d36a11d450805d31e51e9f79e9b810f16d77"
+      }
+    },
+    "header_sha256": "4ec9719d54183b238d2ad3feda13532d124dacdc37ee09ef60e7e4267b3330c2"
+  },
+  "speech_noise": {
+    "header": "golden_speech_noise.h",
+    "arrays": {
+      "erb_gru_speech_noise_pcm_input": {
+        "symbol": "erb_gru_speech_noise_pcm_input",
+        "shape": [
+          4000
+        ],
+        "dtype": "float32",
+        "sha256": "c7ec128fa8631f0205b7362b7e560d038a5030f6510b33dd9f08966c356e3668"
+      },
+      "erb_gru_speech_noise_windowed_pcm": {
+        "symbol": "erb_gru_speech_noise_windowed_pcm",
+        "shape": [
+          24,
+          320
+        ],
+        "dtype": "float32",
+        "sha256": "ae1257b1b576914f53dd72631ec9ab2695b59046b57916f5dc4177af78711ad3"
+      },
+      "erb_gru_speech_noise_fft_real": {
+        "symbol": "erb_gru_speech_noise_fft_real",
+        "shape": [
+          24,
+          161
+        ],
+        "dtype": "float32",
+        "sha256": "993f12e8223345ab62ff122d59dd56daceb0549266246110592dc6680ea2b33b"
+      },
+      "erb_gru_speech_noise_fft_imag": {
+        "symbol": "erb_gru_speech_noise_fft_imag",
+        "shape": [
+          24,
+          161
+        ],
+        "dtype": "float32",
+        "sha256": "a5a97c648f65930023de1457e2d7eb913cf1800c42ee30d040f02ef9daa4ab43"
+      },
+      "erb_gru_speech_noise_magnitude": {
+        "symbol": "erb_gru_speech_noise_magnitude",
+        "shape": [
+          24,
+          161
+        ],
+        "dtype": "float32",
+        "sha256": "ead25cf54ba23da3665fa78a976a6aa88f959a766d7443c2d4057632705421f5"
+      },
+      "erb_gru_speech_noise_erb_feature": {
+        "symbol": "erb_gru_speech_noise_erb_feature",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "float32",
+        "sha256": "77021a934d9e3f7593f175555c76ba90c4be6aee918ac0ad40193001a3a2e831"
+      },
+      "erb_gru_speech_noise_erb_feature_int8": {
+        "symbol": "erb_gru_speech_noise_erb_feature_int8",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "int8",
+        "sha256": "6878941b02c5692bbc2441383d7e84f3e2f802fd8a50cfaa0db995f21fce74d9"
+      },
+      "erb_gru_speech_noise_state1": {
+        "symbol": "erb_gru_speech_noise_state1",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "7763588bc397d250eb820e2f103fb858436d00fc9e5665f1df5cf6ed5281c890"
+      },
+      "erb_gru_speech_noise_state1_int8": {
+        "symbol": "erb_gru_speech_noise_state1_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "d9b5973e872aaaa94e4416727995e912c6443c9baaecc5480a7ff1832db6d425"
+      },
+      "erb_gru_speech_noise_state2": {
+        "symbol": "erb_gru_speech_noise_state2",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "e463de129135af3d317f7b929db258bb23f1ed0d8c1d8c4d736a31779cdab4e8"
+      },
+      "erb_gru_speech_noise_state2_int8": {
+        "symbol": "erb_gru_speech_noise_state2_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "c77d8a47d560b0fb4f94ff7bc29b19516d8299393a08fdb9b6f704d591218f7d"
+      },
+      "erb_gru_speech_noise_gain": {
+        "symbol": "erb_gru_speech_noise_gain",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "float32",
+        "sha256": "464097d8eb052c054fe342dc021404c252a9d053df0e8fb97cccbf15ca584655"
+      },
+      "erb_gru_speech_noise_gain_int8": {
+        "symbol": "erb_gru_speech_noise_gain_int8",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "int8",
+        "sha256": "c07bb6cf47d1c21fee71f451305799b72c8fb33e4f2f05399cd8d521ae421f75"
+      },
+      "erb_gru_speech_noise_next_state1": {
+        "symbol": "erb_gru_speech_noise_next_state1",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "4e723e596905ddb066ce18dc1a13816b0089bd8679bc8cc19d593e98c69fcb99"
+      },
+      "erb_gru_speech_noise_next_state1_int8": {
+        "symbol": "erb_gru_speech_noise_next_state1_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "e9f4e11d35df05b66ed7967cdee09c431db0bd9d159795c631712bcea630e602"
+      },
+      "erb_gru_speech_noise_next_state2": {
+        "symbol": "erb_gru_speech_noise_next_state2",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "e83e4f7c0f9662f754f9f94ae44c774386c16ecf6a81dc80012207de417a6a26"
+      },
+      "erb_gru_speech_noise_next_state2_int8": {
+        "symbol": "erb_gru_speech_noise_next_state2_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "15c433aee6de1e7591f3dcc1ab1f8bffd7e333eba021d9fcbeea72bde1348ddc"
+      },
+      "erb_gru_speech_noise_pcm_output": {
+        "symbol": "erb_gru_speech_noise_pcm_output",
+        "shape": [
+          4000
+        ],
+        "dtype": "float32",
+        "sha256": "9dcb162fc4f0e2e1c8a725e027a48a671748e3cc62437ee4c1ded41aec37d0c5"
+      },
+      "erb_gru_speech_noise_pcm_input_int16": {
+        "symbol": "erb_gru_speech_noise_pcm_input_int16",
+        "shape": [
+          4000
+        ],
+        "dtype": "int16",
+        "sha256": "d3218e956336b1719bd3c966580a8f7ae8d6048254a76061c4360088cd75b44d"
+      },
+      "erb_gru_speech_noise_pcm_output_int16": {
+        "symbol": "erb_gru_speech_noise_pcm_output_int16",
+        "shape": [
+          4000
+        ],
+        "dtype": "int16",
+        "sha256": "f280ba7295ca31b29e8b790314ff6126bff637e8d3d61d0c57509fe25804c081"
+      }
+    },
+    "header_sha256": "06c0e4b8e286373ee73f466548ae94ab87e363374e942020bddd39e5de9bf136"
+  },
+  "near_full_scale": {
+    "header": "golden_near_full_scale.h",
+    "arrays": {
+      "erb_gru_near_full_scale_pcm_input": {
+        "symbol": "erb_gru_near_full_scale_pcm_input",
+        "shape": [
+          4000
+        ],
+        "dtype": "float32",
+        "sha256": "ca433b8a91974bd98f0bc9d6e4a883db104f0e19b68f8ebb0dbc08ce69b2bfbb"
+      },
+      "erb_gru_near_full_scale_windowed_pcm": {
+        "symbol": "erb_gru_near_full_scale_windowed_pcm",
+        "shape": [
+          24,
+          320
+        ],
+        "dtype": "float32",
+        "sha256": "9a6cf3aaec4b702ca952574bbceef551b4730cc5d0b5af13cc02e60fc44fca59"
+      },
+      "erb_gru_near_full_scale_fft_real": {
+        "symbol": "erb_gru_near_full_scale_fft_real",
+        "shape": [
+          24,
+          161
+        ],
+        "dtype": "float32",
+        "sha256": "ab4eb280ee5e0b8f7e990c2ddb1925ebc587549d0311555bcdff2867fc56705f"
+      },
+      "erb_gru_near_full_scale_fft_imag": {
+        "symbol": "erb_gru_near_full_scale_fft_imag",
+        "shape": [
+          24,
+          161
+        ],
+        "dtype": "float32",
+        "sha256": "d47cb17a09922f65c6724ea4f7b967ca73c3e3d5501b9ede698eb0057f171560"
+      },
+      "erb_gru_near_full_scale_magnitude": {
+        "symbol": "erb_gru_near_full_scale_magnitude",
+        "shape": [
+          24,
+          161
+        ],
+        "dtype": "float32",
+        "sha256": "befe2eedcddb478ae2bf266b21e672c3206c5f84b44cee9380cf3e51be844ead"
+      },
+      "erb_gru_near_full_scale_erb_feature": {
+        "symbol": "erb_gru_near_full_scale_erb_feature",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "float32",
+        "sha256": "a2d44de3c78f6b0067edb47da6dc2dd6b74c0d436d03de0e3886db5060fe6ec0"
+      },
+      "erb_gru_near_full_scale_erb_feature_int8": {
+        "symbol": "erb_gru_near_full_scale_erb_feature_int8",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "int8",
+        "sha256": "6fc5406513fe548bc4a05358b8b2e788ae6a5e45d8d8e0b936f11e5bc60676fd"
+      },
+      "erb_gru_near_full_scale_state1": {
+        "symbol": "erb_gru_near_full_scale_state1",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "d3721beeb3f3060da2168ba021545b2096970be714c53bdfe184d5533505d5ca"
+      },
+      "erb_gru_near_full_scale_state1_int8": {
+        "symbol": "erb_gru_near_full_scale_state1_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "d81e5512cd0f91e04814ae425aef0b08e28f38886239cb793df891f2d557ffb0"
+      },
+      "erb_gru_near_full_scale_state2": {
+        "symbol": "erb_gru_near_full_scale_state2",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "adfab25dcf880237ce1837bde49b602e53b59ee4b62502451664427bdd639191"
+      },
+      "erb_gru_near_full_scale_state2_int8": {
+        "symbol": "erb_gru_near_full_scale_state2_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "c17e542706af8ca1b7d122c8b9f4728eaeea2ea1f1d2e728c0e8315d725fbcfa"
+      },
+      "erb_gru_near_full_scale_gain": {
+        "symbol": "erb_gru_near_full_scale_gain",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "float32",
+        "sha256": "c253c163b46cd1c13cb971e1cf6564cd85a1d62f63e6bb3c3426c4f997fc7f78"
+      },
+      "erb_gru_near_full_scale_gain_int8": {
+        "symbol": "erb_gru_near_full_scale_gain_int8",
+        "shape": [
+          24,
+          1,
+          32
+        ],
+        "dtype": "int8",
+        "sha256": "2d5e8d1351bc06600f51f36b40754bef9275f1a1400f588f07e9a03dec3659b2"
+      },
+      "erb_gru_near_full_scale_next_state1": {
+        "symbol": "erb_gru_near_full_scale_next_state1",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "66401f0e5adb90f2d6139dcd76bea6ab69030ea611164c04e8f7bcfd1b37c6f9"
+      },
+      "erb_gru_near_full_scale_next_state1_int8": {
+        "symbol": "erb_gru_near_full_scale_next_state1_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "a86630099f18c7cd23993c98350394261a9b7de824d22d4f87d2632ddfd68ef3"
+      },
+      "erb_gru_near_full_scale_next_state2": {
+        "symbol": "erb_gru_near_full_scale_next_state2",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "float32",
+        "sha256": "597b4fe0f762b93161390589d1143857b9bca42a172a1ab6471cc79d3d14e711"
+      },
+      "erb_gru_near_full_scale_next_state2_int8": {
+        "symbol": "erb_gru_near_full_scale_next_state2_int8",
+        "shape": [
+          24,
+          64
+        ],
+        "dtype": "int8",
+        "sha256": "0d466eee55a483e4f98d47d87467e920a2ece36efe4b9b8cfba74e7f92143bd5"
+      },
+      "erb_gru_near_full_scale_pcm_output": {
+        "symbol": "erb_gru_near_full_scale_pcm_output",
+        "shape": [
+          4000
+        ],
+        "dtype": "float32",
+        "sha256": "847df0624a08db7b6878183151b03294d61aab60fd9224389806923db3f198ac"
+      },
+      "erb_gru_near_full_scale_pcm_input_int16": {
+        "symbol": "erb_gru_near_full_scale_pcm_input_int16",
+        "shape": [
+          4000
+        ],
+        "dtype": "int16",
+        "sha256": "35a7afe613afc4e890eedcd1ec61712afe6b6737cdc17d4da8ba0f9a0035f69c"
+      },
+      "erb_gru_near_full_scale_pcm_output_int16": {
+        "symbol": "erb_gru_near_full_scale_pcm_output_int16",
+        "shape": [
+          4000
+        ],
+        "dtype": "int16",
+        "sha256": "1719995f94079faedfb9759b2baa8822db0b60d6f4862735e93659bfd260836c"
+      }
+    },
+    "header_sha256": "052fa381ef26dbe912835649225586834b0f77a5a81225097a1e4e587b2d63f5"
+  },
+  "total_frames": 120
+}

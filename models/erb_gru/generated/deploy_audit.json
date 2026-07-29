@@ -1,0 +1,377 @@
+{
+  "board_pcm_reference": {
+    "clean_speech": {
+      "derived_from_pcm16": true,
+      "frames": 24,
+      "raw_package_pcm_max_error_lsb": 20,
+      "raw_package_pcm_rmse_lsb": 2.8773685895275913,
+      "raw_package_pcm_snr_db": 61.50462284862943,
+      "samples": 4000
+    },
+    "near_full_scale": {
+      "derived_from_pcm16": true,
+      "frames": 24,
+      "raw_package_pcm_max_error_lsb": 55,
+      "raw_package_pcm_rmse_lsb": 21.00783187289921,
+      "raw_package_pcm_snr_db": 47.43981551555763,
+      "samples": 4000
+    },
+    "silence": {
+      "derived_from_pcm16": true,
+      "frames": 24,
+      "raw_package_pcm_max_error_lsb": 0,
+      "raw_package_pcm_rmse_lsb": 0.0,
+      "raw_package_pcm_snr_db": null,
+      "samples": 4000
+    },
+    "sine_1khz": {
+      "derived_from_pcm16": true,
+      "frames": 24,
+      "raw_package_pcm_max_error_lsb": 14,
+      "raw_package_pcm_rmse_lsb": 4.407181639097712,
+      "raw_package_pcm_snr_db": 42.047969882341235,
+      "samples": 4000
+    },
+    "speech_noise": {
+      "derived_from_pcm16": true,
+      "frames": 24,
+      "raw_package_pcm_max_error_lsb": 20,
+      "raw_package_pcm_rmse_lsb": 4.746577714522328,
+      "raw_package_pcm_snr_db": 55.46460555089616,
+      "samples": 4000
+    }
+  },
+  "deploy_model": {
+    "bytes": 59232,
+    "path": "erb_gru_int8_vela.tflite",
+    "sha256": "45f59d59598d74d36daebbb0d61b4d05020e164e4f78a62fcc31b4bb6b7d8fe8"
+  },
+  "model_header_matches_vela": true,
+  "package_version": "w4_erb-gru_deployment_v2_seed20260730",
+  "passed": true,
+  "pre_vela_contract": {
+    "inputs": [
+      {
+        "bytes": 64,
+        "dtype": "int8",
+        "index": 0,
+        "name": "serving_default_state1:0",
+        "scale": 0.007843137718737125,
+        "shape": [
+          1,
+          64
+        ],
+        "zero_point": -1
+      },
+      {
+        "bytes": 64,
+        "dtype": "int8",
+        "index": 1,
+        "name": "serving_default_state2:0",
+        "scale": 0.007836385630071163,
+        "shape": [
+          1,
+          64
+        ],
+        "zero_point": 0
+      },
+      {
+        "bytes": 32,
+        "dtype": "int8",
+        "index": 2,
+        "name": "serving_default_erb_feature:0",
+        "scale": 0.04050697013735771,
+        "shape": [
+          1,
+          1,
+          32
+        ],
+        "zero_point": 49
+      }
+    ],
+    "operators": [
+      {
+        "index": 0,
+        "name": "FULLY_CONNECTED"
+      },
+      {
+        "index": 1,
+        "name": "SPLIT"
+      },
+      {
+        "index": 2,
+        "name": "FULLY_CONNECTED"
+      },
+      {
+        "index": 3,
+        "name": "STRIDED_SLICE"
+      },
+      {
+        "index": 4,
+        "name": "ADD"
+      },
+      {
+        "index": 5,
+        "name": "LOGISTIC"
+      },
+      {
+        "index": 6,
+        "name": "SUB"
+      },
+      {
+        "index": 7,
+        "name": "MUL"
+      },
+      {
+        "index": 8,
+        "name": "STRIDED_SLICE"
+      },
+      {
+        "index": 9,
+        "name": "ADD"
+      },
+      {
+        "index": 10,
+        "name": "LOGISTIC"
+      },
+      {
+        "index": 11,
+        "name": "MUL"
+      },
+      {
+        "index": 12,
+        "name": "FULLY_CONNECTED"
+      },
+      {
+        "index": 13,
+        "name": "ADD"
+      },
+      {
+        "index": 14,
+        "name": "TANH"
+      },
+      {
+        "index": 15,
+        "name": "MUL"
+      },
+      {
+        "index": 16,
+        "name": "ADD"
+      },
+      {
+        "index": 17,
+        "name": "FULLY_CONNECTED"
+      },
+      {
+        "index": 18,
+        "name": "SPLIT"
+      },
+      {
+        "index": 19,
+        "name": "FULLY_CONNECTED"
+      },
+      {
+        "index": 20,
+        "name": "STRIDED_SLICE"
+      },
+      {
+        "index": 21,
+        "name": "ADD"
+      },
+      {
+        "index": 22,
+        "name": "LOGISTIC"
+      },
+      {
+        "index": 23,
+        "name": "SUB"
+      },
+      {
+        "index": 24,
+        "name": "MUL"
+      },
+      {
+        "index": 25,
+        "name": "STRIDED_SLICE"
+      },
+      {
+        "index": 26,
+        "name": "ADD"
+      },
+      {
+        "index": 27,
+        "name": "LOGISTIC"
+      },
+      {
+        "index": 28,
+        "name": "MUL"
+      },
+      {
+        "index": 29,
+        "name": "FULLY_CONNECTED"
+      },
+      {
+        "index": 30,
+        "name": "ADD"
+      },
+      {
+        "index": 31,
+        "name": "TANH"
+      },
+      {
+        "index": 32,
+        "name": "MUL"
+      },
+      {
+        "index": 33,
+        "name": "ADD"
+      },
+      {
+        "index": 34,
+        "name": "FULLY_CONNECTED"
+      },
+      {
+        "index": 35,
+        "name": "LOGISTIC"
+      },
+      {
+        "index": 36,
+        "name": "RESHAPE"
+      }
+    ],
+    "outputs": [
+      {
+        "bytes": 64,
+        "dtype": "int8",
+        "index": 57,
+        "name": "StatefulPartitionedCall:2",
+        "scale": 0.007836385630071163,
+        "shape": [
+          1,
+          64
+        ],
+        "zero_point": 0
+      },
+      {
+        "bytes": 64,
+        "dtype": "int8",
+        "index": 38,
+        "name": "StatefulPartitionedCall:1",
+        "scale": 0.007843137718737125,
+        "shape": [
+          1,
+          64
+        ],
+        "zero_point": -1
+      },
+      {
+        "bytes": 32,
+        "dtype": "int8",
+        "index": 60,
+        "name": "StatefulPartitionedCall:0",
+        "scale": 0.00390625,
+        "shape": [
+          1,
+          1,
+          32
+        ],
+        "zero_point": -128
+      }
+    ],
+    "tensorflow_version": "2.20.0"
+  },
+  "raw_manifest_indices_are_pre_vela": true,
+  "schema_version": 1,
+  "source_manifest_experiment_id": "erb-gru:w4_erb-gru_deployment_v2_seed20260730",
+  "tooling_environment": {
+    "manifest_tensorflow": "2.20.0",
+    "tensorflow": "2.20.0"
+  },
+  "vela_contract": {
+    "inputs": [
+      {
+        "bytes": 64,
+        "dtype": "int8",
+        "index": 4,
+        "name": "serving_default_state1:0",
+        "scale": 0.007843137718737125,
+        "shape": [
+          1,
+          64
+        ],
+        "zero_point": -1
+      },
+      {
+        "bytes": 64,
+        "dtype": "int8",
+        "index": 3,
+        "name": "serving_default_state2:0",
+        "scale": 0.007836385630071163,
+        "shape": [
+          1,
+          64
+        ],
+        "zero_point": 0
+      },
+      {
+        "bytes": 32,
+        "dtype": "int8",
+        "index": 5,
+        "name": "serving_default_erb_feature:0",
+        "scale": 0.04050697013735771,
+        "shape": [
+          1,
+          1,
+          32
+        ],
+        "zero_point": 49
+      }
+    ],
+    "operators": [
+      {
+        "index": 0,
+        "name": "ethos-u"
+      }
+    ],
+    "outputs": [
+      {
+        "bytes": 64,
+        "dtype": "int8",
+        "index": 7,
+        "name": "StatefulPartitionedCall:2",
+        "scale": 0.007836385630071163,
+        "shape": [
+          1,
+          64
+        ],
+        "zero_point": 0
+      },
+      {
+        "bytes": 64,
+        "dtype": "int8",
+        "index": 6,
+        "name": "StatefulPartitionedCall:1",
+        "scale": 0.007843137718737125,
+        "shape": [
+          1,
+          64
+        ],
+        "zero_point": -1
+      },
+      {
+        "bytes": 32,
+        "dtype": "int8",
+        "index": 8,
+        "name": "StatefulPartitionedCall:0",
+        "scale": 0.00390625,
+        "shape": [
+          1,
+          1,
+          32
+        ],
+        "zero_point": -128
+      }
+    ],
+    "tensorflow_version": "2.20.0"
+  }
+}
