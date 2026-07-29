@@ -40,12 +40,18 @@ uint32_t ethosu_u55_cycles_now(void)
     return m55m1_ethosu_u55_board_cycles_now();
 }
 
+uint32_t ethosu_u55_cycles_elapsed(uint32_t start_cycle, uint32_t end_cycle)
+{
+    return m55m1_tlv320dac3100_test_cycles_elapsed(start_cycle, end_cycle);
+}
+
 void ethosu_u55_fault_delay_ms(uint32_t milliseconds)
 {
     const uint32_t start_cycle = ethosu_u55_cycles_now();
     const uint32_t delay_cycles = (SystemCoreClock / 1000U) * milliseconds;
 
-    while ((ethosu_u55_cycles_now() - start_cycle) < delay_cycles)
+    while (m55m1_tlv320dac3100_test_cycles_elapsed(
+               start_cycle, ethosu_u55_cycles_now()) < delay_cycles)
     {
         __NOP();
     }
@@ -53,7 +59,8 @@ void ethosu_u55_fault_delay_ms(uint32_t milliseconds)
 
 bool ethosu_u55_deadline_exceeded(uint32_t start_cycle, uint32_t milliseconds)
 {
-    return (ethosu_u55_cycles_now() - start_cycle) >=
+    return m55m1_tlv320dac3100_test_cycles_elapsed(
+               start_cycle, ethosu_u55_cycles_now()) >=
            ((SystemCoreClock / 1000U) * milliseconds);
 }
 

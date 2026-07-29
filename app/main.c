@@ -221,7 +221,9 @@ int main(void)
             }
             ++g_telemetry.frame_count;
             audio_update_telemetry(
-                m55m1_tlv320dac3100_test_cycles_now() - enhance_start, result);
+                m55m1_tlv320dac3100_test_cycles_elapsed(
+                    enhance_start, m55m1_tlv320dac3100_test_cycles_now()),
+                result);
 #else
             status = tlv320dac3100_submit_mono_block(g_dmic_block, sample_count);
 #endif

@@ -8,6 +8,7 @@
 #include <stddef.h>
 
 #include "board/m55m1_tlv320dac3100_test.h"
+#include "common/wrapping_counter.h"
 #include "NuMicro.h"
 
 #define M55M1_TLV320DAC3100_APLL0_HZ  475136006UL
@@ -66,6 +67,13 @@ uint32_t m55m1_tlv320dac3100_test_cycles_now(void)
     return (M55M1_TLV320DAC3100_SYSTICK_MASK -
             (SysTick->VAL & M55M1_TLV320DAC3100_SYSTICK_MASK)) &
            M55M1_TLV320DAC3100_SYSTICK_MASK;
+}
+
+uint32_t m55m1_tlv320dac3100_test_cycles_elapsed(
+    uint32_t start_cycle, uint32_t end_cycle)
+{
+    return wrapping_counter_elapsed(
+        start_cycle, end_cycle, M55M1_TLV320DAC3100_SYSTICK_MASK);
 }
 
 uint32_t m55m1_tlv320dac3100_test_cycles_to_us(uint32_t cycles)

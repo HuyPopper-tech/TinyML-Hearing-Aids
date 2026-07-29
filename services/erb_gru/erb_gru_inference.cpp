@@ -22,7 +22,9 @@ namespace {
 
 constexpr size_t kTensorArenaBytes = 128U * 1024U;
 alignas(16) uint8_t g_tensor_arena[kTensorArenaBytes];
-tflite::MicroMutableOpResolver<1> g_resolver;
+alignas(tflite::MicroMutableOpResolver<1>)
+    uint8_t g_resolver_storage[sizeof(tflite::MicroMutableOpResolver<1>)];
+tflite::MicroMutableOpResolver<1> *g_resolver;
 alignas(tflite::MicroInterpreter) uint8_t g_interpreter_storage[sizeof(tflite::MicroInterpreter)];
 tflite::MicroInterpreter *g_interpreter;
 uint32_t g_last_invoke_cycles;
@@ -126,14 +128,19 @@ extern "C" bool erb_gru_inference_init(void)
     }
 
     model = tflite::GetModel(erb_gru_vela_model);
-    if (!model_hash_valid() || !model_contract_valid(model) || (model->version() != TFLITE_SCHEMA_VERSION) ||
-        (g_resolver.AddEthosU() != kTfLiteOk))
+    if (!model_hash_valid() || !model_contract_valid(model) || (model->version() != TFLITE_SCHEMA_VERSION))
     {
+        return false;
+    }
+    g_resolver = new (g_resolver_storage) tflite::MicroMutableOpResolver<1>();
+    if (g_resolver->AddEthosU() != kTfLiteOk)
+    {
+        g_resolver = nullptr;
         return false;
     }
 
     g_interpreter = new (g_interpreter_storage)
-        tflite::MicroInterpreter(model, g_resolver, g_tensor_arena, sizeof(g_tensor_arena));
+        tflite::MicroInterpreter(model, *g_resolver, g_tensor_arena, sizeof(g_tensor_arena));
     if ((g_interpreter->AllocateTensors() != kTfLiteOk) || !tensors_valid())
     {
         g_interpreter = nullptr;
@@ -180,7 +187,8 @@ extern "C" bool erb_gru_inference_invoke(
 #if M55M1_ERB_GRU_FAULT_INVOKE_SLOW
     ethosu_u55_fault_delay_ms(12U);
 #endif
-    g_last_invoke_cycles = ethosu_u55_cycles_now() - start_cycle;
+    g_last_invoke_cycles = ethosu_u55_cycles_elapsed(
+        start_cycle, ethosu_u55_cycles_now());
     if (g_last_invoke_cycles > g_max_invoke_cycles)
     {
         g_max_invoke_cycles = g_last_invoke_cycles;

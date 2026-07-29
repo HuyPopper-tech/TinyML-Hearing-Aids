@@ -17,6 +17,7 @@ bool ethosu_u55_init(void);
 
 /** @brief Return the free-running board timer used for inference profiling. */
 uint32_t ethosu_u55_cycles_now(void);
+uint32_t ethosu_u55_cycles_elapsed(uint32_t start_cycle, uint32_t end_cycle);
 void ethosu_u55_fault_delay_ms(uint32_t milliseconds);
 bool ethosu_u55_deadline_exceeded(uint32_t start_cycle, uint32_t milliseconds);
 

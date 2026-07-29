@@ -172,6 +172,10 @@ bool m55m1_tlv320dac3100_test_dmic_block_pending(void);
 /** @brief Return the current free-running SysTick count used by telemetry. */
 uint32_t m55m1_tlv320dac3100_test_cycles_now(void);
 
+/** @brief Return wrap-safe elapsed cycles between two SysTick samples. */
+uint32_t m55m1_tlv320dac3100_test_cycles_elapsed(
+    uint32_t start_cycle, uint32_t end_cycle);
+
 /** @brief Convert a short free-running SysTick interval to microseconds. */
 uint32_t m55m1_tlv320dac3100_test_cycles_to_us(uint32_t cycles);
 
