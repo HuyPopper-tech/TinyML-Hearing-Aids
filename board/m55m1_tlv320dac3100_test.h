@@ -19,7 +19,7 @@ extern "C" {
 /**
  * @brief Outcome of the board-owned external-clock and peripheral binding.
  *
- * `OK` means the HXT-derived APLL0, audio pins, peripheral clocks, and the
+ * `OK` means the HXT-derived core/audio PLLs, audio pins, peripheral clocks, and the
  * generic-driver configuration are ready. Timeout values leave `config`
  * uninitialised; callers must display a diagnostic or stop, not call the
  * generic driver with it.
@@ -27,7 +27,9 @@ extern "C" {
 typedef enum {
     M55M1_TLV320DAC3100_BOARD_INIT_OK = 0,
     M55M1_TLV320DAC3100_BOARD_INIT_HXT_TIMEOUT,
+    M55M1_TLV320DAC3100_BOARD_INIT_APLL1_TIMEOUT,
     M55M1_TLV320DAC3100_BOARD_INIT_APLL0_TIMEOUT,
+    M55M1_TLV320DAC3100_BOARD_INIT_CLOCK_MISMATCH,
     /** PB0 remained low after GPIO I2C recovery; do not call the codec driver. */
     M55M1_TLV320DAC3100_BOARD_INIT_I2C_STUCK,
 } m55m1_tlv320dac3100_board_init_result_t;
@@ -45,6 +47,8 @@ typedef enum {
     M55M1_TLV320DAC3100_BOARD_STAGE_SCLK_HIRC_READY,
     M55M1_TLV320DAC3100_BOARD_STAGE_HXT_WAIT,
     M55M1_TLV320DAC3100_BOARD_STAGE_HXT_READY,
+    M55M1_TLV320DAC3100_BOARD_STAGE_APLL1_WAIT,
+    M55M1_TLV320DAC3100_BOARD_STAGE_APLL1_READY,
     M55M1_TLV320DAC3100_BOARD_STAGE_APLL0_WAIT,
     M55M1_TLV320DAC3100_BOARD_STAGE_APLL0_READY,
     M55M1_TLV320DAC3100_BOARD_STAGE_SCLK_APLL0_READY,
@@ -56,6 +60,15 @@ typedef enum {
     M55M1_TLV320DAC3100_BOARD_STAGE_CYCLE_COUNTER_READY,
     M55M1_TLV320DAC3100_BOARD_STAGE_PERIPHERALS_READY,
 } m55m1_tlv320dac3100_board_stage_t;
+
+/** Board-clock values measured after the profile clock tree is committed. */
+typedef struct {
+    uint32_t core_hz;
+    uint32_t apll0_hz;
+    uint32_t apll1_hz;
+    uint32_t i2s_src_hz;
+    uint32_t mclk_hz;
+} m55m1_tlv320dac3100_clock_snapshot_t;
 
 /**
  * @brief Snapshot of DMIC capture health counters.
@@ -131,6 +144,13 @@ m55m1_tlv320dac3100_test_board_init_with_progress(
     void *callback_context,
     m55m1_tlv320dac3100_board_progress_callback_t progress_callback,
     void *progress_context);
+
+/**
+ * @brief Copy the validated board clock contract after successful board init.
+ * @return True only when `snapshot` is non-NULL and the clock contract is valid.
+ */
+bool m55m1_tlv320dac3100_test_get_clock_snapshot(
+    m55m1_tlv320dac3100_clock_snapshot_t *snapshot);
 
 /**
  * @brief Start 16 kHz or 32 kHz capture from the onboard MP34DT05 through DMIC1.

@@ -138,6 +138,47 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
         ):
             self.assertIn(required, passthrough)
 
+    def test_board_separates_220mhz_core_from_exact_audio_pll(self):
+        board_header = (
+            REPO_ROOT / "board" / "m55m1_tlv320dac3100_test.h"
+        ).read_text(encoding="utf-8")
+        board_source = (
+            REPO_ROOT / "board" / "m55m1_tlv320dac3100_test.c"
+        ).read_text(encoding="utf-8")
+        app = (REPO_ROOT / "app" / "main.c").read_text(encoding="utf-8")
+        board = board_header + board_source
+
+        for required in (
+            "M55M1_TLV320DAC3100_CORE_HZ       220000000UL",
+            "M55M1_TLV320DAC3100_AUDIO_APLL_HZ 475136006UL",
+            "CLK_APLL1_SELECT",
+            "CLK_STATUS_APLL1STB_Msk",
+            "CLK_SET_SCLKDIV(1UL)",
+            "CLK_I2SSEL_I2S0SEL_APLL1_DIV2",
+            "M55M1_TLV320DAC3100_BOARD_INIT_APLL1_TIMEOUT",
+            "M55M1_TLV320DAC3100_BOARD_INIT_CLOCK_MISMATCH",
+            "M55M1_TLV320DAC3100_BOARD_STAGE_APLL1_WAIT",
+            "M55M1_TLV320DAC3100_BOARD_STAGE_APLL1_READY",
+            "m55m1_tlv320dac3100_clock_snapshot_t",
+            "m55m1_tlv320dac3100_test_get_clock_snapshot",
+        ):
+            self.assertIn(required, board)
+        self.assertNotIn("CLK_I2SSEL_I2S0SEL_APLL0_DIV2", board_source)
+        dmic_start = board_source[
+            board_source.index("bool m55m1_tlv320dac3100_test_dmic_start") :
+            board_source.index("bool m55m1_tlv320dac3100_test_dmic_take_block")
+        ]
+        self.assertIn("if (!g_clock_snapshot_valid)", dmic_start)
+        self.assertEqual(dmic_start.count("CLK_EnableAPLL"), 1)
+        for field in (
+            "core_hz",
+            "apll0_hz",
+            "apll1_hz",
+            "i2s_src_hz",
+            "mclk_hz",
+        ):
+            self.assertIn(field, app)
+
     def test_driver_uses_direct_mclk_headphone_route_and_pdma_ping_pong(self):
         source = (REPO_ROOT / "drivers" / "tlv320dac3100" / "tlv320dac3100.c").read_text(
             encoding="utf-8"

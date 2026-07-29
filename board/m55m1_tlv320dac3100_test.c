@@ -11,7 +11,8 @@
 #include "common/wrapping_counter.h"
 #include "NuMicro.h"
 
-#define M55M1_TLV320DAC3100_APLL0_HZ  475136006UL
+#define M55M1_TLV320DAC3100_CORE_HZ       220000000UL
+#define M55M1_TLV320DAC3100_AUDIO_APLL_HZ 475136006UL
 /* TLV320DAC3100 supports I2C Fast-mode; control transfers do not gate PDMA audio. */
 #define M55M1_TLV320DAC3100_I2C_HZ    400000UL
 #define M55M1_TLV320DAC3100_PDMA_CH   0UL
@@ -40,6 +41,8 @@ static NVT_NONCACHEABLE int16_t
     g_dmic_buffers[2][TLV320DAC3100_MAX_SAMPLES_PER_BLOCK];
 static NVT_NONCACHEABLE LPDSCT_T g_dmic_descriptors[2] __ALIGNED(4);
 static m55m1_tlv320dac3100_dmic_state_t g_dmic_state;
+static m55m1_tlv320dac3100_clock_snapshot_t g_clock_snapshot;
+static bool g_clock_snapshot_valid;
 static uint32_t g_cycles_per_us = 1U;
 
 /**
@@ -175,22 +178,24 @@ m55m1_tlv320dac3100_test_board_init_with_progress(
     void *progress_context)
 {
     uint32_t i2s_module_divider;
+    uint32_t required_mclk_hz;
 
-    if ((config == NULL) || (tlv320dac3100_profile_mclk_hz(profile) == 0UL))
+    required_mclk_hz = tlv320dac3100_profile_mclk_hz(profile);
+    if ((config == NULL) || (required_mclk_hz == 0UL))
     {
-        return M55M1_TLV320DAC3100_BOARD_INIT_APLL0_TIMEOUT;
+        return M55M1_TLV320DAC3100_BOARD_INIT_CLOCK_MISMATCH;
     }
+    g_clock_snapshot_valid = false;
     i2s_module_divider = (profile == TLV320DAC3100_AUDIO_PROFILE_16KHZ) ? 58UL : 29UL;
     m55m1_tlv320dac3100_notify_progress(
         progress_callback, progress_context, M55M1_TLV320DAC3100_BOARD_STAGE_ENTER);
     SYS_UnlockReg();
 
     /*
-     * CLK_EnableAPLL first disables APLL0. The BSP or a prior boot stage may
+     * CLK_EnableAPLL first disables its selected PLL. The BSP or a prior boot stage may
      * still select APLL0 as SCLK, so switching the core to HIRC first prevents
      * an APLL0 reprogram from removing the CPU clock and causing CPULK reset.
-     * APLL0 remains dedicated to I2S after this call; the core is not switched
-     * back to its 475 MHz audio-only frequency.
+     * APLL0 is reconfigured for the 220 MHz core only after HIRC owns SCLK.
      */
     CLK_SetSCLK(CLK_SCLKSEL_SCLKSEL_HIRC);
     m55m1_tlv320dac3100_notify_progress(
@@ -213,21 +218,35 @@ m55m1_tlv320dac3100_test_board_init_with_progress(
     m55m1_tlv320dac3100_notify_progress(
         progress_callback, progress_context, M55M1_TLV320DAC3100_BOARD_STAGE_HXT_READY);
     /*
-     * APLL0 must remain inside the M55M1 36..500 MHz operating range.  The
-     * selected fractional value is divided by two and then by 58 or 29,
+     * APLL1 remains inside the M55M1 36..500 MHz operating range. The selected
+     * fractional value is divided by two and then by 58 or 29,
      * yielding exact 4.096 MHz or 8.192 MHz I2S source clocks. An invalid
      * 32.768 MHz APLL target would silently select the BSP fallback clock and
      * make the driver's clock-mismatch guard fail.
      */
     m55m1_tlv320dac3100_notify_progress(
-        progress_callback, progress_context, M55M1_TLV320DAC3100_BOARD_STAGE_APLL0_WAIT);
-    (void)CLK_EnableAPLL(CLK_APLLCTL_APLLSRC_HXT, M55M1_TLV320DAC3100_APLL0_HZ,
-                         CLK_APLL0_SELECT);
+        progress_callback, progress_context, M55M1_TLV320DAC3100_BOARD_STAGE_APLL1_WAIT);
+    (void)CLK_EnableAPLL(CLK_APLLCTL_APLLSRC_HXT,
+                         M55M1_TLV320DAC3100_AUDIO_APLL_HZ,
+                         CLK_APLL1_SELECT);
     /*
      * CLK_EnableAPLL returns its calculated frequency even when its internal
-     * bounded wait expires. Read the hardware-ready bit so an unlocked APLL0
+     * bounded wait expires. Read the hardware-ready bit so an unlocked APLL1
      * cannot silently become an invalid I2S MCLK source.
      */
+    if ((CLK->STATUS & CLK_STATUS_APLL1STB_Msk) == 0U)
+    {
+        SYS_LockReg();
+        return M55M1_TLV320DAC3100_BOARD_INIT_APLL1_TIMEOUT;
+    }
+    m55m1_tlv320dac3100_notify_progress(
+        progress_callback, progress_context, M55M1_TLV320DAC3100_BOARD_STAGE_APLL1_READY);
+
+    m55m1_tlv320dac3100_notify_progress(
+        progress_callback, progress_context, M55M1_TLV320DAC3100_BOARD_STAGE_APLL0_WAIT);
+    (void)CLK_EnableAPLL(CLK_APLLCTL_APLLSRC_HXT,
+                         M55M1_TLV320DAC3100_CORE_HZ,
+                         CLK_APLL0_SELECT);
     if ((CLK->STATUS & CLK_STATUS_APLL0STB_Msk) == 0U)
     {
         SYS_LockReg();
@@ -235,20 +254,35 @@ m55m1_tlv320dac3100_test_board_init_with_progress(
     }
     m55m1_tlv320dac3100_notify_progress(
         progress_callback, progress_context, M55M1_TLV320DAC3100_BOARD_STAGE_APLL0_READY);
-    /* Keep the exact APLL0 audio source while running the M55 below 220 MHz. */
-    CLK_SET_SCLKDIV(3UL);
+    CLK_SET_SCLKDIV(1UL);
     CLK_SetSCLK(CLK_SCLKSEL_SCLKSEL_APLL0);
     m55m1_tlv320dac3100_notify_progress(
         progress_callback, progress_context,
         M55M1_TLV320DAC3100_BOARD_STAGE_SCLK_APLL0_READY);
+
+    g_clock_snapshot = (m55m1_tlv320dac3100_clock_snapshot_t){
+        .core_hz = CLK_GetSCLKFreq(),
+        .apll0_hz = CLK_GetAPLL0ClockFreq(),
+        .apll1_hz = CLK_GetAPLL1ClockFreq(),
+    };
+    g_clock_snapshot.i2s_src_hz = g_clock_snapshot.apll1_hz / 2UL;
+    g_clock_snapshot.mclk_hz =
+        g_clock_snapshot.i2s_src_hz / i2s_module_divider;
+    if ((g_clock_snapshot.core_hz != M55M1_TLV320DAC3100_CORE_HZ) ||
+        (g_clock_snapshot.apll0_hz != M55M1_TLV320DAC3100_CORE_HZ) ||
+        (g_clock_snapshot.mclk_hz != required_mclk_hz))
+    {
+        SYS_LockReg();
+        return M55M1_TLV320DAC3100_BOARD_INIT_CLOCK_MISMATCH;
+    }
     if (i2s_module_divider == 58UL)
     {
-        CLK_SetModuleClock(I2S0_MODULE, CLK_I2SSEL_I2S0SEL_APLL0_DIV2,
+        CLK_SetModuleClock(I2S0_MODULE, CLK_I2SSEL_I2S0SEL_APLL1_DIV2,
                            CLK_I2SDIV_I2S0DIV(58));
     }
     else
     {
-        CLK_SetModuleClock(I2S0_MODULE, CLK_I2SSEL_I2S0SEL_APLL0_DIV2,
+        CLK_SetModuleClock(I2S0_MODULE, CLK_I2SSEL_I2S0SEL_APLL1_DIV2,
                            CLK_I2SDIV_I2S0DIV(29));
     }
     CLK_EnableModuleClock(I2S0_MODULE);
@@ -313,7 +347,19 @@ m55m1_tlv320dac3100_test_board_init_with_progress(
         progress_callback, progress_context,
         M55M1_TLV320DAC3100_BOARD_STAGE_PERIPHERALS_READY);
 
+    g_clock_snapshot_valid = true;
     return M55M1_TLV320DAC3100_BOARD_INIT_OK;
+}
+
+bool m55m1_tlv320dac3100_test_get_clock_snapshot(
+    m55m1_tlv320dac3100_clock_snapshot_t *snapshot)
+{
+    if ((snapshot == NULL) || !g_clock_snapshot_valid)
+    {
+        return false;
+    }
+    *snapshot = g_clock_snapshot;
+    return true;
 }
 
 bool m55m1_tlv320dac3100_test_dmic_start(tlv320dac3100_audio_profile_t profile)
@@ -336,8 +382,12 @@ bool m55m1_tlv320dac3100_test_dmic_start(tlv320dac3100_audio_profile_t profile)
     CLK_WaitClockReady(CLK_STATUS_HXTSTB_Msk);
     CLK_EnableModuleClock(DMIC0_MODULE);
     CLK_EnableModuleClock(LPPDMA0_MODULE);
-    (void)CLK_EnableAPLL(CLK_APLLCTL_APLLSRC_HXT, DMIC_APLL1_FREQ_196608KHZ,
-                         CLK_APLL1_SELECT);
+    if (!g_clock_snapshot_valid)
+    {
+        (void)CLK_EnableAPLL(CLK_APLLCTL_APLLSRC_HXT,
+                             DMIC_APLL1_FREQ_196608KHZ,
+                             CLK_APLL1_SELECT);
+    }
     CLK_SetModuleClock(DMIC0_MODULE, CLK_DMICSEL_DMIC0SEL_APLL1_DIV2,
                        CLK_DMICDIV_DMIC0DIV(1));
     SET_DMIC1_CLK_PB2();

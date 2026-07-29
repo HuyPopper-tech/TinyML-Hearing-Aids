@@ -58,6 +58,10 @@ static const char *audio_board_stage_name(m55m1_tlv320dac3100_board_stage_t stag
         return "HXT_WAIT";
     case M55M1_TLV320DAC3100_BOARD_STAGE_HXT_READY:
         return "HXT_READY";
+    case M55M1_TLV320DAC3100_BOARD_STAGE_APLL1_WAIT:
+        return "APLL1_WAIT";
+    case M55M1_TLV320DAC3100_BOARD_STAGE_APLL1_READY:
+        return "APLL1_READY";
     case M55M1_TLV320DAC3100_BOARD_STAGE_APLL0_WAIT:
         return "APLL0_WAIT";
     case M55M1_TLV320DAC3100_BOARD_STAGE_APLL0_READY:
@@ -130,6 +134,7 @@ int main(void)
     tlv320dac3100_config_t config;
     tlv320dac3100_status_t status;
     m55m1_tlv320dac3100_board_init_result_t board_status;
+    m55m1_tlv320dac3100_clock_snapshot_t clocks;
 
     m55m1_debug_uart_init();
     printf("\n[BOOT] ERB-GRU firmware starting\n");
@@ -145,6 +150,16 @@ int main(void)
     if (board_status != M55M1_TLV320DAC3100_BOARD_INIT_OK) {
         audio_halt("board initialization", (int)board_status);
     }
+    if (!m55m1_tlv320dac3100_test_get_clock_snapshot(&clocks)) {
+        audio_halt("board clock snapshot", -1);
+    }
+    printf("[BOOT] clocks core_hz=%lu apll0_hz=%lu apll1_hz=%lu "
+           "i2s_src_hz=%lu mclk_hz=%lu\n",
+           (unsigned long)clocks.core_hz,
+           (unsigned long)clocks.apll0_hz,
+           (unsigned long)clocks.apll1_hz,
+           (unsigned long)clocks.i2s_src_hz,
+           (unsigned long)clocks.mclk_hz);
     status = tlv320dac3100_init(&config);
     if (status != TLV320DAC3100_STATUS_OK) {
         audio_halt("codec initialization", (int)status);
