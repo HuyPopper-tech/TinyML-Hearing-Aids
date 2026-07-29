@@ -178,6 +178,7 @@ if(M55M1_ERB_GRU_DIAGNOSTICS)
         ${PROJ_ROOT}/board/m55m1_debug_uart.c
         ${PROJ_ROOT}/common/fixed_byte_ring.c
         ${PROJ_ROOT}/drivers/debug_uart_tx/debug_uart_tx.c
+        ${PROJ_ROOT}/services/erb_gru/erb_gru_audio_diagnostics.c
         ${PROJ_ROOT}/services/audio_telemetry.c)
 endif()
 

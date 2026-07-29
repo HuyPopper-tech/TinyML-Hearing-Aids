@@ -15,6 +15,9 @@
 
 #include "models/erb_gru/generated/erb_gru_assets.h"
 #include "services/erb_gru/erb_gru_audio_enhancer.h"
+#if M55M1_ERB_GRU_DIAGNOSTICS
+#include "services/erb_gru/erb_gru_audio_diagnostics.h"
+#endif
 #include "services/erb_gru/erb_gru_inference.h"
 #include "kiss_fft.h"
 #include "tools/kiss_fftr.h"
@@ -57,6 +60,9 @@ alignas(16) int8_t g_state1[ERB_GRU_INFERENCE_STATE_SIZE];
 alignas(16) int8_t g_state2[ERB_GRU_INFERENCE_STATE_SIZE];
 alignas(16) int8_t g_next_state1[ERB_GRU_INFERENCE_STATE_SIZE];
 alignas(16) int8_t g_next_state2[ERB_GRU_INFERENCE_STATE_SIZE];
+#if M55M1_ERB_GRU_DIAGNOSTICS
+alignas(16) int16_t g_diagnostic_source_pcm[kHopSamples];
+#endif
 alignas(16) uint8_t g_forward_memory[4096];
 alignas(16) uint8_t g_inverse_memory[4096];
 kiss_fftr_cfg g_forward_fft;
@@ -184,6 +190,10 @@ extern "C" void erb_gru_audio_enhancer_reset(void)
     std::memset(g_analysis_ring, 0, sizeof(g_analysis_ring));
     std::memset(g_synthesis_overlap, 0, sizeof(g_synthesis_overlap));
     reset_recurrent_state();
+#if M55M1_ERB_GRU_DIAGNOSTICS
+    std::memset(g_diagnostic_source_pcm, 0, sizeof(g_diagnostic_source_pcm));
+    erb_gru_audio_diagnostics_reset();
+#endif
     g_have_first_hop = false;
     g_have_processed_frame = false;
 }
@@ -226,11 +236,17 @@ extern "C" erb_gru_audio_result_t erb_gru_audio_enhancer_process(
     if (!g_have_first_hop)
     {
         std::memset(output, 0, kHopSamples * sizeof(output[0]));
+#if M55M1_ERB_GRU_DIAGNOSTICS
+        std::memcpy(g_diagnostic_source_pcm, input, sizeof(g_diagnostic_source_pcm));
+#endif
         g_have_first_hop = true;
         return ERB_GRU_AUDIO_RESULT_PREROLL_SILENCE;
     }
 
     analyze_frame();
+#if M55M1_ERB_GRU_DIAGNOSTICS
+    erb_gru_audio_diagnostics_record_feature(g_feature_q, kBands);
+#endif
     inference_ok = erb_gru_inference_invoke(
         g_feature_q, g_state1, g_state2, g_gain_q, g_next_state1, g_next_state2);
     if (inference_ok)
@@ -242,9 +258,19 @@ extern "C" erb_gru_audio_result_t erb_gru_audio_enhancer_process(
             g_gains[band] = dequantize(g_gain_q[band], ERB_GRU_GAIN_SCALE,
                                        ERB_GRU_GAIN_ZERO_POINT);
         }
+#if M55M1_ERB_GRU_DIAGNOSTICS
+        erb_gru_audio_diagnostics_record_gain_state(
+            g_gain_q, kBands, g_next_state1, g_next_state2,
+            ERB_GRU_INFERENCE_STATE_SIZE);
+#endif
     }
     expand_gains(inference_ok);
     synthesize_hop(output);
+#if M55M1_ERB_GRU_DIAGNOSTICS
+    erb_gru_audio_diagnostics_record_pcm(
+        g_diagnostic_source_pcm, output, kHopSamples);
+    std::memcpy(g_diagnostic_source_pcm, input, sizeof(g_diagnostic_source_pcm));
+#endif
     g_have_processed_frame = true;
     if (!inference_ok)
     {
@@ -253,6 +279,27 @@ extern "C" erb_gru_audio_result_t erb_gru_audio_enhancer_process(
     }
     return ERB_GRU_AUDIO_RESULT_ENHANCED;
 }
+
+#if M55M1_ERB_GRU_DIAGNOSTICS
+extern "C" bool erb_gru_audio_enhancer_take_diagnostics(
+    erb_gru_audio_diagnostics_t *diagnostics)
+{
+    return erb_gru_audio_diagnostics_take(diagnostics);
+}
+
+extern "C" uint32_t erb_gru_audio_enhancer_static_bytes(void)
+{
+    return (uint32_t)(
+        sizeof(g_analysis_ring) + sizeof(g_synthesis_overlap) +
+        sizeof(g_fft_input) + sizeof(g_ifft_output) + sizeof(g_spectrum) +
+        sizeof(g_scaled_spectrum) + sizeof(g_magnitude) + sizeof(g_features) +
+        sizeof(g_gains) + sizeof(g_bin_gains) + sizeof(g_feature_q) +
+        sizeof(g_gain_q) + sizeof(g_state1) + sizeof(g_state2) +
+        sizeof(g_next_state1) + sizeof(g_next_state2) +
+        sizeof(g_diagnostic_source_pcm) + sizeof(g_forward_memory) +
+        sizeof(g_inverse_memory));
+}
+#endif
 
 #if MODEL_GOLDEN_TEST_DATA
 extern "C" bool erb_gru_audio_enhancer_flush(int16_t output[kHopSamples])

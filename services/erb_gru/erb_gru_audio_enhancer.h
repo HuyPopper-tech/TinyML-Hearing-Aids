@@ -22,11 +22,50 @@ typedef enum {
     ERB_GRU_AUDIO_RESULT_INVALID
 } erb_gru_audio_result_t;
 
+#if M55M1_ERB_GRU_DIAGNOSTICS
+typedef struct {
+    uint32_t frames;
+    uint64_t input_energy;
+    uint64_t output_energy;
+    uint32_t pcm_samples;
+    uint32_t input_clip_count;
+    uint32_t output_clip_count;
+    uint16_t input_peak;
+    uint16_t output_peak;
+
+    int64_t feature_sum;
+    uint32_t feature_count;
+    uint32_t feature_sat_low;
+    uint32_t feature_sat_high;
+    int8_t feature_min;
+    int8_t feature_max;
+
+    int64_t gain_sum;
+    uint32_t gain_count;
+    uint32_t gain_near_zero;
+    uint32_t gain_near_unity;
+    int8_t gain_min;
+    int8_t gain_max;
+
+    int8_t state1_min;
+    int8_t state1_max;
+    int8_t state2_min;
+    int8_t state2_max;
+    uint32_t state_sat_count;
+} erb_gru_audio_diagnostics_t;
+#endif
+
 bool erb_gru_audio_enhancer_init(void);
 erb_gru_audio_result_t erb_gru_audio_enhancer_process(
     const int16_t input[ERB_GRU_AUDIO_HOP_SAMPLES],
     int16_t output[ERB_GRU_AUDIO_HOP_SAMPLES]);
 void erb_gru_audio_enhancer_reset(void);
+
+#if M55M1_ERB_GRU_DIAGNOSTICS
+bool erb_gru_audio_enhancer_take_diagnostics(
+    erb_gru_audio_diagnostics_t *diagnostics);
+uint32_t erb_gru_audio_enhancer_static_bytes(void);
+#endif
 
 #if MODEL_GOLDEN_TEST_DATA
 bool erb_gru_audio_enhancer_flush(int16_t output[ERB_GRU_AUDIO_HOP_SAMPLES]);
