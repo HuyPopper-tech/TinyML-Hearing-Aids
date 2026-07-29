@@ -13,8 +13,8 @@
 extern "C" {
 #endif
 
-/** Conservative board-level maximum DAC gain until headphone SPL calibration is available. */
-#define M55M1_TLV320DAC3100_SAFE_MAX_GAIN_DB  (-12)
+/** Bring-up DAC ceiling; validate headphone SPL before increasing above -3 dB. */
+#define M55M1_TLV320DAC3100_SAFE_MAX_GAIN_DB  (-3)
 
 /**
  * @brief Outcome of the board-owned external-clock and peripheral binding.
@@ -47,6 +47,13 @@ typedef enum {
     M55M1_TLV320DAC3100_BOARD_STAGE_HXT_READY,
     M55M1_TLV320DAC3100_BOARD_STAGE_APLL0_WAIT,
     M55M1_TLV320DAC3100_BOARD_STAGE_APLL0_READY,
+    M55M1_TLV320DAC3100_BOARD_STAGE_SCLK_APLL0_READY,
+    M55M1_TLV320DAC3100_BOARD_STAGE_MODULE_CLOCKS_READY,
+    M55M1_TLV320DAC3100_BOARD_STAGE_AUDIO_PINS_READY,
+    M55M1_TLV320DAC3100_BOARD_STAGE_I2C_RECOVERY_READY,
+    M55M1_TLV320DAC3100_BOARD_STAGE_I2C_PINS_READY,
+    M55M1_TLV320DAC3100_BOARD_STAGE_I2C_RESET_READY,
+    M55M1_TLV320DAC3100_BOARD_STAGE_CYCLE_COUNTER_READY,
     M55M1_TLV320DAC3100_BOARD_STAGE_PERIPHERALS_READY,
 } m55m1_tlv320dac3100_board_stage_t;
 
@@ -65,6 +72,12 @@ typedef struct {
     /** Number of LPPDMA abort conditions observed for the DMIC channel. */
     uint32_t dma_errors;
 } m55m1_tlv320dac3100_dmic_status_t;
+
+/** Timestamp attached to one DMIC block after its DMA transfer completes. */
+typedef struct {
+    uint32_t sequence;
+    uint32_t completed_cycle;
+} m55m1_tlv320dac3100_dmic_block_timing_t;
 
 /**
  * @brief Receive one synchronous board-initialisation progress event.
@@ -106,9 +119,10 @@ m55m1_tlv320dac3100_test_board_init(tlv320dac3100_audio_profile_t profile,
  * @param progress_context Caller-owned value forwarded to `progress_callback`.
  * @return Clock/peripheral binding result; `config` is valid only for `OK`.
  *
- * The callback observes ENTER, safe HIRC SCLK, HXT wait/ready, APLL0
- * wait/ready, and final peripheral readiness. It is a diagnostic boundary
- * only and never changes board ownership, DMA descriptors, or codec state.
+ * The callback observes each clock transition, module-clock binding, audio
+ * pin mux, I2C recovery, and final peripheral readiness. It is a diagnostic
+ * boundary only and never changes board ownership, DMA descriptors, or codec
+ * state.
  */
 m55m1_tlv320dac3100_board_init_result_t
 m55m1_tlv320dac3100_test_board_init_with_progress(
@@ -141,6 +155,25 @@ bool m55m1_tlv320dac3100_test_dmic_start(tlv320dac3100_audio_profile_t profile);
  */
 bool m55m1_tlv320dac3100_test_dmic_take_block(
     int16_t *destination, uint16_t sample_count);
+
+/**
+ * @brief Copy one completed DMIC block and its DMA-completion timestamp.
+ *
+ * This is the timestamp origin for end-to-end audio telemetry. It runs in
+ * foreground; LPPDMA IRQ only writes the fixed-size timing record.
+ */
+bool m55m1_tlv320dac3100_test_dmic_take_block_timed(
+    int16_t *destination, uint16_t sample_count,
+    m55m1_tlv320dac3100_dmic_block_timing_t *timing);
+
+/** Return true when foreground should prioritize a completed DMIC block. */
+bool m55m1_tlv320dac3100_test_dmic_block_pending(void);
+
+/** @brief Return the current free-running SysTick count used by telemetry. */
+uint32_t m55m1_tlv320dac3100_test_cycles_now(void);
+
+/** @brief Convert a short free-running SysTick interval to microseconds. */
+uint32_t m55m1_tlv320dac3100_test_cycles_to_us(uint32_t cycles);
 
 /**
  * @brief Copy the current DMIC capture-health counters to foreground storage.

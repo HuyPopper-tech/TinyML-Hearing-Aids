@@ -69,6 +69,44 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
         ):
             self.assertIn(required, source)
 
+    def test_audio_transport_carries_timestamped_blocks_without_isr_logging(self):
+        board_header = (REPO_ROOT / "board" / "m55m1_tlv320dac3100_test.h").read_text(
+            encoding="utf-8"
+        )
+        board_source = (REPO_ROOT / "board" / "m55m1_tlv320dac3100_test.c").read_text(
+            encoding="utf-8"
+        )
+        driver_header = (REPO_ROOT / "drivers" / "tlv320dac3100" / "tlv320dac3100.h").read_text(
+            encoding="utf-8"
+        )
+        driver_source = (REPO_ROOT / "drivers" / "tlv320dac3100" / "tlv320dac3100.c").read_text(
+            encoding="utf-8"
+        )
+
+        for required in (
+            "m55m1_tlv320dac3100_dmic_block_timing_t",
+            "m55m1_tlv320dac3100_test_dmic_take_block_timed",
+            "m55m1_tlv320dac3100_test_cycles_to_us",
+            "SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk",
+            "M55M1_TLV320DAC3100_SYSTICK_MASK",
+            "g_dmic_state.last_completed_cycle",
+        ):
+            self.assertIn(required, board_header + board_source)
+        self.assertNotIn("DWT->", board_source)
+        for required in (
+            "tlv320dac3100_audio_block_tag_t",
+            "tlv320dac3100_audio_completion_t",
+            "tlv320dac3100_submit_mono_block_tagged",
+            "tlv320dac3100_take_audio_completion",
+            "g_context.slot_tags[slot]",
+        ):
+            self.assertIn(required, driver_header + driver_source)
+
+        lppdma_handler = board_source[board_source.index("void LPPDMA_IRQHandler") :]
+        pdma_handler = driver_source[driver_source.index("void tlv320dac3100_handle_pdma_irq") :]
+        self.assertNotIn("printf", lppdma_handler)
+        self.assertNotIn("printf", pdma_handler)
+
     def test_board_and_normal_passthrough_select_one_matching_profile(self):
         """I2S and DMIC must use the same profile; a mixed rate audibly changes pitch."""
         board_header = (REPO_ROOT / "board" / "m55m1_tlv320dac3100_test.h").read_text(
@@ -95,7 +133,8 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
             "TLV320DAC3100_AUDIO_PROFILE_16KHZ",
             "TLV320DAC3100_MAX_SAMPLES_PER_BLOCK",
             "tlv320dac3100_profile_samples_per_block",
-            "tlv320dac3100_submit_mono_block(g_dmic_block, sample_count)",
+            "erb_gru_audio_enhancer_process(g_dmic_block, g_enhanced_block)",
+            "tlv320dac3100_submit_mono_block_tagged(",
         ):
             self.assertIn(required, passthrough)
 
@@ -283,6 +322,36 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
         self.assertLess(
             board_source.index("CLK_SetSCLK(CLK_SCLKSEL_SCLKSEL_HIRC);"),
             board_source.index("CLK_EnableAPLL(CLK_APLLCTL_APLLSRC_HXT"),
+        )
+
+    def test_board_reports_post_apll_boundaries_before_i2c_recovery(self):
+        """A boot stop after APLL lock must identify the next hardware boundary."""
+        board_header = (REPO_ROOT / "board" / "m55m1_tlv320dac3100_test.h").read_text(
+            encoding="utf-8"
+        )
+        board_source = (REPO_ROOT / "board" / "m55m1_tlv320dac3100_test.c").read_text(
+            encoding="utf-8"
+        )
+
+        for boundary in (
+            "M55M1_TLV320DAC3100_BOARD_STAGE_SCLK_APLL0_READY",
+            "M55M1_TLV320DAC3100_BOARD_STAGE_MODULE_CLOCKS_READY",
+            "M55M1_TLV320DAC3100_BOARD_STAGE_AUDIO_PINS_READY",
+            "M55M1_TLV320DAC3100_BOARD_STAGE_I2C_RECOVERY_READY",
+            "M55M1_TLV320DAC3100_BOARD_STAGE_I2C_PINS_READY",
+            "M55M1_TLV320DAC3100_BOARD_STAGE_I2C_RESET_READY",
+            "M55M1_TLV320DAC3100_BOARD_STAGE_CYCLE_COUNTER_READY",
+        ):
+            self.assertIn(boundary, board_header)
+            self.assertIn(boundary, board_source)
+
+        self.assertLess(
+            board_source.index("CLK_SetSCLK(CLK_SCLKSEL_SCLKSEL_APLL0);"),
+            board_source.index("M55M1_TLV320DAC3100_BOARD_STAGE_SCLK_APLL0_READY"),
+        )
+        self.assertLess(
+            board_source.index("M55M1_TLV320DAC3100_BOARD_STAGE_AUDIO_PINS_READY"),
+            board_source.index("m55m1_tlv320dac3100_recover_i2c_bus()"),
         )
 
     def test_led_diagnostic_uses_pa7_and_covers_audio_faults(self):
@@ -494,7 +563,7 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
         )
         self.assertNotIn("UART_Open(", passthrough_app)
 
-        self.assertIn("Normal low-latency MP34DT05-to-TLV320DAC3100 passthrough firmware",
+        self.assertIn("Bare-metal 16 kHz ERB-GRU hearing-aid composition",
                       diagnostic_app)
         self.assertIn("APP_AUDIO_PROFILE", diagnostic_app)
         self.assertNotIn("UART_Open(", diagnostic_app)
@@ -523,7 +592,7 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
             "PDMA",
             "SWD",
             "32-bit",
-            "-12 dB",
+            "-3 dB",
             "400 kHz",
             "20 ms",
             "transport/reference",
@@ -544,7 +613,7 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
             "32 kHz",
             "8.192 MHz",
             "32-bit",
-            "-12 dB",
+            "-3 dB",
             "underrun",
             "transport/reference",
         ):

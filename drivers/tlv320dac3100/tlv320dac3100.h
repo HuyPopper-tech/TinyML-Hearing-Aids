@@ -84,6 +84,19 @@ typedef struct {
     void *callback_context;
 } tlv320dac3100_config_t;
 
+/** Opaque capture timestamp and sequence transported with one PCM block. */
+typedef struct {
+    uint32_t sequence;
+    uint32_t capture_completed_cycle;
+} tlv320dac3100_audio_block_tag_t;
+
+/** Foreground-readable completion record for one tagged DAC DMA block. */
+typedef struct {
+    uint32_t sequence;
+    uint32_t capture_completed_cycle;
+    uint32_t dac_completed_cycle;
+} tlv320dac3100_audio_completion_t;
+
 /**
  * @brief Runtime counters, state, and most recent failed I2C transaction.
  *
@@ -173,6 +186,18 @@ tlv320dac3100_status_t tlv320dac3100_submit_mono_block(
     const int16_t *samples, uint16_t sample_count);
 
 /**
+ * @brief Submit PCM with a capture timestamp for end-to-end latency tracking.
+ *
+ * The tag is copied into the released PDMA slot and returned by
+ * `tlv320dac3100_take_audio_completion` after that slot is played.
+ */
+tlv320dac3100_status_t tlv320dac3100_submit_mono_block_tagged(
+    const int16_t *samples, uint16_t sample_count, const tlv320dac3100_audio_block_tag_t *tag);
+
+/** @brief Copy and consume the newest completed tagged DAC block, if present. */
+bool tlv320dac3100_take_audio_completion(tlv320dac3100_audio_completion_t *completion);
+
+/**
  * @brief Set independent left/right DAC digital gains under the board safety ceiling.
  * @param left_gain_db Requested left-channel gain in dB.
  * @param right_gain_db Requested right-channel gain in dB.
@@ -215,7 +240,7 @@ tlv320dac3100_status_t tlv320dac3100_recover(void);
  * Call only from the matching PDMA IRQ handler. The handler marks a completed
  * descriptor free and switches it to silence before notifying the callback.
  */
-void tlv320dac3100_handle_pdma_irq(void);
+void tlv320dac3100_handle_pdma_irq(uint32_t completed_cycle);
 
 #ifdef __cplusplus
 }

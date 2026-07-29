@@ -72,6 +72,10 @@ typedef struct {
     tlv320dac3100_driver_status_t status;
     bool slot_available[2];
     bool slot_contains_audio[2];
+    bool slot_has_tag[2];
+    tlv320dac3100_audio_block_tag_t slot_tags[2];
+    tlv320dac3100_audio_completion_t latest_completion;
+    bool completion_ready;
     bool has_queued_audio;
     uint8_t completed_slot;
 } tlv320dac3100_context_t;
@@ -462,6 +466,9 @@ tlv320dac3100_status_t tlv320dac3100_init(const tlv320dac3100_config_t *config)
     g_context.slot_available[1] = true;
     g_context.slot_contains_audio[0] = false;
     g_context.slot_contains_audio[1] = false;
+    g_context.slot_has_tag[0] = false;
+    g_context.slot_has_tag[1] = false;
+    g_context.completion_ready = false;
     g_context.has_queued_audio = false;
     g_context.completed_slot = 0U;
 
@@ -582,6 +589,12 @@ tlv320dac3100_status_t tlv320dac3100_stop(void)
 tlv320dac3100_status_t tlv320dac3100_submit_mono_block(
     const int16_t *samples, uint16_t sample_count)
 {
+    return tlv320dac3100_submit_mono_block_tagged(samples, sample_count, NULL);
+}
+
+tlv320dac3100_status_t tlv320dac3100_submit_mono_block_tagged(
+    const int16_t *samples, uint16_t sample_count, const tlv320dac3100_audio_block_tag_t *tag)
+{
     uint32_t primask;
     uint8_t slot = 2U;
     uint32_t index;
@@ -620,10 +633,40 @@ tlv320dac3100_status_t tlv320dac3100_submit_mono_block(
 
     /* This descriptor was completed before becoming available, so changing SA is race-free. */
     g_pdma_descriptors[slot].SA = (uint32_t)(uintptr_t)g_stereo_buffers[slot];
+    if (tag != NULL)
+    {
+        g_context.slot_tags[slot] = *tag;
+        g_context.slot_has_tag[slot] = true;
+    }
+    else
+    {
+        g_context.slot_has_tag[slot] = false;
+    }
     g_context.slot_contains_audio[slot] = true;
     g_context.has_queued_audio = true;
     ++g_context.status.queued_blocks;
     return TLV320DAC3100_STATUS_OK;
+}
+
+bool tlv320dac3100_take_audio_completion(tlv320dac3100_audio_completion_t *completion)
+{
+    uint32_t primask;
+
+    if (completion == NULL)
+    {
+        return false;
+    }
+    primask = __get_PRIMASK();
+    __disable_irq();
+    if (!g_context.completion_ready)
+    {
+        __set_PRIMASK(primask);
+        return false;
+    }
+    *completion = g_context.latest_completion;
+    g_context.completion_ready = false;
+    __set_PRIMASK(primask);
+    return true;
 }
 
 tlv320dac3100_status_t tlv320dac3100_set_channel_digital_gain_db(
@@ -706,7 +749,7 @@ tlv320dac3100_status_t tlv320dac3100_recover(void)
     return tlv320dac3100_init(&config);
 }
 
-void tlv320dac3100_handle_pdma_irq(void)
+void tlv320dac3100_handle_pdma_irq(uint32_t completed_cycle)
 {
     const uint32_t channel_mask = 1UL << g_context.config.pdma_channel;
     const uint8_t slot = g_context.completed_slot;
@@ -729,6 +772,16 @@ void tlv320dac3100_handle_pdma_irq(void)
         if (g_context.has_queued_audio && !g_context.slot_contains_audio[slot])
         {
             ++g_context.status.underrun_blocks;
+        }
+        if (g_context.slot_has_tag[slot])
+        {
+            g_context.latest_completion = (tlv320dac3100_audio_completion_t){
+                .sequence = g_context.slot_tags[slot].sequence,
+                .capture_completed_cycle = g_context.slot_tags[slot].capture_completed_cycle,
+                .dac_completed_cycle = completed_cycle,
+            };
+            g_context.completion_ready = true;
+            g_context.slot_has_tag[slot] = false;
         }
 
         /* Revert to silence before releasing the slot so a missed deadline cannot replay old audio. */

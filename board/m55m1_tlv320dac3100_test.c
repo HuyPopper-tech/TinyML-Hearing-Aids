@@ -17,6 +17,7 @@
 #define M55M1_TLV320DAC3100_LPPDMA_CH 0UL
 #define M55M1_TLV320DAC3100_I2C_RECOVERY_PULSES 9U
 #define M55M1_TLV320DAC3100_I2C_RECOVERY_DELAY_US 5UL
+#define M55M1_TLV320DAC3100_SYSTICK_MASK (SysTick_LOAD_RELOAD_Msk)
 
 typedef struct {
     volatile bool block_ready;
@@ -26,6 +27,7 @@ typedef struct {
     volatile uint32_t completed_blocks;
     volatile uint32_t dma_errors;
     volatile uint32_t overrun_blocks;
+    volatile uint32_t last_completed_cycle;
 } m55m1_tlv320dac3100_dmic_state_t;
 
 /*
@@ -37,6 +39,39 @@ static NVT_NONCACHEABLE int16_t
     g_dmic_buffers[2][TLV320DAC3100_MAX_SAMPLES_PER_BLOCK];
 static NVT_NONCACHEABLE LPDSCT_T g_dmic_descriptors[2] __ALIGNED(4);
 static m55m1_tlv320dac3100_dmic_state_t g_dmic_state;
+static uint32_t g_cycles_per_us = 1U;
+
+/**
+ * @brief Start a free-running, non-interrupting SysTick counter for telemetry.
+ *
+ * This board's debug/trace peripheral is not accessible to firmware, so DWT
+ * access faults before codec startup. SysTick is core-clocked and its 24-bit
+ * period exceeds the sub-10 ms processing and DMA-to-DAC intervals measured
+ * here. CLK_SysTickDelay reuses an enabled SysTick without reconfiguring it.
+ */
+static void m55m1_tlv320dac3100_enable_cycle_counter(void)
+{
+    g_cycles_per_us = SystemCoreClock / 1000000UL;
+    if (g_cycles_per_us == 0U)
+    {
+        g_cycles_per_us = 1U;
+    }
+    SysTick->LOAD = M55M1_TLV320DAC3100_SYSTICK_MASK;
+    SysTick->VAL = 0U;
+    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk;
+}
+
+uint32_t m55m1_tlv320dac3100_test_cycles_now(void)
+{
+    return (M55M1_TLV320DAC3100_SYSTICK_MASK -
+            (SysTick->VAL & M55M1_TLV320DAC3100_SYSTICK_MASK)) &
+           M55M1_TLV320DAC3100_SYSTICK_MASK;
+}
+
+uint32_t m55m1_tlv320dac3100_test_cycles_to_us(uint32_t cycles)
+{
+    return (cycles & M55M1_TLV320DAC3100_SYSTICK_MASK) / g_cycles_per_us;
+}
 
 /**
  * @brief Release a slave that retained SDA low across an MCU-only reset.
@@ -192,6 +227,12 @@ m55m1_tlv320dac3100_test_board_init_with_progress(
     }
     m55m1_tlv320dac3100_notify_progress(
         progress_callback, progress_context, M55M1_TLV320DAC3100_BOARD_STAGE_APLL0_READY);
+    /* Keep the exact APLL0 audio source while running the M55 below 220 MHz. */
+    CLK_SET_SCLKDIV(3UL);
+    CLK_SetSCLK(CLK_SCLKSEL_SCLKSEL_APLL0);
+    m55m1_tlv320dac3100_notify_progress(
+        progress_callback, progress_context,
+        M55M1_TLV320DAC3100_BOARD_STAGE_SCLK_APLL0_READY);
     if (i2s_module_divider == 58UL)
     {
         CLK_SetModuleClock(I2S0_MODULE, CLK_I2SSEL_I2S0SEL_APLL0_DIV2,
@@ -207,23 +248,42 @@ m55m1_tlv320dac3100_test_board_init_with_progress(
     CLK_EnableModuleClock(PDMA0_MODULE);
     CLK_EnableModuleClock(GPIOB_MODULE);
     CLK_EnableModuleClock(GPIOF_MODULE);
+    m55m1_tlv320dac3100_notify_progress(
+        progress_callback, progress_context,
+        M55M1_TLV320DAC3100_BOARD_STAGE_MODULE_CLOCKS_READY);
 
     /* These assignments intentionally disable J2 SWD and UART5 while audio is active. */
     SET_I2S0_DO_PF0();
     SET_I2S0_LRCK_PF1();
     SET_I2S0_BCLK_PB5();
     SET_I2S0_MCLK_PB4();
+    m55m1_tlv320dac3100_notify_progress(
+        progress_callback, progress_context,
+        M55M1_TLV320DAC3100_BOARD_STAGE_AUDIO_PINS_READY);
     if (!m55m1_tlv320dac3100_recover_i2c_bus())
     {
         SYS_LockReg();
         return M55M1_TLV320DAC3100_BOARD_INIT_I2C_STUCK;
     }
+    m55m1_tlv320dac3100_notify_progress(
+        progress_callback, progress_context,
+        M55M1_TLV320DAC3100_BOARD_STAGE_I2C_RECOVERY_READY);
     SET_I2C1_SCL_PB1();
     SET_I2C1_SDA_PB0();
+    m55m1_tlv320dac3100_notify_progress(
+        progress_callback, progress_context,
+        M55M1_TLV320DAC3100_BOARD_STAGE_I2C_PINS_READY);
 
     /* Clear any boot-ROM/debugger I2C state before I2C_Open enables master mode. */
     SYS_ResetModule(SYS_I2C1RST);
     SYS_LockReg();
+    m55m1_tlv320dac3100_notify_progress(
+        progress_callback, progress_context,
+        M55M1_TLV320DAC3100_BOARD_STAGE_I2C_RESET_READY);
+    m55m1_tlv320dac3100_enable_cycle_counter();
+    m55m1_tlv320dac3100_notify_progress(
+        progress_callback, progress_context,
+        M55M1_TLV320DAC3100_BOARD_STAGE_CYCLE_COUNTER_READY);
 
     /* The codec supports 400 kHz Fast-mode; nRESET now resets codec and MCU together. */
     (void)I2C_Open(I2C1, M55M1_TLV320DAC3100_I2C_HZ);
@@ -323,9 +383,23 @@ bool m55m1_tlv320dac3100_test_dmic_start(tlv320dac3100_audio_profile_t profile)
 bool m55m1_tlv320dac3100_test_dmic_take_block(
     int16_t *destination, uint16_t sample_count)
 {
+    return m55m1_tlv320dac3100_test_dmic_take_block_timed(
+        destination, sample_count, NULL);
+}
+
+bool m55m1_tlv320dac3100_test_dmic_block_pending(void)
+{
+    return g_dmic_state.block_ready;
+}
+
+bool m55m1_tlv320dac3100_test_dmic_take_block_timed(
+    int16_t *destination, uint16_t sample_count,
+    m55m1_tlv320dac3100_dmic_block_timing_t *timing)
+{
     uint32_t primask;
     uint32_t index;
     uint8_t completed_slot;
+    m55m1_tlv320dac3100_dmic_block_timing_t local_timing;
 
     if ((destination == NULL) || (sample_count != g_dmic_state.samples_per_block))
     {
@@ -341,6 +415,8 @@ bool m55m1_tlv320dac3100_test_dmic_take_block(
         return false;
     }
     completed_slot = g_dmic_state.completed_slot;
+    local_timing.sequence = g_dmic_state.completed_blocks;
+    local_timing.completed_cycle = g_dmic_state.last_completed_cycle;
     g_dmic_state.block_ready = false;
     __set_PRIMASK(primask);
 
@@ -348,6 +424,10 @@ bool m55m1_tlv320dac3100_test_dmic_take_block(
     for (index = 0U; index < sample_count; ++index)
     {
         destination[index] = g_dmic_buffers[completed_slot][index];
+    }
+    if (timing != NULL)
+    {
+        *timing = local_timing;
     }
     return true;
 }
@@ -375,7 +455,7 @@ void m55m1_tlv320dac3100_test_dmic_get_status(
 
 void PDMA0_IRQHandler(void)
 {
-    tlv320dac3100_handle_pdma_irq();
+    tlv320dac3100_handle_pdma_irq(m55m1_tlv320dac3100_test_cycles_now());
 }
 
 void LPPDMA_IRQHandler(void)
@@ -392,6 +472,7 @@ void LPPDMA_IRQHandler(void)
     {
         LPPDMA_CLR_TD_FLAG(LPPDMA, channel_mask);
         ++g_dmic_state.completed_blocks;
+        g_dmic_state.last_completed_cycle = m55m1_tlv320dac3100_test_cycles_now();
         if (g_dmic_state.block_ready)
         {
             ++g_dmic_state.overrun_blocks;
