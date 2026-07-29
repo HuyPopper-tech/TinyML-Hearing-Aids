@@ -225,6 +225,10 @@ extern "C" void erb_gru_inference_get_performance(
             g_deadline_miss_count,
             g_arena_used_bytes,
             kTensorArenaBytes,
+            ERB_GRU_MACS_PER_INFERENCE,
+            ERB_GRU_NPU_OPERATOR_COUNT,
+            ERB_GRU_CPU_OPERATOR_COUNT,
+            ERB_GRU_MODEL_BYTES,
         };
     }
 }

@@ -62,6 +62,10 @@ class AudioTelemetryTests(unittest.TestCase):
                 snapshot.arena_capacity_bytes = 131072U;
                 snapshot.dsp_static_bytes = 18000U;
                 snapshot.stack_configured_bytes = 8192U;
+                snapshot.macs_per_inference = 45056U;
+                snapshot.npu_operator_count = 30U;
+                snapshot.cpu_operator_count = 0U;
+                snapshot.model_flash_bytes = 59232U;
                 snapshot.audio.frames = 100U;
                 snapshot.audio.pcm_samples = 4U;
                 snapshot.audio.input_energy = 400U;

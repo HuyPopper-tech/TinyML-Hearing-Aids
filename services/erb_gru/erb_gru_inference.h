@@ -25,6 +25,10 @@ typedef struct {
     uint32_t deadline_miss_count;
     size_t arena_used_bytes;
     size_t arena_capacity_bytes;
+    uint32_t macs_per_inference;
+    uint32_t npu_operator_count;
+    uint32_t cpu_operator_count;
+    uint32_t model_flash_bytes;
 } erb_gru_inference_performance_t;
 
 bool erb_gru_inference_init(void);

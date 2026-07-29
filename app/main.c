@@ -145,6 +145,10 @@ static void audio_update_telemetry(
     g_telemetry.arena_capacity_bytes = (uint32_t)inference.arena_capacity_bytes;
     g_telemetry.dsp_static_bytes = erb_gru_audio_enhancer_static_bytes();
     g_telemetry.stack_configured_bytes = M55M1_STACK_SIZE_BYTES;
+    g_telemetry.macs_per_inference = inference.macs_per_inference;
+    g_telemetry.npu_operator_count = inference.npu_operator_count;
+    g_telemetry.cpu_operator_count = inference.cpu_operator_count;
+    g_telemetry.model_flash_bytes = inference.model_flash_bytes;
     m55m1_tlv320dac3100_test_dmic_get_status(&dmic_status);
     tlv320dac3100_get_status(&dac_status);
     g_telemetry.dmic_overrun = dmic_status.overrun_blocks;

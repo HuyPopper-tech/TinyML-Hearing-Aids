@@ -34,6 +34,10 @@ typedef struct {
     uint32_t arena_capacity_bytes;
     uint32_t dsp_static_bytes;
     uint32_t stack_configured_bytes;
+    uint32_t macs_per_inference;
+    uint32_t npu_operator_count;
+    uint32_t cpu_operator_count;
+    uint32_t model_flash_bytes;
     erb_gru_audio_diagnostics_t audio;
 } audio_telemetry_snapshot_t;
 

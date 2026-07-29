@@ -10,7 +10,6 @@
 #include <string.h>
 
 #include "drivers/debug_uart_tx/debug_uart_tx.h"
-#include "models/erb_gru/generated/erb_gru_deploy_contract.h"
 #include "services/audio_telemetry.h"
 
 #define AUDIO_TELEMETRY_INTERVAL_FRAMES 100U
@@ -217,10 +216,11 @@ void audio_telemetry_poll(
     rms_ratio_milli = (input_rms == 0U) ? 0U :
         (uint32_t)(((uint64_t)output_rms * 1000U) / input_rms);
     active_mmac_s_x1000 = (invoke.sum == 0U) ? 0U :
-        (uint32_t)(((uint64_t)ERB_GRU_MACS_PER_INFERENCE * invoke.count * 1000U) /
+        (uint32_t)(((uint64_t)snapshot->macs_per_inference *
+                    invoke.count * 1000U) /
                    invoke.sum);
     stream_mmac_s_x1000 = (uint32_t)(
-        ((uint64_t)ERB_GRU_MACS_PER_INFERENCE * 100U * 1000U + 500000U) /
+        ((uint64_t)snapshot->macs_per_inference * 100U * 1000U + 500000U) /
         1000000U);
     duty_permille = (processing.count == 0U) ? 0U :
         (uint32_t)((invoke.sum * 1000U) /
@@ -264,14 +264,14 @@ void audio_telemetry_poll(
         (unsigned long)snapshot->dac_dma_error,
         (unsigned long)snapshot->npu_error,
         (unsigned long)debug_uart_tx_drop_count(),
-        (unsigned long)ERB_GRU_MACS_PER_INFERENCE,
-        (unsigned long)ERB_GRU_NPU_OPERATOR_COUNT,
-        (unsigned long)ERB_GRU_CPU_OPERATOR_COUNT,
+        (unsigned long)snapshot->macs_per_inference,
+        (unsigned long)snapshot->npu_operator_count,
+        (unsigned long)snapshot->cpu_operator_count,
         (unsigned long)active_mmac_s_x1000,
         (unsigned long)stream_mmac_s_x1000,
         (unsigned long)duty_permille,
         (unsigned long)snapshot->invoke_count,
-        (unsigned long)ERB_GRU_MODEL_BYTES,
+        (unsigned long)snapshot->model_flash_bytes,
         (unsigned long)snapshot->arena_used_bytes,
         (unsigned long)snapshot->arena_capacity_bytes,
         (unsigned long)snapshot->dsp_static_bytes,
