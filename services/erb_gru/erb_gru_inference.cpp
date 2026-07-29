@@ -224,6 +224,7 @@ extern "C" void erb_gru_inference_get_performance(
             g_invoke_error_count,
             g_deadline_miss_count,
             g_arena_used_bytes,
+            kTensorArenaBytes,
         };
     }
 }

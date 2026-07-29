@@ -128,16 +128,29 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
             app.index("tlv320dac3100_start()"),
         )
 
+    def test_streaming_loop_tags_wola_output_with_previous_source_hop(self):
+        app = self.read("app/main.c")
+
+        self.assertIn("erb_gru_stream_timing_advance(", app)
+        self.assertIn(".sequence = source_tag.sequence", app)
+        self.assertRegex(
+            app,
+            r"\.capture_completed_cycle\s*=\s*source_tag\.capture_completed_cycle",
+        )
+        self.assertIn("tlv320dac3100_take_audio_completion(", app)
+        self.assertIn("audio_telemetry_record_e2e_us(", app)
+
     def test_telemetry_is_rate_limited_and_uart_is_irq_driven(self):
         telemetry = self.read("services/audio_telemetry.c")
         uart = self.read("drivers/debug_uart_tx/debug_uart_tx.c")
         board = self.read("board/m55m1_debug_uart.c")
         for required in (
-            "AUDIO_TELEMETRY_INTERVAL_FRAMES 500U",
+            "AUDIO_TELEMETRY_INTERVAL_FRAMES 100U",
             "dmic_block_pending",
             "snprintf",
             "debug_uart_tx_try_enqueue",
-            "p99_us",
+            "[MODEL]",
+            "[AUDIO]",
         ):
             self.assertIn(required, telemetry)
         for required in (

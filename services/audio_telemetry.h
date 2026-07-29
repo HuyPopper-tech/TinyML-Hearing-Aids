@@ -9,6 +9,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "services/erb_gru/erb_gru_audio_enhancer.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -27,11 +29,18 @@ typedef struct {
     uint32_t dac_underrun;
     uint32_t dac_dma_error;
     uint32_t npu_error;
+    uint32_t invoke_count;
     uint32_t arena_used_bytes;
+    uint32_t arena_capacity_bytes;
+    uint32_t dsp_static_bytes;
+    uint32_t stack_configured_bytes;
+    erb_gru_audio_diagnostics_t audio;
 } audio_telemetry_snapshot_t;
 
 void audio_telemetry_init(void);
 void audio_telemetry_record_processing_us(uint32_t elapsed_us);
+void audio_telemetry_record_invoke_us(uint32_t elapsed_us);
+void audio_telemetry_record_e2e_us(uint32_t elapsed_us, uint32_t sequence);
 void audio_telemetry_poll(
     const audio_telemetry_snapshot_t *snapshot, bool dmic_block_pending);
 void audio_telemetry_fatal(const char *stage, int status);

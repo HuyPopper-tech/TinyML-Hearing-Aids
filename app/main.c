@@ -33,6 +33,7 @@
 #if M55M1_ENABLE_ERB_GRU
 #if M55M1_ERB_GRU_DIAGNOSTICS
 #include "services/audio_telemetry.h"
+#include "services/erb_gru/erb_gru_stream_timing.h"
 #endif
 #include "services/erb_gru/erb_gru_audio_enhancer.h"
 #include "services/erb_gru/erb_gru_inference.h"
@@ -48,6 +49,7 @@ static int16_t g_dmic_block[TLV320DAC3100_MAX_SAMPLES_PER_BLOCK];
 static int16_t g_enhanced_block[ERB_GRU_AUDIO_HOP_SAMPLES];
 #if M55M1_ERB_GRU_DIAGNOSTICS
 static audio_telemetry_snapshot_t g_telemetry;
+static erb_gru_stream_timing_t g_stream_timing;
 #endif
 #endif
 
@@ -131,11 +133,18 @@ static void audio_update_telemetry(
     erb_gru_inference_get_performance(&inference);
     g_telemetry.invoke_last_us =
         m55m1_tlv320dac3100_test_cycles_to_us(inference.last_invoke_cycles);
+    if (inference.invoke_count != g_telemetry.invoke_count) {
+        audio_telemetry_record_invoke_us(g_telemetry.invoke_last_us);
+    }
     g_telemetry.invoke_max_us =
         m55m1_tlv320dac3100_test_cycles_to_us(inference.max_invoke_cycles);
+    g_telemetry.invoke_count = inference.invoke_count;
     g_telemetry.deadline_miss = inference.deadline_miss_count;
     g_telemetry.npu_error = inference.invoke_error_count;
     g_telemetry.arena_used_bytes = (uint32_t)inference.arena_used_bytes;
+    g_telemetry.arena_capacity_bytes = (uint32_t)inference.arena_capacity_bytes;
+    g_telemetry.dsp_static_bytes = erb_gru_audio_enhancer_static_bytes();
+    g_telemetry.stack_configured_bytes = M55M1_STACK_SIZE_BYTES;
     m55m1_tlv320dac3100_test_dmic_get_status(&dmic_status);
     tlv320dac3100_get_status(&dac_status);
     g_telemetry.dmic_overrun = dmic_status.overrun_blocks;
@@ -216,6 +225,7 @@ int main(void)
 #endif
 #if M55M1_ERB_GRU_DIAGNOSTICS
     audio_telemetry_init();
+    erb_gru_stream_timing_reset(&g_stream_timing);
     printf("[BOOT] Ethos-U55 and TFLM initialized\n");
     printf("[ERB-GRU] 16 kHz Ethos-U55 inference enabled\n");
 #endif
@@ -244,8 +254,10 @@ int main(void)
         if (m55m1_tlv320dac3100_test_dmic_take_block_timed(
                 g_dmic_block, sample_count, &capture_timing)) {
 #if M55M1_ENABLE_ERB_GRU
+#if M55M1_ERB_GRU_DIAGNOSTICS
             const uint32_t enhance_start =
                 m55m1_tlv320dac3100_test_cycles_now();
+#endif
             const erb_gru_audio_result_t result =
                 erb_gru_audio_enhancer_process(g_dmic_block, g_enhanced_block);
 
@@ -255,12 +267,32 @@ int main(void)
 #if M55M1_ERB_GRU_FAULT_DAC_BUSY
             status = TLV320DAC3100_STATUS_BUSY;
 #else
-            status = tlv320dac3100_submit_mono_block_tagged(
-                g_enhanced_block, sample_count,
-                &(tlv320dac3100_audio_block_tag_t){
-                    .sequence = capture_timing.sequence,
-                    .capture_completed_cycle = capture_timing.completed_cycle,
-                });
+#if M55M1_ERB_GRU_DIAGNOSTICS
+            {
+                erb_gru_source_tag_t source_tag;
+                const bool source_valid = erb_gru_stream_timing_advance(
+                    &g_stream_timing,
+                    capture_timing.sequence,
+                    capture_timing.completed_cycle,
+                    &source_tag);
+
+                if (source_valid) {
+                    status = tlv320dac3100_submit_mono_block_tagged(
+                        g_enhanced_block, sample_count,
+                        &(tlv320dac3100_audio_block_tag_t){
+                            .sequence = source_tag.sequence,
+                            .capture_completed_cycle =
+                                source_tag.capture_completed_cycle,
+                        });
+                } else {
+                    status = tlv320dac3100_submit_mono_block(
+                        g_enhanced_block, sample_count);
+                }
+            }
+#else
+            status = tlv320dac3100_submit_mono_block(
+                g_enhanced_block, sample_count);
+#endif
 #endif
             if (status == TLV320DAC3100_STATUS_BUSY) {
 #if M55M1_ERB_GRU_DIAGNOSTICS
@@ -279,12 +311,27 @@ int main(void)
                 m55m1_tlv320dac3100_test_cycles_elapsed(
                     enhance_start, m55m1_tlv320dac3100_test_cycles_now()),
                 result);
+            if ((g_telemetry.frame_count % 100U) == 0U) {
+                (void)erb_gru_audio_enhancer_take_diagnostics(&g_telemetry.audio);
+            }
 #endif
 #else
             status = tlv320dac3100_submit_mono_block(g_dmic_block, sample_count);
 #endif
         }
 #if M55M1_ENABLE_ERB_GRU && M55M1_ERB_GRU_DIAGNOSTICS
+        {
+            tlv320dac3100_audio_completion_t completion;
+
+            if (tlv320dac3100_take_audio_completion(&completion)) {
+                audio_telemetry_record_e2e_us(
+                    m55m1_tlv320dac3100_test_cycles_to_us(
+                        m55m1_tlv320dac3100_test_cycles_elapsed(
+                            completion.capture_completed_cycle,
+                            completion.dac_completed_cycle)),
+                    completion.sequence);
+            }
+        }
         audio_telemetry_poll(
             &g_telemetry, m55m1_tlv320dac3100_test_dmic_block_pending());
 #endif
