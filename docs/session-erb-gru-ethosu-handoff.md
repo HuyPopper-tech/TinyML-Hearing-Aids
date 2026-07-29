@@ -41,8 +41,8 @@ from PCM16, quantized gains, and the exact package DSP constants.
   custom op, raw tensor indices, ordinals, types, ranks, shapes, bytes and
   per-tensor quantization.
 - Tensor arena remains the 128 KiB bring-up arena. Final
-  `align_up(arena_used + 1024, 16)` cannot be selected until a licensed board
-  build and measurement are available.
+  `align_up(arena_used + 1024, 16)` cannot be selected until runtime board
+  measurement is available.
 - First 160-sample hop produces silence and does not run FFT/inference or
   update recurrent state. The next hop creates the first 320-sample frame.
 - Invoke failure uses unity gains through the same IFFT/WOLA path, resets both
@@ -58,6 +58,18 @@ from PCM16, quantized gains, and the exact package DSP constants.
   invocation is rejected before output/state publication.
 - Golden builds compile exactly one selected corpus and run 24 stateful frames
   plus the final overlap flush.
+- Core and audio clock ownership is now separated:
+  - APLL0 is the 220 MHz SCLK source with divider 1;
+  - APLL1 is 475.136006 MHz and supplies I2S0 through `/2`, then `/58` or
+    `/29` for exact 4.096 MHz or 8.192 MHz codec MCLK;
+  - DMIC shares the validated audio APLL1 when normal firmware is running and
+    configures its former 196.608 MHz diagnostic clock only when started
+    independently.
+- Boot validates and reports `core_hz`, `apll0_hz`, `apll1_hz`,
+  `i2s_src_hz`, and `mclk_hz` before codec/audio start.
+- All SysTick intervals use 24-bit modular elapsed arithmetic. An Invoke that
+  crosses the approximately 76.26 ms wrap at 220 MHz no longer produces a
+  false 10 ms deadline failure.
 
 ## Validation completed
 
@@ -69,20 +81,36 @@ from PCM16, quantized gains, and the exact package DSP constants.
   are reset before the next successful frame.
 - Fixed byte ring whole-message/drop/wrap host test: pass.
 - `git diff --check`: pass.
-- Full Python suite: 51 tests pass. The two remaining errors are isolated
+- Full Python suite: 55 tests pass. The two remaining errors are isolated
   worktree infrastructure files absent from this worktree:
   `.codex/AGENTS.md` and `.vscode/launch.json`.
 - Debug configure: pass.
 - Release configure: pass.
+- The UART1 vendor preprocessor failure is fixed without modifying `libs/`.
+  `system_M55M1.c` alone compiles its unsupported weak debug-UART helpers
+  empty; project board code supplies strong `SetDebugUartMFP()` and
+  `InitDebugUart()` for PA2/PA3 at 115200 baud.
+- A Release build made after the UART1 fix completed and produced AXF/BIN/map.
+  That map reports 176.76 KiB total ROM, 162.31 KiB total RW, one 59,232-byte
+  `erb_gru_vela_model`, a 128 KiB tensor arena, an 8 KiB reserved stack, and
+  5,184 bytes in non-cacheable SRAM. The arena/DSP buffers in cacheable SRAM,
+  stack in DTCM, and DMA buffers in non-cacheable SRAM do not overlap.
+- Debug then exposed microlib process-exit destructor references from the
+  namespace-scope TFLM resolver. The resolver now uses static aligned storage
+  and placement construction, so firmware does not require `atexit` support.
+  Contract tests cover both UART ownership and resolver lifetime.
 
 ## External blockers and remaining board acceptance
 
-Debug and Release compilation both stop immediately because Arm Compiler
-license 400 is assigned to another user. No new AXF/BIN/map file was produced.
-Consequently these values remain unmeasured and must not be inferred:
+The Arm Compiler license changed to error 400 ("assigned to another user")
+while rebuilding after the resolver and clock changes. Debug and Release
+configuration pass, but current-source compilation stops at the first licensed
+compiler jobs. Therefore the existing Release artifacts and map prove the
+earlier UART1 fix only and are stale; a clean current-source Debug/Release build
+still needs to be rerun.
+The following runtime values remain unmeasured and must not be inferred:
 
 - final arena size and arena high-water;
-- Flash/cacheable/non-cacheable SRAM map usage and single model-copy check;
 - stack high-water and 2 KiB headroom requirement;
 - on-board five-scenario parity;
 - fault boundary discontinuity;
@@ -96,3 +124,14 @@ After restoring the Arm Compiler license, rerun Debug and Release builds,
 inspect the map, then build each golden/fault configuration and flash through
 the recovery connection above. Only after the measured arena and full board
 acceptance pass should the 128 KiB arena be reduced.
+
+The first board boot after restoring the license must include:
+
+```text
+[BOOT] clocks core_hz=220000000 apll0_hz=220000000 apll1_hz=475136006 i2s_src_hz=237568003 mclk_hz=4096000
+```
+
+The exact APLL1 readback may reflect the BSP's fractional rounding, but
+`mclk_hz` must be exactly 4,096,000 for the 16 kHz profile. During a production
+run, `fallback`, `deadline`, and `npu_error` must no longer rise at the former
+SysTick-wrap cadence.
