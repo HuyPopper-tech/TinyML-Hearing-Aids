@@ -2,6 +2,16 @@
   "version": 3,
   "configurePresets": [
     {
+      "name": "m55m1-release",
+      "displayName": "M55M1 Release (Arm Compiler 6)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/armclang.cmake"
+      }
+    },
+    {
       "name": "m55m1-debug",
       "displayName": "M55M1 Debug (Arm Compiler 6)",
       "generator": "Ninja",
@@ -13,6 +23,10 @@
     }
   ],
   "buildPresets": [
+    {
+      "name": "m55m1-release",
+      "configurePreset": "m55m1-release"
+    },
     {
       "name": "m55m1-debug",
       "configurePreset": "m55m1-debug"

@@ -168,69 +168,75 @@ from PCM16, quantized gains, and the exact package DSP constants.
   and placement construction, so firmware does not require `atexit` support.
   Contract tests cover both UART ownership and resolver lifetime.
 
-## External blockers and remaining board acceptance
+## Optimized Release DSP root cause and resolution
 
-The Arm Compiler license remains at error 400 ("assigned to another user").
-Both Release production and Release diagnostic configurations pass, but both
-current-source builds stop at the first licensed compiler jobs. Therefore the
-existing Release artifacts and map prove the earlier UART1 fix only and are
-stale; neither new telemetry binary has been produced.
-The following runtime values remain unmeasured and must not be inferred:
+The board A/B profiles localize the Release-only attenuation to CPU gain
+expansion:
 
-- final arena size and arena high-water;
-- stack high-water and 2 KiB headroom requirement;
-- on-board five-scenario parity;
-- fault boundary discontinuity;
+| Profile | Observed result |
+| --- | --- |
+| Unity fallback, Release `-O3` | bin gain, spectrum ratio and PCM ratio near `1.000` |
+| Model, Release `-O3` | band gain `~0.988–0.992`, bin gain `~0.497–0.498`, spectrum/PCM `~0.48–0.50` |
+| Model, whole-enhancer `NO_VECTORIZE` | bin gain `~0.995`, spectrum/PCM restored near unity |
+| Model, enhancer `-O2` | bin gain/spectrum/PCM zero; invalid workaround |
+
+The first bad boundary is the CPU `32 → 161` reduction in `expand_gains()`.
+The NPU output remains near unity, and unity fallback proves the shared
+optimized FFT/IFFT/WOLA and audio transport path does not introduce the fixed
+factor-of-two loss.
+
+Armclang 6.24 vectorized code generation for the stride-161 reduction is the
+current root-cause inference. Firmware now disables vectorization/interleaving
+only on that reduction loop; all other firmware stays at Release `-O3`. The
+temporary CMake DSP probe and its build-log field were removed.
+
+The whole-enhancer profiles identify the faulty stage, but the installed
+loop-local workaround still requires a final board A/B. Do not call the exact
+loop-level compiler defect confirmed until that comparison is complete. The
+long-term CPU and model-output migration options are documented in
+[`erb-gru-model-deployment.md`](erb-gru-model-deployment.md).
+
+Three model-path diagnostic binaries used for the investigation reported a
+dirty worktree. They are valid evidence for stage localization, not final
+production artifacts. A clean final build must report `dirty=0`.
+
+## Current validation and remaining board acceptance
+
+After the architecture/style refactor:
+
+- generator `--check` passes, including the frontend-only generated contract;
+- host golden parity, failure recovery, diagnostics and telemetry tests pass;
+- architecture tests enforce `app → services → drivers → board → libs`;
+- the SPSC ring uses explicit acquire/release publication and host behavior
+  tests preserve whole-message/drop/wrap semantics;
+- Release configuration succeeds with production defaults.
+
+The current automated Armclang build is externally blocked at license error
+400 ("assigned to another user"). Earlier user-built Release profiles supplied
+the A/B evidence above, but a final `.bin` and map for the current refactored
+source must not be claimed until the license permits a clean build.
+
+Still required on the final current-source binary:
+
+- loop-local workaround A/B with a stable 1 kHz tone;
+- final arena used value and reduced arena decision;
+- stack high-water with at least 2 KiB headroom;
+- five-scenario on-board parity and fault-boundary discontinuity;
 - diagnostic enhance/NPU/E2E timing and acoustic statistics;
-- the cause of the perceived unity-like audio path;
-- 10-minute production soak and p99/max/counter acceptance.
+- final map check for one model copy and no diagnostic code in production;
+- 10-minute production soak and p99/max/error-counter acceptance.
 
-Before flashing, preserve the recovery path: SWDIO PF0, SWCLK PF1, nRESET,
-GND and VREF/3V3. UART debug remains PA2 RX / PA3 TX at 115200-8N1. No pin mux
-or recovery behavior was changed.
+Before flashing, preserve SWDIO PF0, SWCLK PF1, nRESET, GND and VREF/3V3.
+UART diagnostics remain PA2 RX / PA3 TX at 115200-8N1. No recovery pin or IRQ
+priority was changed.
 
-After restoring the Arm Compiler license, build Release once with diagnostics
-`OFF` and once with diagnostics `ON`, inspect both maps, then build each
-golden/fault configuration and flash through the recovery connection above.
-Capture at least one clean-speech and one speech-plus-noise diagnostic run
-before assigning the unity-like sound to feature scaling, model gains, WOLA, or
-the output path. Only after the measured arena and full board acceptance pass
-should the 128 KiB arena be reduced.
-
-## Optimized Release DSP investigation
-
-The Release-only approximately 0.5 PCM ratio is not yet assigned to
-auto-vectorization. Debug normal inference and Debug unity fallback do not show
-the fixed attenuation. The successful whole-file `NO_VECTORIZE` investigation
-has been replaced by a scoped Armclang loop pragma on the `expand_gains()`
-32-term reduction; all other firmware remains at Release `-O3`. The diagnostic
-Release build identifies itself before audio start without a temporary probe
-field:
-
-```text
-[BUILD] type=Release diagnostics=1 gain_db=0 fault=OFF git=... dirty=...
-```
-
-After the Arm Compiler license is restored, use a stable 1 kHz tone, discard
-startup snapshots, and capture at least 10 snapshots for each diagnostic
-Release scenario:
-
-1. Release, diagnostics ON, `INVOKE_FAIL`. A PCM ratio near 1000
-   clears the common optimized FFT/IFFT/WOLA fallback path; a ratio near 500
-   places the first fault in that common path.
-2. Release, diagnostics ON, fault OFF. Compare band gain, bin gain,
-   spectrum ratio, IFFT RMS, WOLA RMS and PCM ratio. The first boundary that
-   falls from near 1000 to near 500 identifies the faulty stage.
-3. Confirm the installed loop-local workaround on the board before removing
-   it. Board loop-local A/B validation has not yet been completed.
-
-The first board boot after restoring the license must include:
+The first board boot must report a 220 MHz core and exact 4.096 MHz codec MCLK
+for the 16 kHz profile:
 
 ```text
 [BOOT] clocks core_hz=220000000 apll0_hz=220000000 apll1_hz=475136006 i2s_src_hz=237568003 mclk_hz=4096000
 ```
 
-The exact APLL1 readback may reflect the BSP's fractional rounding, but
-`mclk_hz` must be exactly 4,096,000 for the 16 kHz profile. During a production
-run, `fallback`, `deadline`, and `npu_error` must no longer rise at the former
-SysTick-wrap cadence.
+APLL1 readback may reflect BSP fractional rounding, but `mclk_hz` must remain
+exact. Do not reduce the 128 KiB tensor arena or declare the firmware
+production-ready until the measurements above pass.

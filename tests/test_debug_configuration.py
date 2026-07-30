@@ -11,6 +11,25 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class DebugConfigurationTests(unittest.TestCase):
+    def test_release_preset_uses_the_canonical_build_directory(self):
+        presets = json.loads((REPO_ROOT / "CMakePresets.json").read_text(encoding="utf-8"))
+        configure = {
+            item["name"]: item for item in presets["configurePresets"]
+        }
+        builds = {item["name"]: item for item in presets["buildPresets"]}
+
+        release = configure["m55m1-release"]
+        self.assertEqual(release["binaryDir"], "${sourceDir}/build")
+        self.assertEqual(release["cacheVariables"]["CMAKE_BUILD_TYPE"], "Release")
+        self.assertEqual(
+            release["cacheVariables"]["CMAKE_TOOLCHAIN_FILE"],
+            "${sourceDir}/cmake/armclang.cmake",
+        )
+        self.assertEqual(
+            builds["m55m1-release"]["configurePreset"],
+            "m55m1-release",
+        )
+
     def test_debug_preset_keeps_debug_symbols_in_a_separate_build_directory(self):
         presets = json.loads((REPO_ROOT / "CMakePresets.json").read_text(encoding="utf-8"))
         preset = next(item for item in presets["configurePresets"] if item["name"] == "m55m1-debug")
