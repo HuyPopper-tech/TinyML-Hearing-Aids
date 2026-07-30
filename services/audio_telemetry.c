@@ -78,6 +78,7 @@ static audio_telemetry_window_stats_t window_stats(
         }
     }
     result.average = (uint32_t)(result.sum / count);
+    // Nearest-rank p99 keeps the bounded 100-frame window integer-only.
     result.p99 = sorted[(((uint32_t)count * 99U + 99U) / 100U) - 1U];
     return result;
 }
@@ -105,6 +106,10 @@ static uint32_t sqrt_ratio_milli(uint64_t numerator, uint64_t denominator) {
     if (denominator == 0U) {
         return 0U;
     }
+    /*
+     * Rescale numerator and denominator together before multiplying by
+     * 1,000,000, preserving the ratio while preventing uint64_t overflow.
+     */
     while (numerator > (UINT64_MAX / 1000000ULL)) {
         numerator >>= 1U;
         denominator = (denominator >> 1U) + (denominator & 1U);
@@ -203,6 +208,11 @@ void audio_telemetry_poll(
     if ((snapshot == NULL) || dmic_block_pending) {
         return;
     }
+    /*
+     * A previously formatted snapshot remains intact until the UART ring can
+     * accept the whole message. Window counters reset only after that atomic
+     * enqueue succeeds, so UART pressure cannot erase diagnostic evidence.
+     */
     if (g_pending_length != 0U) {
         if (debug_uart_tx_try_enqueue(g_message, g_pending_length)) {
             g_pending_length = 0U;
@@ -348,6 +358,7 @@ void audio_telemetry_poll(
     if ((length <= 0) || ((size_t)length >= sizeof(g_message))) {
         return;
     }
+    // Publish the bounded four-line snapshot as one indivisible ring message.
     g_pending_length = (size_t)length;
     if (debug_uart_tx_try_enqueue(g_message, g_pending_length)) {
         g_pending_length = 0U;

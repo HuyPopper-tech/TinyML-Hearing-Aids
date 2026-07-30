@@ -11,8 +11,8 @@ PROJECT_SOURCE_SUFFIXES = {".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp"}
 EXCLUDED_PREFIXES = ("libs/", "models/erb_gru/generated/", "models/erb_gru/packages/")
 
 
-def branch_changed_source_lines():
-    """Return branch-added project source lines, excluding generated/vendor artifacts."""
+def branch_changed_source_hunks():
+    """Return actual source and touched new-file line ranges for branch C/C++ hunks."""
     paths = subprocess.run(
         ["git", "diff", "--name-only", "main"],
         cwd=ROOT,
@@ -29,29 +29,37 @@ def branch_changed_source_lines():
         if not (ROOT / path).is_file():
             continue
         diff = subprocess.run(
-            ["git", "diff", "--unified=0", "main", "--", relative_path],
+            ["git", "diff", "--unified=1", "main", "--", relative_path],
             cwd=ROOT,
             capture_output=True,
             text=True,
             check=True,
         ).stdout
-        yield relative_path, [line[1:] for line in diff.splitlines() if line.startswith("+") and not line.startswith("+++")]
+        ranges = []
+        for header in re.finditer(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", diff, re.MULTILINE):
+            start = int(header.group(1))
+            count = int(header.group(2) or "1")
+            ranges.append(range(start, start + max(count, 1)))
+        yield relative_path, (ROOT / path).read_text(encoding="utf-8").splitlines(), ranges
 
 
 class ErbGruStyleContractTests(unittest.TestCase):
     def test_branch_added_functions_and_control_blocks_use_same_line_braces(self):
         """Catch added Allman braces without inspecting comments, macros, or initializers."""
         violations = []
-        control = re.compile(r"^\s*(?:if|for|while)\s*\(.*\)\s*$|^\s*do\s*$")
+        control = re.compile(r"^\s*(?:if|for|while)\s*\(.*\)\s*$|^\s*(?:do|else)\s*$|^\s*else\s+if\s*\(.*\)\s*$")
         function_end = re.compile(r"^\s*[A-Za-z_][A-Za-z0-9_\s*]*\)\s*$")
 
-        for relative_path, added_lines in branch_changed_source_lines():
-            for index, line in enumerate(added_lines[:-1]):
+        for relative_path, source_lines, ranges in branch_changed_source_hunks():
+            touched = {line_number for changed_range in ranges for line_number in changed_range}
+            for line_number, line in enumerate(source_lines[:-1], start=1):
+                if line_number not in touched:
+                    continue
                 if line.lstrip().startswith(("//", "/*", "*", "#")):
                     continue
                 if not (control.match(line) or function_end.match(line)):
                     continue
-                next_line = added_lines[index + 1]
+                next_line = source_lines[line_number]
                 if next_line.strip() == "{":
                     violations.append(f"{relative_path}: {line.strip()}")
 

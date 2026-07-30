@@ -18,8 +18,28 @@ class FixedByteRingTests(unittest.TestCase):
 
         self.assertNotIn("volatile uint32_t head", header)
         self.assertNotIn("volatile uint32_t tail", header)
-        self.assertIn("FIXED_BYTE_RING_LOAD_ACQUIRE", source)
-        self.assertIn("FIXED_BYTE_RING_STORE_RELEASE", source)
+        self.assertIn("__atomic_load_n((pointer), __ATOMIC_ACQUIRE)", source)
+        self.assertIn("__atomic_store_n((pointer), (value), __ATOMIC_RELEASE)", source)
+
+        enqueue = source[source.index("bool fixed_byte_ring_try_enqueue"):source.index("bool fixed_byte_ring_try_pop")]
+        self.assertLess(
+            enqueue.index("ring->storage[(head + (uint32_t)index)"),
+            enqueue.index("FIXED_BYTE_RING_STORE_RELEASE(&ring->head"),
+        )
+        self.assertLess(
+            enqueue.index("FIXED_BYTE_RING_LOAD_ACQUIRE(&ring->tail)"),
+            enqueue.index("ring->storage[(head + (uint32_t)index)"),
+        )
+
+        pop = source[source.index("bool fixed_byte_ring_try_pop"):]
+        self.assertLess(
+            pop.index("FIXED_BYTE_RING_LOAD_ACQUIRE(&ring->head)"),
+            pop.index("*value = ring->storage[tail % ring->capacity]"),
+        )
+        self.assertLess(
+            pop.index("*value = ring->storage[tail % ring->capacity]"),
+            pop.index("FIXED_BYTE_RING_STORE_RELEASE(&ring->tail"),
+        )
 
     def test_enqueue_is_all_or_drop_and_wraps_without_reordering(self):
         harness = textwrap.dedent(

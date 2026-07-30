@@ -253,8 +253,7 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
         CLK_SetModuleClock(I2S0_MODULE, CLK_I2SSEL_I2S0SEL_APLL1_DIV2,
                            CLK_I2SDIV_I2S0DIV(58));
     }
-    else
-    {
+    else {
         CLK_SetModuleClock(I2S0_MODULE, CLK_I2SSEL_I2S0SEL_APLL1_DIV2,
                            CLK_I2SDIV_I2S0DIV(29));
     }

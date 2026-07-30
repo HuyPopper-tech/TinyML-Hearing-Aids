@@ -637,8 +637,7 @@ tlv320dac3100_status_t tlv320dac3100_submit_mono_block_tagged(
         g_context.slot_tags[slot] = *tag;
         g_context.slot_has_tag[slot] = true;
     }
-    else
-    {
+    else {
         g_context.slot_has_tag[slot] = false;
     }
     g_context.slot_contains_audio[slot] = true;

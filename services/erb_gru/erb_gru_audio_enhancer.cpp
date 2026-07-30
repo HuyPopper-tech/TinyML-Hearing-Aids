@@ -149,6 +149,11 @@ void append_hop(const int16_t input[kHopSamples]) {
 }
 
 void analyze_frame() {
+    /*
+     * Match the training frontend exactly: sqrt-Hann analysis, real FFT
+     * magnitude, bin-major ERB projection, epsilon-clamped logarithm, then
+     * per-band INT8 quantization for the model input.
+     */
     for (uint32_t index = 0U; index < kFftSamples; ++index) {
         g_fft_input[index] = g_analysis_ring[index] * sqrt_hann_320[index];
     }
@@ -233,6 +238,11 @@ void synthesize_hop(int16_t output[kHopSamples]) {
     uint32_t wola_peak_q15 = 0U;
 #endif
 
+    /*
+     * kiss_fftri is unnormalized. Divide by the 320-point FFT length before
+     * applying the package synthesis/normalization windows; retain the second
+     * half as overlap for the next 160-sample streaming hop.
+     */
     kiss_fftri(g_inverse_fft, g_scaled_spectrum, g_ifft_output);
 #if M55M1_ERB_GRU_DIAGNOSTICS
     for (uint32_t index = 0U; index < kFftSamples; ++index) {
@@ -336,6 +346,11 @@ extern "C" erb_gru_audio_result_t erb_gru_audio_enhancer_process(
 #endif
     inference_ok = erb_gru_inference_invoke(
         g_feature_q, g_state1, g_state2, g_gain_q, g_next_state1, g_next_state2);
+    /*
+     * Commit recurrent outputs only after a successful Invoke. A failed
+     * frame follows the unity-gain WOLA path, then resets both states so no
+     * partially updated NPU output can affect the recovery frame.
+     */
     if (inference_ok) {
         std::memcpy(g_state1, g_next_state1, sizeof(g_state1));
         std::memcpy(g_state2, g_next_state2, sizeof(g_state2));

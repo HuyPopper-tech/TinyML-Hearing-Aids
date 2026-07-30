@@ -80,6 +80,11 @@ bool model_contract_valid(const tflite::Model *model) {
         (std::strcmp(operator_code->custom_code()->c_str(), "ethos-u") != 0)) {
         return false;
     }
+    /*
+     * TFLM accesses tensors by input/output ordinal, while the Vela flatbuffer
+     * stores different raw tensor indices. Validate both mappings so firmware
+     * never reuses the pre-Vela manifest indices by accident.
+     */
     return (subgraph->inputs()->Get(ERB_GRU_INPUT_STATE1_ORDINAL) == ERB_GRU_INPUT_STATE1_INDEX) &&
            (subgraph->inputs()->Get(ERB_GRU_INPUT_STATE2_ORDINAL) == ERB_GRU_INPUT_STATE2_INDEX) &&
            (subgraph->inputs()->Get(ERB_GRU_INPUT_FEATURE_ORDINAL) == ERB_GRU_INPUT_FEATURE_INDEX) &&
@@ -119,6 +124,11 @@ extern "C" bool erb_gru_inference_init(void) {
     if (!model_hash_valid() || !model_contract_valid(model) || (model->version() != TFLITE_SCHEMA_VERSION)) {
         return false;
     }
+    /*
+     * Placement-new constructs the resolver and interpreter in aligned static
+     * storage. Their lifetime is the firmware lifetime; no heap allocation or
+     * process-exit destructor is permitted after audio starts.
+     */
     g_resolver = new (g_resolver_storage) tflite::MicroMutableOpResolver<1>();
     if (g_resolver->AddEthosU() != kTfLiteOk) {
         g_resolver = nullptr;

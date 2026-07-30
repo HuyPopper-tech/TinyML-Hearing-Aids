@@ -50,6 +50,7 @@ void audio_telemetry_record_processing_us(uint32_t elapsed_us);
 void audio_telemetry_record_invoke_us(uint32_t elapsed_us);
 /** @brief Record capture-to-DAC latency. @param elapsed_us End-to-end duration. @param sequence Source frame ordinal. @return None. Foreground-only. */
 void audio_telemetry_record_e2e_us(uint32_t elapsed_us, uint32_t sequence);
+/** @brief Rate-limit and emit a telemetry snapshot. @param snapshot Caller-owned aggregate read only for this call. @param dmic_block_pending Current capture availability. @return None. Foreground-only; never blocks audio or runs in an ISR. */
 void audio_telemetry_poll(
     const audio_telemetry_snapshot_t *snapshot, bool dmic_block_pending);
 /** @brief Emit a terminal failure report. @param stage Static failure stage text. @param status Platform status. @return None. Foreground-only; caller retains stage lifetime. */
