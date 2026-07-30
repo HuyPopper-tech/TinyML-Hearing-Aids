@@ -136,7 +136,7 @@ from PCM16, quantized gains, and the exact package DSP constants.
   are reset before the next successful frame.
 - Fixed byte ring whole-message/drop/wrap host test: pass.
 - `git diff --check`: pass.
-- Full Python discovery after the architecture/style refactor: 88 tests pass
+- Full Python discovery after the architecture/style refactor: 89 tests pass
   after supplying the linked worktree with temporary copies of the ignored
   repository guidance and VS Code launch fixtures. Without those fixtures,
   the same suite reports only the two baseline setup-file errors.
@@ -162,17 +162,21 @@ from PCM16, quantized gains, and the exact package DSP constants.
   `system_M55M1.c` alone compiles its unsupported weak debug-UART helpers
   empty; project board code supplies strong `SetDebugUartMFP()` and
   `InitDebugUart()` for PA2/PA3 at 115200 baud.
-- The final production Release map reports 174.15 KiB total ROM, 160.44 KiB
+- The final production Release map reports 174.12 KiB total ROM, 160.44 KiB
   total RW, one 59,232-byte
   `erb_gru_vela_model`, a 128 KiB tensor arena, an 8 KiB reserved stack, and
   5,184 bytes in non-cacheable SRAM. The arena/DSP buffers in cacheable SRAM,
   stack in DTCM, and DMA buffers in non-cacheable SRAM do not overlap.
-- The final Release binary is 178,344 bytes with SHA-256
-  `446b3ae9210a233417053553e2958bcb2065655e2b518a6a1840a16a468ccc4d`.
-  The Debug binary is 187,560 bytes with SHA-256
-  `f27010193629eedfe4f4ecf96198ec162c79a773254f58eb36d7bd5119c7e300`.
-  Both were built from commit `b137409ed2a7` with `dirty=0`, production
-  diagnostics disabled, fault injection disabled, and input gain 0 dB.
+- The final Release binary is 178,312 bytes with SHA-256
+  `992f1f45cd2c6891a9b8dc79ab1cb948b6b4ba9e2f0ab282ea5fa4502d2ca03d`.
+  The Debug binary is 187,400 bytes with SHA-256
+  `28cb4af5fa936b1d87ede3e1b468134014473f1cbded68af077bcf8057feb126`.
+  Both were built from code-validation commit `3d9578c58437` with `dirty=0`,
+  production diagnostics disabled, fault injection disabled, and input gain
+  0 dB.
+- Git attributes now disable text conversion for package and generated asset
+  trees. This preserves manifest-verified bytes on Windows with
+  `core.autocrlf=true`; a regression test covers both attribute rules.
 - The production map contains no audio telemetry, diagnostic accumulator,
   debug-UART TX, or project debug-UART board objects. The binary contains none
   of the project `[BOOT]`, `[PERF]`, `[MODEL]`, `[AUDIO]`, `[DSP]`, `[FAIL]`,
