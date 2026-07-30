@@ -160,10 +160,10 @@ class ErbGruAudioDiagnosticsTests(unittest.TestCase):
                     diagnostics.bin_gain_sum_q15 !=
                         (uint64_t)diagnostics.bin_gain_count * 32768ULL) return 4;
                 if (diagnostics.spectrum_input_energy_q30 == 0U) return 5;
-                const uint64_t ratio_million =
-                    diagnostics.spectrum_output_energy_q30 * 1000000ULL /
+                const uint64_t spectrum_ratio_milli =
+                    diagnostics.spectrum_output_energy_q30 * 1000ULL /
                     diagnostics.spectrum_input_energy_q30;
-                if (ratio_million < 998001ULL || ratio_million > 1002001ULL) return 6;
+                if (spectrum_ratio_milli < 999U || spectrum_ratio_milli > 1001U) return 6;
                 if (diagnostics.ifft_sample_count == 0U ||
                     diagnostics.wola_sample_count == 0U ||
                     diagnostics.wola_peak_q15 == 0U) return 7;
@@ -279,7 +279,7 @@ class ErbGruAudioDiagnosticsTests(unittest.TestCase):
                 [
                     shutil.which("g++"),
                     "-std=c++11",
-                    "-O2",
+                    "-O3",
                     "-DM55M1_ERB_GRU_DIAGNOSTICS=1",
                     "-DMODEL_GOLDEN_TEST_DATA=0",
                     "-I",

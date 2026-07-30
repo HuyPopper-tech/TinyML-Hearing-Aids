@@ -206,6 +206,13 @@ void expand_gains(bool inference_ok)
 
         if (inference_ok)
         {
+            // Armclang 6.24 can reduce this Release sum to approximately 0.5;
+            // the whole-file NO_VECTORIZE probe restored it. Remove this only
+            // when the host regression and board Release tone checks both pass
+            // without it (all bin gains and spectrum ratio within 999..1001).
+#if defined(__clang__)
+#pragma clang loop vectorize(disable) interleave(disable)
+#endif
             for (uint32_t band = 0U; band < kBands; ++band)
             {
                 bin_gain += g_gains[band] *

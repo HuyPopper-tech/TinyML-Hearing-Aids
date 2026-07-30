@@ -21,17 +21,30 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
             'set(M55M1_ERB_GRU_INPUT_GAIN_DB "0"',
             'set(M55M1_ERB_GRU_GOLDEN_SCENARIO ""',
             'set(M55M1_ERB_GRU_FAULT_INJECTION "OFF"',
-            'set(M55M1_ERB_GRU_DSP_PROBE "AUTO"',
             "Production Release firmware rejects golden data and fault injection",
-            "Non-AUTO DSP probes require M55M1_ERB_GRU_DIAGNOSTICS=ON",
-            "NO_VECTORIZE",
-            "O2",
             "drivers/ethosu_u55/ethosu_u55.c",
             "services/erb_gru/erb_gru_inference.cpp",
             "services/erb_gru/erb_gru_audio_enhancer.cpp",
         ):
             self.assertIn(required, cmake)
+        self.assertNotIn("M55M1_ERB_GRU_DSP_PROBE", cmake)
         self.assertNotIn("drivers/ethosu_tflm", cmake)
+
+    def test_release_gain_workaround_is_scoped_to_the_reduction_loop(self):
+        source = self.read("services/erb_gru/erb_gru_audio_enhancer.cpp")
+        app = self.read("app/main.c")
+
+        reduction = source[
+            source.index("if (inference_ok)\n        {", source.index("void expand_gains")) :
+            source.index("g_bin_gains[bin] = bin_gain;", source.index("void expand_gains"))
+        ]
+        self.assertIn("#pragma clang loop vectorize(disable) interleave(disable)", reduction)
+        self.assertIn("Armclang 6.24", reduction)
+        self.assertIn("approximately 0.5", reduction)
+        self.assertIn("NO_VECTORIZE", reduction)
+        self.assertIn("host", reduction)
+        self.assertIn("board", reduction)
+        self.assertNotIn("M55M1_ERB_GRU_DSP_PROBE", app)
 
     def test_diagnostics_flag_gates_all_runtime_logging_sources(self):
         cmake = self.read("CMakeLists.txt")

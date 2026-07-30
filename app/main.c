@@ -172,11 +172,10 @@ int main(void)
     m55m1_debug_uart_init();
     printf("\n[BOOT] ERB-GRU firmware starting\n");
     printf("[BUILD] type=%s diagnostics=1 gain_db=%d "
-           "fault=%s dsp_probe=%s git=%s dirty=%d\n",
+           "fault=%s git=%s dirty=%d\n",
            M55M1_ERB_GRU_BUILD_TYPE,
            M55M1_ERB_GRU_INPUT_GAIN_DB,
            M55M1_ERB_GRU_FAULT_MODE_NAME,
-           M55M1_ERB_GRU_DSP_PROBE_NAME,
            M55M1_ERB_GRU_GIT_REV,
            M55M1_ERB_GRU_GIT_DIRTY);
     printf("[BOOT] audio profile=%u Hz, hop=%u samples\n",
