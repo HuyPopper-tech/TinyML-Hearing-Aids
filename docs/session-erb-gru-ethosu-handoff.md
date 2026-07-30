@@ -1,7 +1,7 @@
 # ERB-GRU Ethos-U55 reintegration handoff
 
 Updated: 2026-07-30
-Worktree: `D:\TinyML-Hearing-Aids\.worktrees\erb-gru-ethosu`  
+Worktree: `D:\TinyML-Hearing-Aids\.worktrees\erb-gru-ethosu`
 Branch: `codex/erb-gru-ethosu`
 
 ## Deployment package

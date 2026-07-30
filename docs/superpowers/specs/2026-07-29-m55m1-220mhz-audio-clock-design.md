@@ -1,7 +1,7 @@
 # M55M1 220 MHz core and ERB-GRU timing design
 
-Date: 2026-07-29  
-Worktree: `D:\TinyML-Hearing-Aids\.worktrees\erb-gru-ethosu`  
+Date: 2026-07-29
+Worktree: `D:\TinyML-Hearing-Aids\.worktrees\erb-gru-ethosu`
 Branch: `codex/erb-gru-ethosu`
 
 ## Goal
