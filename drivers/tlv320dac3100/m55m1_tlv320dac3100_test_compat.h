@@ -1,0 +1,88 @@
+/**
+ * @file m55m1_tlv320dac3100_test_compat.h
+ * @brief Compatibility API for existing isolated TLV320DAC3100 diagnostics.
+ * @author Bui Minh Huy
+ * @date 2026-07-30
+ */
+
+#pragma once
+
+#include "board/m55m1_audio.h"
+#include "drivers/tlv320dac3100/tlv320dac3100.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define M55M1_TLV320DAC3100_SAFE_MAX_GAIN_DB M55M1_AUDIO_SAFE_MAX_GAIN_DB
+#define M55M1_TLV320DAC3100_BOARD_INIT_OK M55M1_AUDIO_BOARD_INIT_OK
+#define M55M1_TLV320DAC3100_BOARD_INIT_HXT_TIMEOUT M55M1_AUDIO_BOARD_INIT_HXT_TIMEOUT
+#define M55M1_TLV320DAC3100_BOARD_INIT_APLL1_TIMEOUT M55M1_AUDIO_BOARD_INIT_APLL1_TIMEOUT
+#define M55M1_TLV320DAC3100_BOARD_INIT_APLL0_TIMEOUT M55M1_AUDIO_BOARD_INIT_APLL0_TIMEOUT
+#define M55M1_TLV320DAC3100_BOARD_INIT_CLOCK_MISMATCH M55M1_AUDIO_BOARD_INIT_CLOCK_MISMATCH
+#define M55M1_TLV320DAC3100_BOARD_INIT_I2C_STUCK M55M1_AUDIO_BOARD_INIT_I2C_STUCK
+
+#define M55M1_TLV320DAC3100_BOARD_STAGE_ENTER M55M1_AUDIO_BOARD_STAGE_ENTER
+#define M55M1_TLV320DAC3100_BOARD_STAGE_SCLK_HIRC_READY M55M1_AUDIO_BOARD_STAGE_SCLK_HIRC_READY
+#define M55M1_TLV320DAC3100_BOARD_STAGE_HXT_WAIT M55M1_AUDIO_BOARD_STAGE_HXT_WAIT
+#define M55M1_TLV320DAC3100_BOARD_STAGE_HXT_READY M55M1_AUDIO_BOARD_STAGE_HXT_READY
+#define M55M1_TLV320DAC3100_BOARD_STAGE_APLL1_WAIT M55M1_AUDIO_BOARD_STAGE_APLL1_WAIT
+#define M55M1_TLV320DAC3100_BOARD_STAGE_APLL1_READY M55M1_AUDIO_BOARD_STAGE_APLL1_READY
+#define M55M1_TLV320DAC3100_BOARD_STAGE_APLL0_WAIT M55M1_AUDIO_BOARD_STAGE_APLL0_WAIT
+#define M55M1_TLV320DAC3100_BOARD_STAGE_APLL0_READY M55M1_AUDIO_BOARD_STAGE_APLL0_READY
+#define M55M1_TLV320DAC3100_BOARD_STAGE_SCLK_APLL0_READY M55M1_AUDIO_BOARD_STAGE_SCLK_APLL0_READY
+#define M55M1_TLV320DAC3100_BOARD_STAGE_MODULE_CLOCKS_READY M55M1_AUDIO_BOARD_STAGE_MODULE_CLOCKS_READY
+#define M55M1_TLV320DAC3100_BOARD_STAGE_AUDIO_PINS_READY M55M1_AUDIO_BOARD_STAGE_AUDIO_PINS_READY
+#define M55M1_TLV320DAC3100_BOARD_STAGE_I2C_RECOVERY_READY M55M1_AUDIO_BOARD_STAGE_I2C_RECOVERY_READY
+#define M55M1_TLV320DAC3100_BOARD_STAGE_I2C_PINS_READY M55M1_AUDIO_BOARD_STAGE_I2C_PINS_READY
+#define M55M1_TLV320DAC3100_BOARD_STAGE_I2C_RESET_READY M55M1_AUDIO_BOARD_STAGE_I2C_RESET_READY
+#define M55M1_TLV320DAC3100_BOARD_STAGE_CYCLE_COUNTER_READY M55M1_AUDIO_BOARD_STAGE_CYCLE_COUNTER_READY
+#define M55M1_TLV320DAC3100_BOARD_STAGE_PERIPHERALS_READY M55M1_AUDIO_BOARD_STAGE_PERIPHERALS_READY
+
+typedef m55m1_audio_board_init_result_t
+    m55m1_tlv320dac3100_board_init_result_t;
+typedef m55m1_audio_board_stage_t m55m1_tlv320dac3100_board_stage_t;
+typedef m55m1_audio_clock_snapshot_t m55m1_tlv320dac3100_clock_snapshot_t;
+typedef m55m1_audio_dmic_status_t m55m1_tlv320dac3100_dmic_status_t;
+typedef m55m1_audio_dmic_block_timing_t
+    m55m1_tlv320dac3100_dmic_block_timing_t;
+typedef m55m1_audio_board_progress_callback_t
+    m55m1_tlv320dac3100_board_progress_callback_t;
+
+m55m1_tlv320dac3100_board_init_result_t
+m55m1_tlv320dac3100_test_board_init(
+    tlv320dac3100_audio_profile_t profile,
+    tlv320dac3100_config_t *config,
+    tlv320dac3100_block_callback_t callback,
+    void *callback_context);
+m55m1_tlv320dac3100_board_init_result_t
+m55m1_tlv320dac3100_test_board_init_with_progress(
+    tlv320dac3100_audio_profile_t profile,
+    tlv320dac3100_config_t *config,
+    tlv320dac3100_block_callback_t callback,
+    void *callback_context,
+    m55m1_tlv320dac3100_board_progress_callback_t progress_callback,
+    void *progress_context);
+bool m55m1_tlv320dac3100_test_get_clock_snapshot(
+    m55m1_tlv320dac3100_clock_snapshot_t *snapshot);
+bool m55m1_tlv320dac3100_test_dmic_start(
+    tlv320dac3100_audio_profile_t profile);
+bool m55m1_tlv320dac3100_test_dmic_take_block(
+    int16_t *destination,
+    uint16_t sample_count);
+bool m55m1_tlv320dac3100_test_dmic_take_block_timed(
+    int16_t *destination,
+    uint16_t sample_count,
+    m55m1_tlv320dac3100_dmic_block_timing_t *timing);
+bool m55m1_tlv320dac3100_test_dmic_block_pending(void);
+uint32_t m55m1_tlv320dac3100_test_cycles_now(void);
+uint32_t m55m1_tlv320dac3100_test_cycles_elapsed(
+    uint32_t start_cycle,
+    uint32_t end_cycle);
+uint32_t m55m1_tlv320dac3100_test_cycles_to_us(uint32_t cycles);
+void m55m1_tlv320dac3100_test_dmic_get_status(
+    m55m1_tlv320dac3100_dmic_status_t *status);
+
+#ifdef __cplusplus
+}
+#endif

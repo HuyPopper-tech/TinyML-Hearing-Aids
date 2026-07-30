@@ -32,7 +32,7 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
 
     def test_release_gain_workaround_is_scoped_to_the_reduction_loop(self):
         source = self.read("services/erb_gru/erb_gru_audio_enhancer.cpp")
-        app = self.read("app/main.c")
+        pipeline = self.read("services/audio_pipeline/audio_pipeline.c")
 
         reduction = source[
             source.index("if (inference_ok)\n        {", source.index("void expand_gains")) :
@@ -44,11 +44,11 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
         self.assertIn("NO_VECTORIZE", reduction)
         self.assertIn("host", reduction)
         self.assertIn("board", reduction)
-        self.assertNotIn("M55M1_ERB_GRU_DSP_PROBE", app)
+        self.assertNotIn("M55M1_ERB_GRU_DSP_PROBE", pipeline)
 
     def test_diagnostics_flag_gates_all_runtime_logging_sources(self):
         cmake = self.read("CMakeLists.txt")
-        app = self.read("app/main.c")
+        pipeline = self.read("services/audio_pipeline/audio_pipeline.c")
 
         self.assertIn(
             'option(M55M1_ERB_GRU_DIAGNOSTICS "Build 1 Hz ERB-GRU diagnostics" OFF)',
@@ -60,15 +60,15 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
             cmake,
         )
         self.assertIn("Golden scenarios require M55M1_ERB_GRU_DIAGNOSTICS=ON", cmake)
-        self.assertIn("#if M55M1_ERB_GRU_DIAGNOSTICS", app)
-        self.assertIn('"[BUILD] type=%s diagnostics=1 gain_db=%d "', app)
+        self.assertIn("#if M55M1_ERB_GRU_DIAGNOSTICS", pipeline)
+        self.assertIn('"[BUILD] type=%s diagnostics=1 gain_db=%d "', pipeline)
         self.assertIn("M55M1_ERB_GRU_GIT_REV", cmake)
         self.assertIn("M55M1_ERB_GRU_GIT_DIRTY", cmake)
 
     def test_fault_injection_is_not_reported_as_a_real_npu_error(self):
         inference = self.read("services/erb_gru/erb_gru_inference.cpp")
         header = self.read("services/erb_gru/erb_gru_inference.h")
-        app = self.read("app/main.c")
+        pipeline = self.read("services/audio_pipeline/audio_pipeline.c")
         telemetry = self.read("services/audio_telemetry.c")
 
         fault_branch = inference[
@@ -78,7 +78,7 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
         self.assertIn("g_fault_injected_count", fault_branch)
         self.assertNotIn("g_invoke_error_count", fault_branch)
         self.assertIn("fault_injected_count", header)
-        self.assertIn("g_telemetry.fault_injected", app)
+        self.assertIn("g_telemetry.fault_injected", pipeline)
         self.assertIn("fault_injected=%lu", telemetry)
 
     def test_generated_contract_uses_vela_ordinals_and_raw_indices(self):
@@ -154,27 +154,26 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
         self.assertNotIn("malloc", source)
 
     def test_streaming_loop_has_no_polling_printf(self):
-        app = self.read("app/main.c")
-        streaming_loop = app[app.rindex("    for (;;) {") :]
-        self.assertNotIn("printf(", streaming_loop)
-        self.assertNotIn("printf(", app[app.index("tlv320dac3100_start()") :])
-        self.assertIn("audio_telemetry_poll(", streaming_loop)
+        pipeline = self.read("services/audio_pipeline/audio_pipeline.c")
+        streaming_poll = pipeline[pipeline.index("void audio_pipeline_poll(void)") :]
+        self.assertNotIn("printf(", streaming_poll)
+        self.assertIn("audio_telemetry_poll(", streaming_poll)
         self.assertLess(
-            app.index("erb_gru_audio_enhancer_init()"),
-            app.index("tlv320dac3100_start()"),
+            pipeline.index("erb_gru_audio_enhancer_init()"),
+            pipeline.index("audio_transport_start()"),
         )
 
     def test_streaming_loop_tags_wola_output_with_previous_source_hop(self):
-        app = self.read("app/main.c")
+        pipeline = self.read("services/audio_pipeline/audio_pipeline.c")
 
-        self.assertIn("erb_gru_stream_timing_advance(", app)
-        self.assertIn(".sequence = source_tag.sequence", app)
+        self.assertIn("erb_gru_stream_timing_advance(", pipeline)
+        self.assertIn(".sequence = source_tag.sequence", pipeline)
         self.assertRegex(
-            app,
+            pipeline,
             r"\.capture_completed_cycle\s*=\s*source_tag\.capture_completed_cycle",
         )
-        self.assertIn("tlv320dac3100_take_audio_completion(", app)
-        self.assertIn("audio_telemetry_record_e2e_us(", app)
+        self.assertIn("audio_transport_take_completion(", pipeline)
+        self.assertIn("audio_telemetry_record_e2e_us(", pipeline)
 
     def test_telemetry_is_rate_limited_and_uart_is_irq_driven(self):
         telemetry = self.read("services/audio_telemetry.c")

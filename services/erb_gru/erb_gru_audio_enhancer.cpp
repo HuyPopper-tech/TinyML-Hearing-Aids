@@ -13,11 +13,11 @@
 #include <cstdint>
 #include <cstring>
 
-#include "models/erb_gru/generated/erb_gru_assets.h"
 #include "services/erb_gru/erb_gru_audio_enhancer.h"
 #if M55M1_ERB_GRU_DIAGNOSTICS
 #include "services/erb_gru/erb_gru_audio_diagnostics.h"
 #endif
+#include "services/erb_gru/erb_gru_frontend_assets.h"
 #include "services/erb_gru/erb_gru_inference.h"
 #include "kiss_fft.h"
 #include "tools/kiss_fftr.h"

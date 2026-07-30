@@ -1,0 +1,113 @@
+/**
+ * @file m55m1_audio.h
+ * @brief Production M55M1 audio clocks, pins, DMA bindings, and capture queue.
+ * @author Bui Minh Huy
+ * @date 2026-07-30
+ */
+
+#pragma once
+
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "NuMicro.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define M55M1_AUDIO_SAFE_MAX_GAIN_DB  (-3)
+
+typedef enum {
+    M55M1_AUDIO_PROFILE_16KHZ = 0,
+    M55M1_AUDIO_PROFILE_32KHZ,
+} m55m1_audio_profile_t;
+
+typedef enum {
+    M55M1_AUDIO_BOARD_INIT_OK = 0,
+    M55M1_AUDIO_BOARD_INIT_HXT_TIMEOUT,
+    M55M1_AUDIO_BOARD_INIT_APLL1_TIMEOUT,
+    M55M1_AUDIO_BOARD_INIT_APLL0_TIMEOUT,
+    M55M1_AUDIO_BOARD_INIT_CLOCK_MISMATCH,
+    M55M1_AUDIO_BOARD_INIT_I2C_STUCK,
+} m55m1_audio_board_init_result_t;
+
+typedef enum {
+    M55M1_AUDIO_BOARD_STAGE_ENTER = 0,
+    M55M1_AUDIO_BOARD_STAGE_SCLK_HIRC_READY,
+    M55M1_AUDIO_BOARD_STAGE_HXT_WAIT,
+    M55M1_AUDIO_BOARD_STAGE_HXT_READY,
+    M55M1_AUDIO_BOARD_STAGE_APLL1_WAIT,
+    M55M1_AUDIO_BOARD_STAGE_APLL1_READY,
+    M55M1_AUDIO_BOARD_STAGE_APLL0_WAIT,
+    M55M1_AUDIO_BOARD_STAGE_APLL0_READY,
+    M55M1_AUDIO_BOARD_STAGE_SCLK_APLL0_READY,
+    M55M1_AUDIO_BOARD_STAGE_MODULE_CLOCKS_READY,
+    M55M1_AUDIO_BOARD_STAGE_AUDIO_PINS_READY,
+    M55M1_AUDIO_BOARD_STAGE_I2C_RECOVERY_READY,
+    M55M1_AUDIO_BOARD_STAGE_I2C_PINS_READY,
+    M55M1_AUDIO_BOARD_STAGE_I2C_RESET_READY,
+    M55M1_AUDIO_BOARD_STAGE_CYCLE_COUNTER_READY,
+    M55M1_AUDIO_BOARD_STAGE_PERIPHERALS_READY,
+} m55m1_audio_board_stage_t;
+
+typedef struct {
+    uint32_t core_hz;
+    uint32_t apll0_hz;
+    uint32_t apll1_hz;
+    uint32_t i2s_src_hz;
+    uint32_t mclk_hz;
+} m55m1_audio_clock_snapshot_t;
+
+typedef struct {
+    I2C_T *i2c;
+    I2S_T *i2s;
+    PDMA_T *pdma;
+    uint8_t pdma_channel;
+    int8_t max_digital_gain_db;
+} m55m1_audio_playback_binding_t;
+
+typedef struct {
+    uint32_t completed_blocks;
+    uint32_t overrun_blocks;
+    uint32_t dma_errors;
+} m55m1_audio_dmic_status_t;
+
+typedef struct {
+    uint32_t sequence;
+    uint32_t completed_cycle;
+} m55m1_audio_dmic_block_timing_t;
+
+typedef void (*m55m1_audio_board_progress_callback_t)(
+    m55m1_audio_board_stage_t stage, void *context);
+
+typedef void (*m55m1_audio_playback_irq_callback_t)(
+    uint32_t completed_cycle, void *context);
+
+m55m1_audio_board_init_result_t m55m1_audio_board_init(
+    m55m1_audio_profile_t profile,
+    m55m1_audio_playback_binding_t *binding,
+    m55m1_audio_playback_irq_callback_t playback_irq_callback,
+    void *playback_irq_context,
+    m55m1_audio_board_progress_callback_t progress_callback,
+    void *progress_context);
+
+bool m55m1_audio_get_clock_snapshot(m55m1_audio_clock_snapshot_t *snapshot);
+
+bool m55m1_audio_dmic_start(m55m1_audio_profile_t profile);
+
+bool m55m1_audio_dmic_take_block(
+    int16_t *destination, uint16_t sample_count);
+
+bool m55m1_audio_dmic_take_block_timed(
+    int16_t *destination,
+    uint16_t sample_count,
+    m55m1_audio_dmic_block_timing_t *timing);
+
+bool m55m1_audio_dmic_block_pending(void);
+
+void m55m1_audio_dmic_get_status(m55m1_audio_dmic_status_t *status);
+
+#ifdef __cplusplus
+}
+#endif

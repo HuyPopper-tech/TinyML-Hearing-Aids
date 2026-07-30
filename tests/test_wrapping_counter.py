@@ -60,8 +60,11 @@ class WrappingCounterTests(unittest.TestCase):
             self.assertEqual(run_result.returncode, 0, run_result.stderr)
 
     def test_realtime_consumers_use_board_elapsed_api(self):
-        audio_board_header = (
-            ROOT / "board" / "m55m1_tlv320dac3100_test.h"
+        timebase_header = (
+            ROOT / "board" / "m55m1_timebase.h"
+        ).read_text(encoding="utf-8")
+        timebase_source = (
+            ROOT / "board" / "m55m1_timebase.c"
         ).read_text(encoding="utf-8")
         ethosu_board_header = (
             ROOT / "board" / "m55m1_ethosu_u55.h"
@@ -72,11 +75,14 @@ class WrappingCounterTests(unittest.TestCase):
         inference = (
             ROOT / "services" / "erb_gru" / "erb_gru_inference.cpp"
         ).read_text(encoding="utf-8")
-        app = (ROOT / "app" / "main.c").read_text(encoding="utf-8")
+        pipeline = (
+            ROOT / "services" / "audio_pipeline" / "audio_pipeline.c"
+        ).read_text(encoding="utf-8")
 
         self.assertIn(
-            "m55m1_tlv320dac3100_test_cycles_elapsed", audio_board_header
+            "m55m1_timebase_cycles_elapsed", timebase_header
         )
+        self.assertIn("wrapping_counter_elapsed(", timebase_source)
         self.assertIn(
             "m55m1_ethosu_u55_board_cycles_elapsed", ethosu_board_header
         )
@@ -88,7 +94,7 @@ class WrappingCounterTests(unittest.TestCase):
             ),
         )
         self.assertNotIn(
-            "m55m1_tlv320dac3100_test_cycles_elapsed",
+            "m55m1_timebase_cycles_elapsed",
             ethosu,
         )
         self.assertRegex(
@@ -99,9 +105,10 @@ class WrappingCounterTests(unittest.TestCase):
             ),
         )
         self.assertRegex(
-            app,
+            pipeline,
             re.compile(
-                r"m55m1_tlv320dac3100_test_cycles_elapsed\(\s*enhance_start,",
+                r"audio_transport_cycles_elapsed\(\s*"
+                r"enhance_start,\s*audio_transport_cycles_now\(\)",
                 re.MULTILINE,
             ),
         )

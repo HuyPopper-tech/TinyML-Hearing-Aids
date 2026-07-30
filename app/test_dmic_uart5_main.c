@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "board/m55m1_tlv320dac3100_test.h"
+#include "drivers/tlv320dac3100/m55m1_tlv320dac3100_test_compat.h"
 #include "NuMicro.h"
 
 /** UART5 baud rate for the host-terminal microphone diagnostics. */

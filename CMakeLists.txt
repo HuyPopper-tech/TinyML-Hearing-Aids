@@ -199,8 +199,11 @@ endif()
 
 set(M55M1_APP_SOURCES
     ${PROJ_ROOT}/app/main.c
+    ${PROJ_ROOT}/board/m55m1_audio.c
+    ${PROJ_ROOT}/board/m55m1_timebase.c
+    ${PROJ_ROOT}/drivers/audio_transport/audio_transport.c
     ${PROJ_ROOT}/drivers/tlv320dac3100/tlv320dac3100.c
-    ${PROJ_ROOT}/board/m55m1_tlv320dac3100_test.c)
+    ${PROJ_ROOT}/services/audio_pipeline/audio_pipeline.c)
 
 if(M55M1_ERB_GRU_DIAGNOSTICS)
     list(APPEND M55M1_APP_SOURCES

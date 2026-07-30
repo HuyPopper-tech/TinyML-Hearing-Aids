@@ -11,7 +11,7 @@
 
 #include "common/sha256.h"
 #include "drivers/ethosu_u55/ethosu_u55.h"
-#include "models/erb_gru/generated/erb_gru_assets.h"
+#include "models/erb_gru/generated/erb_gru_deploy_contract.h"
 #include "models/erb_gru/generated/erb_gru_model_data.h"
 #include "services/erb_gru/erb_gru_inference.h"
 #include "tensorflow/lite/micro/micro_interpreter.h"

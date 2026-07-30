@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 
-#include "board/m55m1_tlv320dac3100_test.h"
+#include "drivers/tlv320dac3100/m55m1_tlv320dac3100_test_compat.h"
 #include "drivers/tlv320dac3100/tlv320dac3100.h"
 
 #define DMIC_PASSTHROUGH_PROFILE TLV320DAC3100_AUDIO_PROFILE_16KHZ
