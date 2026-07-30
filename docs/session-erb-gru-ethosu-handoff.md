@@ -147,9 +147,8 @@ from PCM16, quantized gains, and the exact package DSP constants.
   gain expansion, unity bin gain, unity spectrum ratio and the instrumented
   FFT/IFFT/WOLA fallback path.
 - Configure-level tests prove that production Release rejects fault injection,
-  diagnostic Release accepts it, non-AUTO probes require diagnostics, clean
-  defaults exclude diagnostic objects, and probe flags apply only to
-  `erb_gru_audio_enhancer.cpp`.
+  diagnostic Release accepts it, and clean defaults exclude diagnostic objects
+  and the removed temporary DSP-probe controls.
 - Release production and Release diagnostic CMake configurations both pass.
   The production build graph contains none of the six diagnostic source
   objects; the diagnostic graph contains all six.
