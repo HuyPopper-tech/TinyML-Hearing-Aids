@@ -1,3 +1,8 @@
 * text=auto
 *.sh text eol=lf
 *.bat text eol=crlf
+
+# Model packages and generated assets are hash-verified byte streams. Never
+# rewrite their line endings when checking them out on Windows.
+models/erb_gru/packages/** -text
+models/erb_gru/generated/** -text
