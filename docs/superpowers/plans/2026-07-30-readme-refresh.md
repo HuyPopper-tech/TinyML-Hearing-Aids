@@ -4,67 +4,20 @@
 
 **Goal:** Replace the obsolete DMIC-test README with an accurate quick-start and project overview for the current ERB-GRU Ethos-U55 firmware.
 
-**Architecture:** Keep README as the concise entry point and link to the deployment guide and handoff for detailed evidence. Add one repository contract test for essential facts and relative-link validity so the document cannot silently regress.
+**Architecture:** Keep README as the concise entry point and link to the deployment guide and handoff for detailed evidence. Validate human-facing prose directly instead of adding a brittle source-text contract test.
 
 **Tech Stack:** Markdown, Python `unittest`, CMake/Arm Compiler build documentation.
 
 ## Global Constraints
 
-- Modify only `README.md` and the README contract test after this plan.
+- Modify only `README.md` after this plan.
 - Do not duplicate detailed telemetry schemas, investigation logs, or the replacement-model checklist.
 - Do not claim production readiness while board parity, runtime memory measurements, and soak remain pending.
 - Do not modify firmware, CMake, `libs/`, model packages, or generated assets.
 
 ---
 
-### Task 1: Add the README contract test
-
-**Files:**
-- Create: `tests/test_readme_contract.py`
-
-**Interfaces:**
-- Consumes: repository files referenced by Markdown links.
-- Produces: a `unittest` contract for current firmware identity, canonical commands, safety status, and valid relative links.
-
-- [ ] **Step 1: Add a failing test**
-
-Create a standard-library-only test that requires:
-
-```python
-for expected in (
-    "ERB-GRU",
-    "Ethos-U55",
-    "app -> services -> drivers -> board -> libs",
-    "build.bat release build",
-    "build.bat debug build",
-    "M55M1_GestureAI.axf.bin",
-    "M55M1_ERB_GRU_DIAGNOSTICS",
-    "not production-ready",
-):
-    self.assertIn(expected, readme)
-```
-
-Extract repository-relative Markdown link targets, ignore URL/anchor links, and
-assert that each target exists below the repository root.
-
-- [ ] **Step 2: Run the focused test and verify RED**
-
-Run:
-
-```powershell
-python -m unittest tests.test_readme_contract -v
-```
-
-Expected: failure because the old README lacks the current ERB-GRU contract.
-
-- [ ] **Step 3: Commit the failing contract**
-
-```powershell
-git add tests/test_readme_contract.py
-git commit -m "test: define current firmware readme contract"
-```
-
-### Task 2: Rewrite and validate README
+### Task 1: Rewrite README
 
 **Files:**
 - Modify: `README.md`
@@ -89,18 +42,23 @@ Write the approved quick-start-first sections:
 7. flashing, SWD/TrustZone recovery, and pin ownership;
 8. host validation commands, project layout, and specialist-doc links.
 
-- [ ] **Step 2: Run focused validation**
+### Task 2: Validate and publish README
 
-```powershell
-python -m unittest tests.test_readme_contract -v
-git diff --check
-```
+**Files:**
+- Verify: `README.md`
 
-Expected: all focused tests pass and no whitespace errors.
+**Interfaces:**
+- Consumes: rewritten README and repository filesystem.
+- Produces: verified documentation on `origin/main`.
 
-- [ ] **Step 3: Run the full host suite**
+- [ ] **Step 1: Check relative links and documented identifiers**
 
-Run:
+Use a read-only PowerShell check to extract Markdown links, ignore HTTP and
+anchor targets, and fail when a repository-relative target does not exist.
+Compare documented CMake option names and build commands with their source
+files.
+
+- [ ] **Step 2: Run the full host suite**
 
 ```powershell
 python -m unittest discover -s tests -v
@@ -109,7 +67,7 @@ python -m unittest discover -s tests -v
 If the ignored `.codex/AGENTS.md` fixture is absent, temporarily copy the root
 `AGENTS.md` for this command and remove it immediately afterward.
 
-- [ ] **Step 4: Review scope and commit**
+- [ ] **Step 3: Review scope and commit**
 
 Verify:
 
@@ -125,7 +83,7 @@ git add README.md
 git commit -m "docs: refresh erb-gru firmware readme"
 ```
 
-- [ ] **Step 5: Synchronize and push**
+- [ ] **Step 4: Synchronize and push**
 
 Fetch `origin/main`, require zero commits behind, push without force, then
 verify local `HEAD` equals `origin/main`.
