@@ -17,8 +17,7 @@
 static uint32_t g_cycles_per_us = 1U;
 static bool g_timebase_ready;
 
-void m55m1_timebase_init(void)
-{
+void m55m1_timebase_init(void) {
     if (g_timebase_ready) {
         return;
     }
@@ -33,8 +32,7 @@ void m55m1_timebase_init(void)
     g_timebase_ready = true;
 }
 
-uint32_t m55m1_timebase_cycles_now(void)
-{
+uint32_t m55m1_timebase_cycles_now(void) {
     return (M55M1_TIMEBASE_SYSTICK_MASK -
             (SysTick->VAL & M55M1_TIMEBASE_SYSTICK_MASK)) &
            M55M1_TIMEBASE_SYSTICK_MASK;
@@ -42,13 +40,11 @@ uint32_t m55m1_timebase_cycles_now(void)
 
 uint32_t m55m1_timebase_cycles_elapsed(
     uint32_t start_cycle,
-    uint32_t end_cycle)
-{
+    uint32_t end_cycle) {
     return wrapping_counter_elapsed(
         start_cycle, end_cycle, M55M1_TIMEBASE_SYSTICK_MASK);
 }
 
-uint32_t m55m1_timebase_cycles_to_us(uint32_t cycles)
-{
+uint32_t m55m1_timebase_cycles_to_us(uint32_t cycles) {
     return (cycles & M55M1_TIMEBASE_SYSTICK_MASK) / g_cycles_per_us;
 }

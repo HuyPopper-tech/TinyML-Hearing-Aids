@@ -11,6 +11,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class FixedByteRingTests(unittest.TestCase):
+    def test_spsc_publication_uses_acquire_release_operations(self):
+        """Catch a producer publication that can expose unwritten bytes."""
+        header = (ROOT / "common" / "fixed_byte_ring.h").read_text(encoding="utf-8")
+        source = (ROOT / "common" / "fixed_byte_ring.c").read_text(encoding="utf-8")
+
+        self.assertNotIn("volatile uint32_t head", header)
+        self.assertNotIn("volatile uint32_t tail", header)
+        self.assertIn("FIXED_BYTE_RING_LOAD_ACQUIRE", source)
+        self.assertIn("FIXED_BYTE_RING_STORE_RELEASE", source)
+
     def test_enqueue_is_all_or_drop_and_wraps_without_reordering(self):
         harness = textwrap.dedent(
             r"""

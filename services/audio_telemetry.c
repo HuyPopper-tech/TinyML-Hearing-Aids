@@ -38,16 +38,14 @@ static uint32_t g_e2e_over_limit_count;
 static uint32_t g_last_e2e_sequence;
 static bool g_have_e2e_sequence;
 
-static uint16_t bounded_u16(uint32_t value)
-{
+static uint16_t bounded_u16(uint32_t value) {
     return (value > UINT16_MAX) ? UINT16_MAX : (uint16_t)value;
 }
 
 static void record_sample(
     uint16_t samples[AUDIO_TELEMETRY_INTERVAL_FRAMES],
     uint16_t *count,
-    uint32_t value)
-{
+    uint32_t value) {
     if (*count < AUDIO_TELEMETRY_INTERVAL_FRAMES) {
         samples[*count] = bounded_u16(value);
         ++(*count);
@@ -55,8 +53,7 @@ static void record_sample(
 }
 
 static audio_telemetry_window_stats_t window_stats(
-    const uint16_t *samples, uint16_t count)
-{
+    const uint16_t *samples, uint16_t count) {
     audio_telemetry_window_stats_t result = {0U, 0U, 0U, count, 0U};
     uint16_t sorted[AUDIO_TELEMETRY_INTERVAL_FRAMES];
 
@@ -85,8 +82,7 @@ static audio_telemetry_window_stats_t window_stats(
     return result;
 }
 
-static uint32_t integer_sqrt_u64(uint64_t value)
-{
+static uint32_t integer_sqrt_u64(uint64_t value) {
     uint64_t bit = 1ULL << 62;
     uint64_t result = 0U;
 
@@ -105,8 +101,7 @@ static uint32_t integer_sqrt_u64(uint64_t value)
     return (uint32_t)result;
 }
 
-static uint32_t sqrt_ratio_milli(uint64_t numerator, uint64_t denominator)
-{
+static uint32_t sqrt_ratio_milli(uint64_t numerator, uint64_t denominator) {
     if (denominator == 0U) {
         return 0U;
     }
@@ -117,8 +112,7 @@ static uint32_t sqrt_ratio_milli(uint64_t numerator, uint64_t denominator)
     return integer_sqrt_u64((numerator * 1000000ULL) / denominator);
 }
 
-static uint32_t gain_q_to_milli(int32_t quantized)
-{
+static uint32_t gain_q_to_milli(int32_t quantized) {
     int32_t shifted = quantized + 128;
 
     if (shifted < 0) {
@@ -129,31 +123,26 @@ static uint32_t gain_q_to_milli(int32_t quantized)
     return (uint32_t)((shifted * 1000 + 128) / 256);
 }
 
-static uint32_t q15_to_milli(uint64_t value)
-{
+static uint32_t q15_to_milli(uint64_t value) {
     return (uint32_t)((value * 1000U + 16384U) / 32768U);
 }
 
-static int32_t mean_int8(int64_t sum, uint32_t count)
-{
+static int32_t mean_int8(int64_t sum, uint32_t count) {
     return (count == 0U) ? 0 : (int32_t)(sum / (int64_t)count);
 }
 
-static uint32_t percentage(uint32_t numerator, uint32_t denominator)
-{
+static uint32_t percentage(uint32_t numerator, uint32_t denominator) {
     return (denominator == 0U) ? 0U :
         (uint32_t)(((uint64_t)numerator * 100U) / denominator);
 }
 
-static void clear_windows(void)
-{
+static void clear_windows(void) {
     g_processing_count = 0U;
     g_invoke_count = 0U;
     g_e2e_count = 0U;
 }
 
-void audio_telemetry_init(void)
-{
+void audio_telemetry_init(void) {
     g_pending_length = 0U;
     g_last_snapshot_frame = 0U;
     g_e2e_gap_count = 0U;
@@ -163,18 +152,15 @@ void audio_telemetry_init(void)
     debug_uart_tx_init();
 }
 
-void audio_telemetry_record_processing_us(uint32_t elapsed_us)
-{
+void audio_telemetry_record_processing_us(uint32_t elapsed_us) {
     record_sample(g_processing_us, &g_processing_count, elapsed_us);
 }
 
-void audio_telemetry_record_invoke_us(uint32_t elapsed_us)
-{
+void audio_telemetry_record_invoke_us(uint32_t elapsed_us) {
     record_sample(g_invoke_us, &g_invoke_count, elapsed_us);
 }
 
-void audio_telemetry_record_e2e_us(uint32_t elapsed_us, uint32_t sequence)
-{
+void audio_telemetry_record_e2e_us(uint32_t elapsed_us, uint32_t sequence) {
     if (g_have_e2e_sequence) {
         const uint32_t delta = sequence - g_last_e2e_sequence;
 
@@ -191,8 +177,7 @@ void audio_telemetry_record_e2e_us(uint32_t elapsed_us, uint32_t sequence)
 }
 
 void audio_telemetry_poll(
-    const audio_telemetry_snapshot_t *snapshot, bool dmic_block_pending)
-{
+    const audio_telemetry_snapshot_t *snapshot, bool dmic_block_pending) {
     audio_telemetry_window_stats_t processing;
     audio_telemetry_window_stats_t invoke;
     audio_telemetry_window_stats_t e2e;
@@ -371,8 +356,7 @@ void audio_telemetry_poll(
     }
 }
 
-void audio_telemetry_fatal(const char *stage, int status)
-{
+void audio_telemetry_fatal(const char *stage, int status) {
     const int length = snprintf(
         g_message, sizeof(g_message), "[FAIL] %s (status=%d)\r\n",
         (stage == NULL) ? "unknown" : stage, status);

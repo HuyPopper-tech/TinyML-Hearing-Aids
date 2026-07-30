@@ -18,8 +18,7 @@ static fixed_byte_ring_t g_tx_ring;
 static volatile uint32_t g_drop_count;
 static bool g_initialized;
 
-void debug_uart_tx_init(void)
-{
+void debug_uart_tx_init(void) {
     if (g_initialized) {
         return;
     }
@@ -32,8 +31,7 @@ void debug_uart_tx_init(void)
     g_initialized = true;
 }
 
-bool debug_uart_tx_try_enqueue(const char *message, size_t length)
-{
+bool debug_uart_tx_try_enqueue(const char *message, size_t length) {
     if (!g_initialized || !fixed_byte_ring_try_enqueue(
             &g_tx_ring, (const uint8_t *)message, length)) {
         ++g_drop_count;
@@ -44,13 +42,11 @@ bool debug_uart_tx_try_enqueue(const char *message, size_t length)
     return true;
 }
 
-uint32_t debug_uart_tx_drop_count(void)
-{
+uint32_t debug_uart_tx_drop_count(void) {
     return g_drop_count;
 }
 
-void UART1_IRQHandler(void)
-{
+void UART1_IRQHandler(void) {
     uint8_t value;
 
     while (!UART_IS_TX_FULL(UART1) && fixed_byte_ring_try_pop(&g_tx_ring, &value)) {

@@ -53,8 +53,7 @@ static bool g_initialized;
 static bool g_running;
 static bool g_polling;
 
-static void audio_pipeline_report_failure(const char *stage, int status)
-{
+static void audio_pipeline_report_failure(const char *stage, int status) {
 #if M55M1_ERB_GRU_DIAGNOSTICS
     audio_telemetry_fatal(stage, status);
 #else
@@ -63,8 +62,7 @@ static void audio_pipeline_report_failure(const char *stage, int status)
 #endif
 }
 
-static void audio_pipeline_halt(const char *stage, int status)
-{
+static void audio_pipeline_halt(const char *stage, int status) {
     audio_pipeline_report_failure(stage, status);
     audio_pipeline_stop_safe();
     for (;;) {
@@ -73,8 +71,7 @@ static void audio_pipeline_halt(const char *stage, int status)
 
 #if M55M1_ERB_GRU_DIAGNOSTICS
 static const char *audio_pipeline_board_stage_name(
-    audio_transport_board_stage_t stage)
-{
+    audio_transport_board_stage_t stage) {
     switch (stage) {
     case AUDIO_TRANSPORT_BOARD_STAGE_ENTER:
         return "ENTER";
@@ -115,8 +112,7 @@ static const char *audio_pipeline_board_stage_name(
 
 static void audio_pipeline_board_progress(
     audio_transport_board_stage_t stage,
-    void *context)
-{
+    void *context) {
     (void)context;
     printf("[BOOT] board stage=%d (%s)\n",
            (int)stage, audio_pipeline_board_stage_name(stage));
@@ -126,8 +122,7 @@ static void audio_pipeline_board_progress(
 #if M55M1_ENABLE_ERB_GRU && M55M1_ERB_GRU_DIAGNOSTICS
 static void audio_pipeline_update_telemetry(
     uint32_t elapsed_cycles,
-    erb_gru_audio_result_t result)
-{
+    erb_gru_audio_result_t result) {
     audio_transport_health_t health;
     erb_gru_inference_performance_t inference;
 
@@ -168,8 +163,7 @@ static void audio_pipeline_update_telemetry(
 }
 #endif
 
-bool audio_pipeline_init(void)
-{
+bool audio_pipeline_init(void) {
     audio_transport_init_report_t report;
 
     if (g_initialized) {
@@ -257,8 +251,7 @@ bool audio_pipeline_init(void)
     return true;
 }
 
-bool audio_pipeline_start(void)
-{
+bool audio_pipeline_start(void) {
     if (!g_initialized || g_running) {
         return false;
     }
@@ -273,8 +266,7 @@ bool audio_pipeline_start(void)
     return true;
 }
 
-void audio_pipeline_poll(void)
-{
+void audio_pipeline_poll(void) {
     audio_transport_capture_timing_t capture_timing;
 
     if (!g_running || g_polling) {
@@ -364,8 +356,7 @@ void audio_pipeline_poll(void)
     g_polling = false;
 }
 
-void audio_pipeline_stop_safe(void)
-{
+void audio_pipeline_stop_safe(void) {
     if (g_initialized || g_running) {
         audio_transport_stop_safe();
     }

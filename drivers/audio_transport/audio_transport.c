@@ -17,16 +17,14 @@ typedef struct {
     void *context;
 } audio_transport_progress_context_t;
 
-static void audio_transport_playback_irq(uint32_t completed_cycle, void *context)
-{
+static void audio_transport_playback_irq(uint32_t completed_cycle, void *context) {
     (void)context;
     tlv320dac3100_handle_pdma_irq(completed_cycle);
 }
 
 static void audio_transport_board_progress(
     m55m1_audio_board_stage_t stage,
-    void *context)
-{
+    void *context) {
     audio_transport_progress_context_t *progress =
         (audio_transport_progress_context_t *)context;
 
@@ -34,8 +32,7 @@ static void audio_transport_board_progress(
 }
 
 static audio_transport_status_t audio_transport_map_status(
-    tlv320dac3100_status_t status)
-{
+    tlv320dac3100_status_t status) {
     if (status == TLV320DAC3100_STATUS_OK) {
         return AUDIO_TRANSPORT_STATUS_OK;
     }
@@ -48,8 +45,7 @@ static audio_transport_status_t audio_transport_map_status(
 bool audio_transport_init(
     audio_transport_init_report_t *report,
     audio_transport_progress_callback_t progress_callback,
-    void *progress_context)
-{
+    void *progress_context) {
     m55m1_audio_playback_binding_t binding;
     m55m1_audio_clock_snapshot_t clocks;
     m55m1_audio_board_init_result_t board_status;
@@ -102,8 +98,7 @@ bool audio_transport_init(
     return true;
 }
 
-audio_transport_status_t audio_transport_start(void)
-{
+audio_transport_status_t audio_transport_start(void) {
     const tlv320dac3100_status_t status = tlv320dac3100_start();
 
     if (status != TLV320DAC3100_STATUS_OK) {
@@ -116,16 +111,14 @@ audio_transport_status_t audio_transport_start(void)
     return AUDIO_TRANSPORT_STATUS_OK;
 }
 
-void audio_transport_stop_safe(void)
-{
+void audio_transport_stop_safe(void) {
     m55m1_audio_dmic_stop();
     (void)tlv320dac3100_stop();
 }
 
 bool audio_transport_take_capture(
     int16_t destination[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
-    audio_transport_capture_timing_t *timing)
-{
+    audio_transport_capture_timing_t *timing) {
     m55m1_audio_dmic_block_timing_t board_timing;
 
     if (!m55m1_audio_dmic_take_block_timed(
@@ -139,22 +132,19 @@ bool audio_transport_take_capture(
     return true;
 }
 
-bool audio_transport_capture_pending(void)
-{
+bool audio_transport_capture_pending(void) {
     return m55m1_audio_dmic_block_pending();
 }
 
 audio_transport_status_t audio_transport_submit(
-    const int16_t samples[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK])
-{
+    const int16_t samples[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK]) {
     return audio_transport_map_status(tlv320dac3100_submit_mono_block(
         samples, AUDIO_TRANSPORT_SAMPLES_PER_BLOCK));
 }
 
 audio_transport_status_t audio_transport_submit_tagged(
     const int16_t samples[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
-    const audio_transport_block_tag_t *tag)
-{
+    const audio_transport_block_tag_t *tag) {
     if (tag == NULL) {
         return AUDIO_TRANSPORT_STATUS_ERROR;
     }
@@ -167,8 +157,7 @@ audio_transport_status_t audio_transport_submit_tagged(
         }));
 }
 
-bool audio_transport_take_completion(audio_transport_completion_t *completion)
-{
+bool audio_transport_take_completion(audio_transport_completion_t *completion) {
     tlv320dac3100_audio_completion_t driver_completion;
 
     if ((completion == NULL) ||
@@ -182,8 +171,7 @@ bool audio_transport_take_completion(audio_transport_completion_t *completion)
     return true;
 }
 
-void audio_transport_get_health(audio_transport_health_t *health)
-{
+void audio_transport_get_health(audio_transport_health_t *health) {
     m55m1_audio_dmic_status_t dmic;
     tlv320dac3100_driver_status_t dac;
 
@@ -200,19 +188,16 @@ void audio_transport_get_health(audio_transport_health_t *health)
     };
 }
 
-uint32_t audio_transport_cycles_now(void)
-{
+uint32_t audio_transport_cycles_now(void) {
     return m55m1_timebase_cycles_now();
 }
 
 uint32_t audio_transport_cycles_elapsed(
     uint32_t start_cycle,
-    uint32_t end_cycle)
-{
+    uint32_t end_cycle) {
     return m55m1_timebase_cycles_elapsed(start_cycle, end_cycle);
 }
 
-uint32_t audio_transport_cycles_to_us(uint32_t cycles)
-{
+uint32_t audio_transport_cycles_to_us(uint32_t cycles) {
     return m55m1_timebase_cycles_to_us(cycles);
 }

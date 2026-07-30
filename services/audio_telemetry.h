@@ -42,12 +42,17 @@ typedef struct {
     erb_gru_audio_diagnostics_t audio;
 } audio_telemetry_snapshot_t;
 
+/** @brief Reset foreground telemetry counters. @return None. */
 void audio_telemetry_init(void);
+/** @brief Record an enhancer duration. @param elapsed_us Frame processing time. @return None. Foreground-only. */
 void audio_telemetry_record_processing_us(uint32_t elapsed_us);
+/** @brief Record one model invocation duration. @param elapsed_us Invoke time. @return None. Foreground-only. */
 void audio_telemetry_record_invoke_us(uint32_t elapsed_us);
+/** @brief Record capture-to-DAC latency. @param elapsed_us End-to-end duration. @param sequence Source frame ordinal. @return None. Foreground-only. */
 void audio_telemetry_record_e2e_us(uint32_t elapsed_us, uint32_t sequence);
 void audio_telemetry_poll(
     const audio_telemetry_snapshot_t *snapshot, bool dmic_block_pending);
+/** @brief Emit a terminal failure report. @param stage Static failure stage text. @param status Platform status. @return None. Foreground-only; caller retains stage lifetime. */
 void audio_telemetry_fatal(const char *stage, int status);
 
 #ifdef __cplusplus

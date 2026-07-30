@@ -9,8 +9,7 @@
 
 #include "services/erb_gru/erb_gru_stream_timing.h"
 
-void erb_gru_stream_timing_reset(erb_gru_stream_timing_t *timing)
-{
+void erb_gru_stream_timing_reset(erb_gru_stream_timing_t *timing) {
     if (timing != NULL) {
         timing->pending = (erb_gru_source_tag_t){0U, 0U};
         timing->pending_valid = false;
@@ -21,8 +20,7 @@ bool erb_gru_stream_timing_advance(
     erb_gru_stream_timing_t *timing,
     uint32_t capture_sequence,
     uint32_t capture_completed_cycle,
-    erb_gru_source_tag_t *output_source)
-{
+    erb_gru_source_tag_t *output_source) {
     bool output_valid;
 
     if ((timing == NULL) || (output_source == NULL)) {

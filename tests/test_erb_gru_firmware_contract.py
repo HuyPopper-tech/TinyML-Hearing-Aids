@@ -35,7 +35,7 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
         pipeline = self.read("services/audio_pipeline/audio_pipeline.c")
 
         reduction = source[
-            source.index("if (inference_ok)\n        {", source.index("void expand_gains")) :
+            source.index("if (inference_ok) {", source.index("void expand_gains")) :
             source.index("g_bin_gains[bin] = bin_gain;", source.index("void expand_gains"))
         ]
         self.assertIn("#pragma clang loop vectorize(disable) interleave(disable)", reduction)

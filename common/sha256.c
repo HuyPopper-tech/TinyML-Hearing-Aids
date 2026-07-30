@@ -29,13 +29,11 @@ static const uint32_t SHA256_ROUND_CONSTANTS[64] = {
     0x19a4c116UL, 0x1e376c08UL, 0x2748774cUL, 0x34b0bcb5UL, 0x391c0cb3UL, 0x4ed8aa4aUL, 0x5b9cca4fUL, 0x682e6ff3UL,
     0x748f82eeUL, 0x78a5636fUL, 0x84c87814UL, 0x8cc70208UL, 0x90befffaUL, 0xa4506cebUL, 0xbef9a3f7UL, 0xc67178f2UL};
 
-static uint32_t rotate_right(uint32_t value, uint32_t bits)
-{
+static uint32_t rotate_right(uint32_t value, uint32_t bits) {
     return (value >> bits) | (value << (32U - bits));
 }
 
-static void sha256_transform(sha256_context_t *context, const uint8_t block[64])
-{
+static void sha256_transform(sha256_context_t *context, const uint8_t block[64]) {
     uint32_t words[64];
     uint32_t working[8];
     uint32_t temporary_1;
@@ -44,20 +42,17 @@ static void sha256_transform(sha256_context_t *context, const uint8_t block[64])
     uint32_t sigma_1;
     uint32_t index;
 
-    for (index = 0U; index < 16U; ++index)
-    {
+    for (index = 0U; index < 16U; ++index) {
         words[index] = ((uint32_t)block[index * 4U] << 24U) | ((uint32_t)block[index * 4U + 1U] << 16U) |
                        ((uint32_t)block[index * 4U + 2U] << 8U) | (uint32_t)block[index * 4U + 3U];
     }
-    for (index = 16U; index < 64U; ++index)
-    {
+    for (index = 16U; index < 64U; ++index) {
         sigma_0 = rotate_right(words[index - 15U], 7U) ^ rotate_right(words[index - 15U], 18U) ^ (words[index - 15U] >> 3U);
         sigma_1 = rotate_right(words[index - 2U], 17U) ^ rotate_right(words[index - 2U], 19U) ^ (words[index - 2U] >> 10U);
         words[index] = words[index - 16U] + sigma_0 + words[index - 7U] + sigma_1;
     }
     (void)memcpy(working, context->state, sizeof(working));
-    for (index = 0U; index < 64U; ++index)
-    {
+    for (index = 0U; index < 64U; ++index) {
         temporary_1 = working[7] + (rotate_right(working[4], 6U) ^ rotate_right(working[4], 11U) ^ rotate_right(working[4], 25U)) +
                       ((working[4] & working[5]) ^ ((~working[4]) & working[6])) + SHA256_ROUND_CONSTANTS[index] + words[index];
         temporary_2 = (rotate_right(working[0], 2U) ^ rotate_right(working[0], 13U) ^ rotate_right(working[0], 22U)) +
@@ -71,14 +66,12 @@ static void sha256_transform(sha256_context_t *context, const uint8_t block[64])
         working[1] = working[0];
         working[0] = temporary_1 + temporary_2;
     }
-    for (index = 0U; index < 8U; ++index)
-    {
+    for (index = 0U; index < 8U; ++index) {
         context->state[index] += working[index];
     }
 }
 
-void sha256_compute(const uint8_t *data, size_t length, uint8_t digest[SHA256_DIGEST_BYTES])
-{
+void sha256_compute(const uint8_t *data, size_t length, uint8_t digest[SHA256_DIGEST_BYTES]) {
     sha256_context_t context = {
         {0x6a09e667UL, 0xbb67ae85UL, 0x3c6ef372UL, 0xa54ff53aUL,
          0x510e527fUL, 0x9b05688cUL, 0x1f83d9abUL, 0x5be0cd19UL},
@@ -87,15 +80,13 @@ void sha256_compute(const uint8_t *data, size_t length, uint8_t digest[SHA256_DI
         0U};
     uint32_t index;
 
-    while (length > 0U)
-    {
+    while (length > 0U) {
         const size_t copied = ((64U - context.used) < length) ? (64U - context.used) : length;
         (void)memcpy(&context.block[context.used], data, copied);
         context.used += copied;
         data += copied;
         length -= copied;
-        if (context.used == sizeof(context.block))
-        {
+        if (context.used == sizeof(context.block)) {
             sha256_transform(&context, context.block);
             context.bit_length += 512U;
             context.used = 0U;
@@ -104,20 +95,17 @@ void sha256_compute(const uint8_t *data, size_t length, uint8_t digest[SHA256_DI
 
     context.bit_length += (uint64_t)context.used * 8U;
     context.block[context.used++] = 0x80U;
-    if (context.used > 56U)
-    {
+    if (context.used > 56U) {
         (void)memset(&context.block[context.used], 0, sizeof(context.block) - context.used);
         sha256_transform(&context, context.block);
         context.used = 0U;
     }
     (void)memset(&context.block[context.used], 0, 56U - context.used);
-    for (index = 0U; index < 8U; ++index)
-    {
+    for (index = 0U; index < 8U; ++index) {
         context.block[63U - index] = (uint8_t)(context.bit_length >> (index * 8U));
     }
     sha256_transform(&context, context.block);
-    for (index = 0U; index < 8U; ++index)
-    {
+    for (index = 0U; index < 8U; ++index) {
         digest[index * 4U] = (uint8_t)(context.state[index] >> 24U);
         digest[index * 4U + 1U] = (uint8_t)(context.state[index] >> 16U);
         digest[index * 4U + 2U] = (uint8_t)(context.state[index] >> 8U);

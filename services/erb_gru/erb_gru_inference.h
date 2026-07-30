@@ -32,7 +32,9 @@ typedef struct {
     uint32_t model_flash_bytes;
 } erb_gru_inference_performance_t;
 
+/** @brief Construct the static no-heap TFLM/Ethos-U inference lifetime. @return True if model, tensors and accelerator contract validate. Foreground-only and idempotent after success. */
 bool erb_gru_inference_init(void);
+/** @brief Invoke one recurrent model frame. @param feature Quantized 32-band input. @param state1 First committed recurrent state. @param state2 Second committed recurrent state. @param gain Output gains. @param next_state1 Destination for candidate state one. @param next_state2 Destination for candidate state two. @return True only when all outputs are valid; caller must commit candidate states only after true. Foreground-only, non-reentrant. */
 bool erb_gru_inference_invoke(
     const int8_t feature[ERB_GRU_INFERENCE_BANDS],
     const int8_t state1[ERB_GRU_INFERENCE_STATE_SIZE],
@@ -40,6 +42,7 @@ bool erb_gru_inference_invoke(
     int8_t gain[ERB_GRU_INFERENCE_BANDS],
     int8_t next_state1[ERB_GRU_INFERENCE_STATE_SIZE],
     int8_t next_state2[ERB_GRU_INFERENCE_STATE_SIZE]);
+/** @brief Snapshot inference counters. @param performance Destination, ignored when NULL. @return None. Foreground-only best-effort telemetry. */
 void erb_gru_inference_get_performance(erb_gru_inference_performance_t *performance);
 
 #ifdef __cplusplus

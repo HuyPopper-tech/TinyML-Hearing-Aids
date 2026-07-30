@@ -12,21 +12,17 @@
 
 static bool g_debug_uart_initialized;
 
-void SetDebugUartMFP(void)
-{
+void SetDebugUartMFP(void) {
     SET_UART1_RXD_PA2();
     SET_UART1_TXD_PA3();
 }
 
-void InitDebugUart(void)
-{
+void InitDebugUart(void) {
     UART_Open(UART1, 115200U);
 }
 
-void m55m1_debug_uart_init(void)
-{
-    if (g_debug_uart_initialized)
-    {
+void m55m1_debug_uart_init(void) {
+    if (g_debug_uart_initialized) {
         return;
     }
 
@@ -42,8 +38,7 @@ void m55m1_debug_uart_init(void)
     g_debug_uart_initialized = true;
 }
 
-void m55m1_debug_uart_enable_tx_irq(void)
-{
+void m55m1_debug_uart_enable_tx_irq(void) {
     NVIC_SetPriority(UART1_IRQn, 3U);
     NVIC_EnableIRQ(UART1_IRQn);
 }

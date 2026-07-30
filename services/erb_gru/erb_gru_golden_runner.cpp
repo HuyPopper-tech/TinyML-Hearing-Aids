@@ -45,8 +45,7 @@ alignas(16) int16_t g_block[kHopSamples];
 
 } // namespace
 
-extern "C" bool erb_gru_golden_run(erb_gru_golden_result_t *result)
-{
+extern "C" bool erb_gru_golden_run(erb_gru_golden_result_t *result) {
     erb_gru_golden_result_t local = {};
     uint32_t output_offset = 0U;
 

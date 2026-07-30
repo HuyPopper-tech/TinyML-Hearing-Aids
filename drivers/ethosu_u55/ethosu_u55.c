@@ -16,18 +16,14 @@
 static struct ethosu_driver g_ethosu_driver;
 static bool g_ethosu_ready;
 
-bool ethosu_u55_init(void)
-{
-    if (g_ethosu_ready)
-    {
+bool ethosu_u55_init(void) {
+    if (g_ethosu_ready) {
         return true;
     }
-    if (!m55m1_ethosu_u55_board_init())
-    {
+    if (!m55m1_ethosu_u55_board_init()) {
         return false;
     }
-    if (ethosu_init(&g_ethosu_driver, (void *)NPU_BASE, NULL, 0U, 1, 1) != 0)
-    {
+    if (ethosu_init(&g_ethosu_driver, (void *)NPU_BASE, NULL, 0U, 1, 1) != 0) {
         return false;
     }
     m55m1_ethosu_u55_board_enable_irq();
@@ -35,49 +31,41 @@ bool ethosu_u55_init(void)
     return true;
 }
 
-uint32_t ethosu_u55_cycles_now(void)
-{
+uint32_t ethosu_u55_cycles_now(void) {
     return m55m1_ethosu_u55_board_cycles_now();
 }
 
-uint32_t ethosu_u55_cycles_elapsed(uint32_t start_cycle, uint32_t end_cycle)
-{
+uint32_t ethosu_u55_cycles_elapsed(uint32_t start_cycle, uint32_t end_cycle) {
     return m55m1_ethosu_u55_board_cycles_elapsed(start_cycle, end_cycle);
 }
 
-void ethosu_u55_fault_delay_ms(uint32_t milliseconds)
-{
+void ethosu_u55_fault_delay_ms(uint32_t milliseconds) {
     const uint32_t start_cycle = ethosu_u55_cycles_now();
     const uint32_t delay_cycles = (SystemCoreClock / 1000U) * milliseconds;
 
     while (m55m1_ethosu_u55_board_cycles_elapsed(
-               start_cycle, ethosu_u55_cycles_now()) < delay_cycles)
-    {
+               start_cycle, ethosu_u55_cycles_now()) < delay_cycles) {
         __NOP();
     }
 }
 
-bool ethosu_u55_deadline_exceeded(uint32_t start_cycle, uint32_t milliseconds)
-{
+bool ethosu_u55_deadline_exceeded(uint32_t start_cycle, uint32_t milliseconds) {
     return m55m1_ethosu_u55_board_cycles_elapsed(
                start_cycle, ethosu_u55_cycles_now()) >=
            ((SystemCoreClock / 1000U) * milliseconds);
 }
 
-NVT_ITCM void NPU_IRQHandler(void)
-{
+NVT_ITCM void NPU_IRQHandler(void) {
     ethosu_irq_handler(&g_ethosu_driver);
     __DSB();
     __ISB();
 }
 
-void ethosu_flush_dcache(uint32_t *address, size_t bytes)
-{
+void ethosu_flush_dcache(uint32_t *address, size_t bytes) {
     uint32_t aligned_address;
     uint32_t aligned_bytes;
 
-    if ((address == NULL) || (bytes == 0U))
-    {
+    if ((address == NULL) || (bytes == 0U)) {
         SCB_CleanDCache();
         return;
     }
@@ -86,13 +74,11 @@ void ethosu_flush_dcache(uint32_t *address, size_t bytes)
     SCB_CleanDCache_by_Addr((void *)aligned_address, (int32_t)aligned_bytes);
 }
 
-void ethosu_invalidate_dcache(uint32_t *address, size_t bytes)
-{
+void ethosu_invalidate_dcache(uint32_t *address, size_t bytes) {
     uint32_t aligned_address;
     uint32_t aligned_bytes;
 
-    if ((address == NULL) || (bytes == 0U))
-    {
+    if ((address == NULL) || (bytes == 0U)) {
         SCB_InvalidateDCache();
         return;
     }

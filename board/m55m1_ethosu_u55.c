@@ -13,10 +13,8 @@
 
 static bool g_board_ready;
 
-bool m55m1_ethosu_u55_board_init(void)
-{
-    if (g_board_ready)
-    {
+bool m55m1_ethosu_u55_board_init(void) {
+    if (g_board_ready) {
         return true;
     }
 
@@ -30,20 +28,17 @@ bool m55m1_ethosu_u55_board_init(void)
     return true;
 }
 
-void m55m1_ethosu_u55_board_enable_irq(void)
-{
+void m55m1_ethosu_u55_board_enable_irq(void) {
     NVIC_SetPriority(NPU_IRQn, 2U);
     NVIC_EnableIRQ(NPU_IRQn);
 }
 
-uint32_t m55m1_ethosu_u55_board_cycles_now(void)
-{
+uint32_t m55m1_ethosu_u55_board_cycles_now(void) {
     return m55m1_timebase_cycles_now();
 }
 
 uint32_t m55m1_ethosu_u55_board_cycles_elapsed(
     uint32_t start_cycle,
-    uint32_t end_cycle)
-{
+    uint32_t end_cycle) {
     return m55m1_timebase_cycles_elapsed(start_cycle, end_cycle);
 }

@@ -15,8 +15,7 @@
 
 static erb_gru_audio_diagnostics_t g_diagnostics;
 
-static void reset_extrema(void)
-{
+static void reset_extrema(void) {
     g_diagnostics.feature_min = INT8_MAX;
     g_diagnostics.feature_max = INT8_MIN;
     g_diagnostics.gain_min = INT8_MAX;
@@ -28,14 +27,12 @@ static void reset_extrema(void)
     g_diagnostics.bin_gain_min_q15 = UINT32_MAX;
 }
 
-static uint16_t pcm_amplitude(int16_t sample)
-{
+static uint16_t pcm_amplitude(int16_t sample) {
     const int32_t promoted = sample;
     return (uint16_t)((promoted < 0) ? -promoted : promoted);
 }
 
-static void update_int8_extrema(int8_t value, int8_t *minimum, int8_t *maximum)
-{
+static void update_int8_extrema(int8_t value, int8_t *minimum, int8_t *maximum) {
     if (value < *minimum) {
         *minimum = value;
     }
@@ -44,15 +41,13 @@ static void update_int8_extrema(int8_t value, int8_t *minimum, int8_t *maximum)
     }
 }
 
-void erb_gru_audio_diagnostics_reset(void)
-{
+void erb_gru_audio_diagnostics_reset(void) {
     memset(&g_diagnostics, 0, sizeof(g_diagnostics));
     reset_extrema();
 }
 
 void erb_gru_audio_diagnostics_record_pcm(
-    const int16_t *input, const int16_t *output, size_t count)
-{
+    const int16_t *input, const int16_t *output, size_t count) {
     if ((input == NULL) || (output == NULL) || (count == 0U)) {
         return;
     }
@@ -82,8 +77,7 @@ void erb_gru_audio_diagnostics_record_pcm(
 }
 
 void erb_gru_audio_diagnostics_record_feature(
-    const int8_t *feature, size_t count)
-{
+    const int8_t *feature, size_t count) {
     if (feature == NULL) {
         return;
     }
@@ -107,8 +101,7 @@ void erb_gru_audio_diagnostics_record_gain_state(
     size_t gain_count,
     const int8_t *state1,
     const int8_t *state2,
-    size_t state_count)
-{
+    size_t state_count) {
     if ((gain == NULL) || (state1 == NULL) || (state2 == NULL)) {
         return;
     }
@@ -152,8 +145,7 @@ void erb_gru_audio_diagnostics_record_dsp(
     uint32_t bin_gain_count,
     uint32_t bin_gain_min_q15,
     uint32_t bin_gain_max_q15,
-    uint32_t wola_peak_q15)
-{
+    uint32_t wola_peak_q15) {
     g_diagnostics.spectrum_input_energy_q30 += spectrum_input_energy_q30;
     g_diagnostics.spectrum_output_energy_q30 += spectrum_output_energy_q30;
     g_diagnostics.ifft_energy_q30 += ifft_energy_q30;
@@ -175,8 +167,7 @@ void erb_gru_audio_diagnostics_record_dsp(
     }
 }
 
-bool erb_gru_audio_diagnostics_take(erb_gru_audio_diagnostics_t *diagnostics)
-{
+bool erb_gru_audio_diagnostics_take(erb_gru_audio_diagnostics_t *diagnostics) {
     if ((diagnostics == NULL) || (g_diagnostics.frames == 0U)) {
         return false;
     }

@@ -21,8 +21,7 @@ extern "C" {
  * @return Elapsed ticks modulo `mask + 1`.
  */
 static inline uint32_t wrapping_counter_elapsed(
-    uint32_t start, uint32_t end, uint32_t mask)
-{
+    uint32_t start, uint32_t end, uint32_t mask) {
     return (end - start) & mask;
 }
 

@@ -633,8 +633,7 @@ tlv320dac3100_status_t tlv320dac3100_submit_mono_block_tagged(
 
     /* This descriptor was completed before becoming available, so changing SA is race-free. */
     g_pdma_descriptors[slot].SA = (uint32_t)(uintptr_t)g_stereo_buffers[slot];
-    if (tag != NULL)
-    {
+    if (tag != NULL) {
         g_context.slot_tags[slot] = *tag;
         g_context.slot_has_tag[slot] = true;
     }
@@ -652,14 +651,12 @@ bool tlv320dac3100_take_audio_completion(tlv320dac3100_audio_completion_t *compl
 {
     uint32_t primask;
 
-    if (completion == NULL)
-    {
+    if (completion == NULL) {
         return false;
     }
     primask = __get_PRIMASK();
     __disable_irq();
-    if (!g_context.completion_ready)
-    {
+    if (!g_context.completion_ready) {
         __set_PRIMASK(primask);
         return false;
     }
@@ -773,8 +770,7 @@ void tlv320dac3100_handle_pdma_irq(uint32_t completed_cycle)
         {
             ++g_context.status.underrun_blocks;
         }
-        if (g_context.slot_has_tag[slot])
-        {
+        if (g_context.slot_has_tag[slot]) {
             g_context.latest_completion = (tlv320dac3100_audio_completion_t){
                 .sequence = g_context.slot_tags[slot].sequence,
                 .capture_completed_cycle = g_context.slot_tags[slot].capture_completed_cycle,

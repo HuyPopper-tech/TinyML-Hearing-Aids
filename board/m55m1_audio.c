@@ -46,8 +46,7 @@ static bool g_clock_snapshot_valid;
 static m55m1_audio_playback_irq_callback_t g_playback_irq_callback;
 static void *g_playback_irq_context;
 
-static uint32_t m55m1_audio_profile_mclk_hz(m55m1_audio_profile_t profile)
-{
+static uint32_t m55m1_audio_profile_mclk_hz(m55m1_audio_profile_t profile) {
     if (profile == M55M1_AUDIO_PROFILE_16KHZ) {
         return 4096000UL;
     }
@@ -58,8 +57,7 @@ static uint32_t m55m1_audio_profile_mclk_hz(m55m1_audio_profile_t profile)
 }
 
 static uint32_t m55m1_audio_profile_sample_rate_hz(
-    m55m1_audio_profile_t profile)
-{
+    m55m1_audio_profile_t profile) {
     if (profile == M55M1_AUDIO_PROFILE_16KHZ) {
         return 16000UL;
     }
@@ -70,8 +68,7 @@ static uint32_t m55m1_audio_profile_sample_rate_hz(
 }
 
 static uint16_t m55m1_audio_profile_samples_per_block(
-    m55m1_audio_profile_t profile)
-{
+    m55m1_audio_profile_t profile) {
     if (profile == M55M1_AUDIO_PROFILE_16KHZ) {
         return 160U;
     }
@@ -90,8 +87,7 @@ static uint16_t m55m1_audio_profile_samples_per_block(
  * standard maximum of nine SCL pulses, followed by a STOP, before I2C1 owns
  * the pins. No push-pull high level is ever driven onto this shared bus.
  */
-static bool m55m1_audio_recover_i2c_bus(void)
-{
+static bool m55m1_audio_recover_i2c_bus(void) {
     uint32_t pulse;
 
     SET_GPIO_PB0();
@@ -103,8 +99,7 @@ static bool m55m1_audio_recover_i2c_bus(void)
 
     for (pulse = 0U;
          (pulse < M55M1_AUDIO_I2C_RECOVERY_PULSES) && (PB0 == 0U);
-         ++pulse)
-    {
+         ++pulse) {
         PB1 = 0U;
         CLK_SysTickDelay(M55M1_AUDIO_I2C_RECOVERY_DELAY_US);
         PB1 = 1U;
@@ -134,16 +129,13 @@ static bool m55m1_audio_recover_i2c_bus(void)
  */
 static void m55m1_audio_notify_progress(
     m55m1_audio_board_progress_callback_t callback, void *context,
-    m55m1_audio_board_stage_t stage)
-{
-    if (callback != NULL)
-    {
+    m55m1_audio_board_stage_t stage) {
+    if (callback != NULL) {
         callback(stage, context);
     }
 }
 
-static void m55m1_audio_configure_dmic_descriptor(uint8_t slot)
-{
+static void m55m1_audio_configure_dmic_descriptor(uint8_t slot) {
     const uint8_t next_slot = (uint8_t)(slot ^ 1U);
 
     g_dmic_descriptors[slot].CTL = LPPDMA_OP_SCATTER | LPPDMA_REQ_SINGLE |
@@ -162,15 +154,13 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
     m55m1_audio_playback_irq_callback_t playback_irq_callback,
     void *playback_irq_context,
     m55m1_audio_board_progress_callback_t progress_callback,
-    void *progress_context)
-{
+    void *progress_context) {
     uint32_t i2s_module_divider;
     uint32_t required_mclk_hz;
 
     required_mclk_hz = m55m1_audio_profile_mclk_hz(profile);
     if ((binding == NULL) || (playback_irq_callback == NULL) ||
-        (required_mclk_hz == 0UL))
-    {
+        (required_mclk_hz == 0UL)) {
         return M55M1_AUDIO_BOARD_INIT_CLOCK_MISMATCH;
     }
     g_clock_snapshot_valid = false;
@@ -198,8 +188,7 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
      * Check the StdDriver's bounded readiness result before CLK_EnableAPLL,
      * whose HXT-source path otherwise repeats the same wait internally.
      */
-    if (CLK_WaitClockReady(CLK_STATUS_HXTSTB_Msk) == 0U)
-    {
+    if (CLK_WaitClockReady(CLK_STATUS_HXTSTB_Msk) == 0U) {
         SYS_LockReg();
         return M55M1_AUDIO_BOARD_INIT_HXT_TIMEOUT;
     }
@@ -222,8 +211,7 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
      * bounded wait expires. Read the hardware-ready bit so an unlocked APLL1
      * cannot silently become an invalid I2S MCLK source.
      */
-    if ((CLK->STATUS & CLK_STATUS_APLL1STB_Msk) == 0U)
-    {
+    if ((CLK->STATUS & CLK_STATUS_APLL1STB_Msk) == 0U) {
         SYS_LockReg();
         return M55M1_AUDIO_BOARD_INIT_APLL1_TIMEOUT;
     }
@@ -235,8 +223,7 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
     (void)CLK_EnableAPLL(CLK_APLLCTL_APLLSRC_HXT,
                          M55M1_AUDIO_CORE_HZ,
                          CLK_APLL0_SELECT);
-    if ((CLK->STATUS & CLK_STATUS_APLL0STB_Msk) == 0U)
-    {
+    if ((CLK->STATUS & CLK_STATUS_APLL0STB_Msk) == 0U) {
         SYS_LockReg();
         return M55M1_AUDIO_BOARD_INIT_APLL0_TIMEOUT;
     }
@@ -258,13 +245,11 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
         g_clock_snapshot.i2s_src_hz / i2s_module_divider;
     if ((g_clock_snapshot.core_hz != M55M1_AUDIO_CORE_HZ) ||
         (g_clock_snapshot.apll0_hz != M55M1_AUDIO_CORE_HZ) ||
-        (g_clock_snapshot.mclk_hz != required_mclk_hz))
-    {
+        (g_clock_snapshot.mclk_hz != required_mclk_hz)) {
         SYS_LockReg();
         return M55M1_AUDIO_BOARD_INIT_CLOCK_MISMATCH;
     }
-    if (i2s_module_divider == 58UL)
-    {
+    if (i2s_module_divider == 58UL) {
         CLK_SetModuleClock(I2S0_MODULE, CLK_I2SSEL_I2S0SEL_APLL1_DIV2,
                            CLK_I2SDIV_I2S0DIV(58));
     }
@@ -290,8 +275,7 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
     m55m1_audio_notify_progress(
         progress_callback, progress_context,
         M55M1_AUDIO_BOARD_STAGE_AUDIO_PINS_READY);
-    if (!m55m1_audio_recover_i2c_bus())
-    {
+    if (!m55m1_audio_recover_i2c_bus()) {
         SYS_LockReg();
         return M55M1_AUDIO_BOARD_INIT_I2C_STUCK;
     }
@@ -339,18 +323,15 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
 }
 
 bool m55m1_audio_get_clock_snapshot(
-    m55m1_audio_clock_snapshot_t *snapshot)
-{
-    if ((snapshot == NULL) || !g_clock_snapshot_valid)
-    {
+    m55m1_audio_clock_snapshot_t *snapshot) {
+    if ((snapshot == NULL) || !g_clock_snapshot_valid) {
         return false;
     }
     *snapshot = g_clock_snapshot;
     return true;
 }
 
-bool m55m1_audio_dmic_start(m55m1_audio_profile_t profile)
-{
+bool m55m1_audio_dmic_start(m55m1_audio_profile_t profile) {
     uint32_t index;
     uint32_t actual_sample_rate;
     uint32_t requested_sample_rate;
@@ -358,8 +339,7 @@ bool m55m1_audio_dmic_start(m55m1_audio_profile_t profile)
 
     requested_sample_rate = m55m1_audio_profile_sample_rate_hz(profile);
     samples_per_block = m55m1_audio_profile_samples_per_block(profile);
-    if ((requested_sample_rate == 0UL) || (samples_per_block == 0U))
-    {
+    if ((requested_sample_rate == 0UL) || (samples_per_block == 0U)) {
         return false;
     }
 
@@ -369,8 +349,7 @@ bool m55m1_audio_dmic_start(m55m1_audio_profile_t profile)
     CLK_WaitClockReady(CLK_STATUS_HXTSTB_Msk);
     CLK_EnableModuleClock(DMIC0_MODULE);
     CLK_EnableModuleClock(LPPDMA0_MODULE);
-    if (!g_clock_snapshot_valid)
-    {
+    if (!g_clock_snapshot_valid) {
         (void)CLK_EnableAPLL(CLK_APLLCTL_APLLSRC_HXT,
                              DMIC_APLL1_FREQ_196608KHZ,
                              CLK_APLL1_SELECT);
@@ -399,8 +378,7 @@ bool m55m1_audio_dmic_start(m55m1_audio_profile_t profile)
      */
     DMIC_SET_LATCHEDGE_CH23(DMIC0, DMIC_LATCHDATA_CH23RF);
     actual_sample_rate = DMIC_SetSampleRate(DMIC0, requested_sample_rate);
-    if (actual_sample_rate != requested_sample_rate)
-    {
+    if (actual_sample_rate != requested_sample_rate) {
         DMIC_Close(DMIC0);
         return false;
     }
@@ -408,8 +386,7 @@ bool m55m1_audio_dmic_start(m55m1_audio_profile_t profile)
     g_dmic_state = (m55m1_audio_dmic_state_t){
         .samples_per_block = samples_per_block,
     };
-    for (index = 0U; index < 2U; ++index)
-    {
+    for (index = 0U; index < 2U; ++index) {
         m55m1_audio_configure_dmic_descriptor((uint8_t)index);
     }
     LPPDMA_Open(LPPDMA, 1UL << M55M1_AUDIO_LPPDMA_CH);
@@ -425,8 +402,7 @@ bool m55m1_audio_dmic_start(m55m1_audio_profile_t profile)
     return true;
 }
 
-void m55m1_audio_dmic_stop(void)
-{
+void m55m1_audio_dmic_stop(void) {
     const uint32_t channel_mask = 1UL << M55M1_AUDIO_LPPDMA_CH;
     uint32_t primask;
 
@@ -457,36 +433,31 @@ void m55m1_audio_dmic_stop(void)
 }
 
 bool m55m1_audio_dmic_take_block(
-    int16_t *destination, uint16_t sample_count)
-{
+    int16_t *destination, uint16_t sample_count) {
     return m55m1_audio_dmic_take_block_timed(
         destination, sample_count, NULL);
 }
 
-bool m55m1_audio_dmic_block_pending(void)
-{
+bool m55m1_audio_dmic_block_pending(void) {
     return g_dmic_state.block_ready;
 }
 
 bool m55m1_audio_dmic_take_block_timed(
     int16_t *destination, uint16_t sample_count,
-    m55m1_audio_dmic_block_timing_t *timing)
-{
+    m55m1_audio_dmic_block_timing_t *timing) {
     uint32_t primask;
     uint32_t index;
     uint8_t completed_slot;
     m55m1_audio_dmic_block_timing_t local_timing;
 
-    if ((destination == NULL) || (sample_count != g_dmic_state.samples_per_block))
-    {
+    if ((destination == NULL) || (sample_count != g_dmic_state.samples_per_block)) {
         return false;
     }
 
     /* Only ownership flags need exclusion; LPPDMA keeps filling the alternate slot. */
     primask = __get_PRIMASK();
     __disable_irq();
-    if (!g_dmic_state.block_ready)
-    {
+    if (!g_dmic_state.block_ready) {
         __set_PRIMASK(primask);
         return false;
     }
@@ -497,24 +468,20 @@ bool m55m1_audio_dmic_take_block_timed(
     __set_PRIMASK(primask);
 
     /* This 10 ms profile block completes copying before LPPDMA returns to the alternate slot. */
-    for (index = 0U; index < sample_count; ++index)
-    {
+    for (index = 0U; index < sample_count; ++index) {
         destination[index] = g_dmic_buffers[completed_slot][index];
     }
-    if (timing != NULL)
-    {
+    if (timing != NULL) {
         *timing = local_timing;
     }
     return true;
 }
 
 void m55m1_audio_dmic_get_status(
-    m55m1_audio_dmic_status_t *status)
-{
+    m55m1_audio_dmic_status_t *status) {
     uint32_t primask;
 
-    if (status == NULL)
-    {
+    if (status == NULL) {
         return;
     }
 
@@ -529,31 +496,26 @@ void m55m1_audio_dmic_get_status(
     __set_PRIMASK(primask);
 }
 
-void PDMA0_IRQHandler(void)
-{
+void PDMA0_IRQHandler(void) {
     if (g_playback_irq_callback != NULL) {
         g_playback_irq_callback(
             m55m1_timebase_cycles_now(), g_playback_irq_context);
     }
 }
 
-void LPPDMA_IRQHandler(void)
-{
+void LPPDMA_IRQHandler(void) {
     const uint32_t channel_mask = 1UL << M55M1_AUDIO_LPPDMA_CH;
 
-    if ((LPPDMA_GET_ABORT_STS(LPPDMA) & channel_mask) != 0U)
-    {
+    if ((LPPDMA_GET_ABORT_STS(LPPDMA) & channel_mask) != 0U) {
         LPPDMA_CLR_ABORT_FLAG(LPPDMA, channel_mask);
         ++g_dmic_state.dma_errors;
     }
 
-    if ((LPPDMA_GET_TD_STS(LPPDMA) & channel_mask) != 0U)
-    {
+    if ((LPPDMA_GET_TD_STS(LPPDMA) & channel_mask) != 0U) {
         LPPDMA_CLR_TD_FLAG(LPPDMA, channel_mask);
         ++g_dmic_state.completed_blocks;
         g_dmic_state.last_completed_cycle = m55m1_timebase_cycles_now();
-        if (g_dmic_state.block_ready)
-        {
+        if (g_dmic_state.block_ready) {
             ++g_dmic_state.overrun_blocks;
         }
 

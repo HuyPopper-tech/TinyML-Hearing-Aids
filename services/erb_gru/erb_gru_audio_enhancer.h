@@ -68,19 +68,25 @@ typedef struct {
 } erb_gru_audio_diagnostics_t;
 #endif
 
+/** @brief Initialize static FFT, WOLA and inference state. @return True when processing can begin; foreground-only and no heap allocation after success. */
 bool erb_gru_audio_enhancer_init(void);
+/** @brief Enhance one causal hop. @param input Caller-owned 160-sample capture hop. @param output Destination 160-sample playback hop. @return Enhanced, preroll-silence, unity-fallback, or invalid result. Foreground-only/non-reentrant; input/output may not outlive this call. */
 erb_gru_audio_result_t erb_gru_audio_enhancer_process(
     const int16_t input[ERB_GRU_AUDIO_HOP_SAMPLES],
     int16_t output[ERB_GRU_AUDIO_HOP_SAMPLES]);
+/** @brief Reset overlap and recurrent history. @return None. Foreground-only; next process call repeats preroll semantics. */
 void erb_gru_audio_enhancer_reset(void);
 
 #if M55M1_ERB_GRU_DIAGNOSTICS
+/** @brief Take and reset accumulated diagnostics. @param diagnostics Destination. @return True when a snapshot was copied. Foreground-only. */
 bool erb_gru_audio_enhancer_take_diagnostics(
     erb_gru_audio_diagnostics_t *diagnostics);
+/** @brief Report static enhancer storage. @return Bytes reserved without heap allocation. */
 uint32_t erb_gru_audio_enhancer_static_bytes(void);
 #endif
 
 #if MODEL_GOLDEN_TEST_DATA
+/** @brief Emit the test-only final delayed WOLA hop. @param output Destination hop. @return True when initialized delayed output exists; false otherwise. Terminal lifecycle operation for the golden runner. */
 bool erb_gru_audio_enhancer_flush(int16_t output[ERB_GRU_AUDIO_HOP_SAMPLES]);
 #endif
 

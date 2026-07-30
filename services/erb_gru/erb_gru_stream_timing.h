@@ -23,7 +23,9 @@ typedef struct {
     bool pending_valid;
 } erb_gru_stream_timing_t;
 
+/** @brief Clear one-hop WOLA source history. @param timing Caller-owned tracker. @return None. Foreground-only; discards pending source tag. */
 void erb_gru_stream_timing_reset(erb_gru_stream_timing_t *timing);
+/** @brief Advance source attribution across the one-hop WOLA delay. @param timing Tracker. @param capture_sequence Current capture ordinal. @param capture_completed_cycle Capture timestamp. @param output_source Destination for the preceding source tag. @return True once a delayed output tag exists; false during preroll/invalid input. Foreground-only. */
 bool erb_gru_stream_timing_advance(
     erb_gru_stream_timing_t *timing,
     uint32_t capture_sequence,

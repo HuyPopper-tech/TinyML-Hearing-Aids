@@ -13,11 +13,15 @@
 extern "C" {
 #endif
 
+/** @brief Initialize the board cycle counter before foreground timing clients run. @return None. */
 void m55m1_timebase_init(void);
+/** @brief Read the free-running counter. @return Current cycle value; wrap is expected. */
 uint32_t m55m1_timebase_cycles_now(void);
+/** @brief Calculate wrap-safe elapsed cycles. @param start_cycle Earlier sample. @param end_cycle Later sample. @return Unsigned wrapped delta. */
 uint32_t m55m1_timebase_cycles_elapsed(
     uint32_t start_cycle,
     uint32_t end_cycle);
+/** @brief Convert cycles at the configured core clock. @param cycles Cycle delta. @return Truncated microseconds. */
 uint32_t m55m1_timebase_cycles_to_us(uint32_t cycles);
 
 #ifdef __cplusplus
