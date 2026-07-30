@@ -1,6 +1,6 @@
 # ERB-GRU Ethos-U55 reintegration handoff
 
-Updated: 2026-07-29  
+Updated: 2026-07-30
 Worktree: `D:\TinyML-Hearing-Aids\.worktrees\erb-gru-ethosu`  
 Branch: `codex/erb-gru-ethosu`
 
@@ -45,24 +45,36 @@ generates `erb_gru_deploy_contract.h`, stable asset/model includes,
 - `ON` enables UART1 PA2/PA3 at 115200-8N1 and emits one atomic snapshot after
   each 100 processed hops. A pending DMIC block delays formatting. An enqueue
   failure retains the complete pending message and all statistics for retry.
-- Golden scenarios require diagnostics `ON`; fault injection remains
-  independently selectable.
+- Golden scenarios require diagnostics `ON`. Release diagnostics may use
+  golden scenarios and fault injection, while production Release
+  (`DIAGNOSTICS=OFF`) rejects both.
 - No diagnostic work was added to the DMIC, LPPDMA, PDMA, NPU, or UART ISR
   beyond the existing bounded UART FIFO drain.
 
-Each snapshot has three CRLF-terminated records:
+Each snapshot has four CRLF-terminated records:
 
 ```text
-[PERF] f=... enh_us=avg/max/p99 npu_us=avg/max/p99 dsp_us=... e2e_us=avg/max/p99 e2e_n=... e2e_gap=... e2e_40ms=... fallback=... deadline=... dmic_ovr=... dmic_dma=... dac_busy=... underrun=... dac_dma=... npu_error=... uart_drop=...
+[PERF] f=... enh_us=avg/max/p99 npu_us=avg/max/p99 dsp_us=... e2e_us=avg/max/p99 e2e_n=... e2e_gap=... e2e_40ms=... fallback=... deadline=... dmic_ovr=... dmic_dma=... dac_busy=... underrun=... dac_dma=... npu_error=... fault_injected=... uart_drop=...
 [MODEL] mac_inf=45056 npu_ops=30 cpu_ops=0 active_mmac_s_x1000=... stream_mmac_s_x1000=4506 duty_permille=... invoke_count=... model_flash=59232 arena=used/131072 dsp_static=... stack_cfg=8192
 [AUDIO] frames=... in_peak=... in_rms=... in_clip=... out_peak=... out_rms=... out_clip=... rms_ratio_milli=... feat_q=min/mean/max feat_sat=low/high gain_milli=min/mean/max gain_zero_pct=... gain_unity_pct=... state1_q=min/max state2_q=min/max state_sat=...
+[DSP] valid=... bin_gain_milli=min/mean/max spec_ratio_milli=... ifft_rms=... wola_rms=... wola_peak=...
 ```
 
 The enhancer accumulator excludes pre-roll, associates WOLA output with the
 preceding capture hop, and observes feature tensors immediately after
 quantization and gain/state tensors only after successful Invoke. Unity
 fallback output remains in PCM statistics and is identified by the cumulative
-fallback counter. The DSP static field is a `sizeof` total for enhancer working
+fallback counter. Intentional `INVOKE_FAIL` events increment `fault_injected`,
+not `npu_error`; the latter is reserved for a real TFLM Invoke failure. If no
+Invoke succeeds in a window, `gain_milli=0/0/0` and gain count remains zero.
+
+DSP diagnostics convert normalized spectrum, normalized IFFT and WOLA boundary
+samples to clamped Q15 before accumulating Q30 energy. DC and Nyquist have
+weight one; other spectrum bins have weight two. Per-frame collection performs
+no division, square root, formatting, or allocation. Unity fallback records
+bin gain 1000 and traverses the same spectrum/IFFT/WOLA instrumentation.
+
+The DSP static field is a `sizeof` total for enhancer working
 buffers; stack and arena capacity fields are configured/static values, not
 runtime high-water measurements.
 
@@ -95,8 +107,8 @@ from PCM16, quantized gains, and the exact package DSP constants.
   whole or dropped whole. UART IRQ priority is 3, below audio DMA priority 1
   and NPU priority 2.
 - No polling `printf` remains after audio start. Telemetry is formatted only
-  in foreground when no DMIC block is pending, every 500 frames. It reports a
-  100-us-bucket p99 estimate, max timing, audio/NPU errors and drops.
+  in foreground when no DMIC block is pending, every 100 frames. It reports
+  exact 100-frame p99/max timing, audio/NPU errors and drops.
 - Fault modes exist for `INVOKE_FAIL`, `INVOKE_SLOW`, and `DAC_BUSY`. A late
   invocation is rejected before output/state publication.
 - Golden builds compile exactly one selected corpus and run 24 stateful frames
@@ -124,14 +136,20 @@ from PCM16, quantized gains, and the exact package DSP constants.
   are reset before the next successful frame.
 - Fixed byte ring whole-message/drop/wrap host test: pass.
 - `git diff --check`: pass.
-- Full Python suite: 60 tests pass. The two remaining errors are isolated
+- Full Python suite: 67 tests pass. The two remaining errors are isolated
   worktree infrastructure files absent from this worktree:
   `.codex/AGENTS.md` and `.vscode/launch.json`.
 - Diagnostic host tests cover literal PCM energy/peak/clip statistics, feature
   saturation, gain thresholds, state saturation, pre-roll exclusion,
   accumulator reset, 100-frame scheduling, DMIC deferral, one-message enqueue,
   retry without data loss, p99, wrap-safe E2E timing, sequence gaps and prior-hop
-  WOLA timestamp association.
+  WOLA timestamp association. Optimized host tests also cover 0.9921875 band
+  gain expansion, unity bin gain, unity spectrum ratio and the instrumented
+  FFT/IFFT/WOLA fallback path.
+- Configure-level tests prove that production Release rejects fault injection,
+  diagnostic Release accepts it, non-AUTO probes require diagnostics, clean
+  defaults exclude diagnostic objects, and probe flags apply only to
+  `erb_gru_audio_enhancer.cpp`.
 - Release production and Release diagnostic CMake configurations both pass.
   The production build graph contains none of the six diagnostic source
   objects; the diagnostic graph contains all six.
@@ -179,6 +197,42 @@ Capture at least one clean-speech and one speech-plus-noise diagnostic run
 before assigning the unity-like sound to feature scaling, model gains, WOLA, or
 the output path. Only after the measured arena and full board acceptance pass
 should the 128 KiB arena be reduced.
+
+## Optimized Release DSP investigation
+
+The Release-only approximately 0.5 PCM ratio is not yet assigned to
+auto-vectorization. Debug normal inference and Debug unity fallback do not show
+the fixed attenuation, so the diagnostic Release build now identifies itself
+before audio start:
+
+```text
+[BUILD] type=Release diagnostics=1 gain_db=0 fault=OFF dsp_probe=AUTO git=... dirty=...
+```
+
+`M55M1_ERB_GRU_DSP_PROBE=AUTO|NO_VECTORIZE|O2` is temporary investigation
+scaffolding. `NO_VECTORIZE` adds `-fno-vectorize -fno-slp-vectorize` only to the
+enhancer; `O2` appends `-O2` only to the enhancer after the Release `-O3`.
+Every other firmware translation unit remains at Release optimization.
+Non-AUTO probes are rejected when diagnostics are off.
+
+After the Arm Compiler license is restored, use a stable 1 kHz tone, discard
+startup snapshots, and capture at least 10 snapshots for each build:
+
+1. Release, diagnostics ON, `INVOKE_FAIL`, `AUTO`. A PCM ratio near 1000
+   clears the common optimized FFT/IFFT/WOLA fallback path; a ratio near 500
+   places the first fault in that common path.
+2. Release, diagnostics ON, fault OFF, `AUTO`. Compare band gain, bin gain,
+   spectrum ratio, IFFT RMS, WOLA RMS and PCM ratio. The first boundary that
+   falls from near 1000 to near 500 identifies the faulty stage.
+3. Repeat the model build with `NO_VECTORIZE`, then `O2`. Select no permanent
+   workaround until one probe restores the board ratios.
+
+If `NO_VECTORIZE` alone restores the ratios, replace the temporary probe with
+the narrowest Armclang loop pragma confirmed by the board. If only `O2`
+restores them, pin only `erb_gru_audio_enhancer.cpp` to `-O2`. If neither
+restores them, keep `AUTO`, retain the telemetry, compare AUTO/O2 assembly at
+the identified stage, and file the Armclang 6.24.0 issue. The temporary probe
+must be removed only after that board-backed decision.
 
 The first board boot after restoring the license must include:
 
