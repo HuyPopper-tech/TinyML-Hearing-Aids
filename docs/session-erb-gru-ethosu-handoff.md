@@ -136,9 +136,10 @@ from PCM16, quantized gains, and the exact package DSP constants.
   are reset before the next successful frame.
 - Fixed byte ring whole-message/drop/wrap host test: pass.
 - `git diff --check`: pass.
-- Full Python suite: 67 tests pass. The two remaining errors are isolated
-  worktree infrastructure files absent from this worktree:
-  `.codex/AGENTS.md` and `.vscode/launch.json`.
+- Full Python discovery after the architecture/style refactor: 88 tests pass
+  after supplying the linked worktree with temporary copies of the ignored
+  repository guidance and VS Code launch fixtures. Without those fixtures,
+  the same suite reports only the two baseline setup-file errors.
 - Diagnostic host tests cover literal PCM energy/peak/clip statistics, feature
   saturation, gain thresholds, state saturation, pre-roll exclusion,
   accumulator reset, 100-frame scheduling, DMIC deferral, one-message enqueue,
@@ -154,6 +155,9 @@ from PCM16, quantized gains, and the exact package DSP constants.
   objects; the diagnostic graph contains all six.
 - Debug configure: pass.
 - Release configure: pass.
+- Final current-source Debug and Release builds were attempted after all
+  refactors. Both stop at their first Armclang jobs with license error 400
+  ("assigned to another user"); neither produced a new AXF/BIN/map.
 - The UART1 vendor preprocessor failure is fixed without modifying `libs/`.
   `system_M55M1.c` alone compiles its unsupported weak debug-UART helpers
   empty; project board code supplies strong `SetDebugUartMFP()` and
