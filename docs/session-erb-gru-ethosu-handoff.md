@@ -155,18 +155,28 @@ from PCM16, quantized gains, and the exact package DSP constants.
   objects; the diagnostic graph contains all six.
 - Debug configure: pass.
 - Release configure: pass.
-- Final current-source Debug and Release builds were attempted after all
-  refactors. Both stop at their first Armclang jobs with license error 400
-  ("assigned to another user"); neither produced a new AXF/BIN/map.
+- Final current-source Debug and Release builds pass with Arm Compiler 6.24
+  when run outside the Codex sandbox under the licensed Windows user. Both
+  produce AXF, `M55M1_GestureAI.axf.bin`, map, and HTML reports.
 - The UART1 vendor preprocessor failure is fixed without modifying `libs/`.
   `system_M55M1.c` alone compiles its unsupported weak debug-UART helpers
   empty; project board code supplies strong `SetDebugUartMFP()` and
   `InitDebugUart()` for PA2/PA3 at 115200 baud.
-- A Release build made after the UART1 fix completed and produced AXF/BIN/map.
-  That map reports 176.76 KiB total ROM, 162.31 KiB total RW, one 59,232-byte
+- The final production Release map reports 174.15 KiB total ROM, 160.44 KiB
+  total RW, one 59,232-byte
   `erb_gru_vela_model`, a 128 KiB tensor arena, an 8 KiB reserved stack, and
   5,184 bytes in non-cacheable SRAM. The arena/DSP buffers in cacheable SRAM,
   stack in DTCM, and DMA buffers in non-cacheable SRAM do not overlap.
+- The final Release binary is 178,344 bytes with SHA-256
+  `446b3ae9210a233417053553e2958bcb2065655e2b518a6a1840a16a468ccc4d`.
+  The Debug binary is 187,560 bytes with SHA-256
+  `f27010193629eedfe4f4ecf96198ec162c79a773254f58eb36d7bd5119c7e300`.
+  Both were built from commit `b137409ed2a7` with `dirty=0`, production
+  diagnostics disabled, fault injection disabled, and input gain 0 dB.
+- The production map contains no audio telemetry, diagnostic accumulator,
+  debug-UART TX, or project debug-UART board objects. The binary contains none
+  of the project `[BOOT]`, `[PERF]`, `[MODEL]`, `[AUDIO]`, `[DSP]`, `[FAIL]`,
+  or removed DSP-probe strings.
 - Debug then exposed microlib process-exit destructor references from the
   namespace-scope TFLM resolver. The resolver now uses static aligned storage
   and placement construction, so firmware does not require `atexit` support.
@@ -215,10 +225,10 @@ After the architecture/style refactor:
   tests preserve whole-message/drop/wrap semantics;
 - Release configuration succeeds with production defaults.
 
-The current automated Armclang build is externally blocked at license error
-400 ("assigned to another user"). Earlier user-built Release profiles supplied
-the A/B evidence above, but a final `.bin` and map for the current refactored
-source must not be claimed until the license permits a clean build.
+Armclang builds inside the Codex sandbox remain blocked because the license is
+assigned to the user's Windows account. Running the canonical build scripts
+outside the sandbox resolves that environment constraint; the current
+refactored source has clean Debug and Release artifacts as recorded above.
 
 Still required on the final current-source binary:
 
@@ -227,7 +237,6 @@ Still required on the final current-source binary:
 - stack high-water with at least 2 KiB headroom;
 - five-scenario on-board parity and fault-boundary discontinuity;
 - diagnostic enhance/NPU/E2E timing and acoustic statistics;
-- final map check for one model copy and no diagnostic code in production;
 - 10-minute production soak and p99/max/error-counter acceptance.
 
 Before flashing, preserve SWDIO PF0, SWCLK PF1, nRESET, GND and VREF/3V3.
