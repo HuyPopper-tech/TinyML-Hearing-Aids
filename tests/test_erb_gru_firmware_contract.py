@@ -21,7 +21,11 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
             'set(M55M1_ERB_GRU_INPUT_GAIN_DB "0"',
             'set(M55M1_ERB_GRU_GOLDEN_SCENARIO ""',
             'set(M55M1_ERB_GRU_FAULT_INJECTION "OFF"',
-            "Release firmware rejects golden data and fault injection",
+            'set(M55M1_ERB_GRU_DSP_PROBE "AUTO"',
+            "Production Release firmware rejects golden data and fault injection",
+            "Non-AUTO DSP probes require M55M1_ERB_GRU_DIAGNOSTICS=ON",
+            "NO_VECTORIZE",
+            "O2",
             "drivers/ethosu_u55/ethosu_u55.c",
             "services/erb_gru/erb_gru_inference.cpp",
             "services/erb_gru/erb_gru_audio_enhancer.cpp",
@@ -44,6 +48,25 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
         )
         self.assertIn("Golden scenarios require M55M1_ERB_GRU_DIAGNOSTICS=ON", cmake)
         self.assertIn("#if M55M1_ERB_GRU_DIAGNOSTICS", app)
+        self.assertIn('"[BUILD] type=%s diagnostics=1 gain_db=%d "', app)
+        self.assertIn("M55M1_ERB_GRU_GIT_REV", cmake)
+        self.assertIn("M55M1_ERB_GRU_GIT_DIRTY", cmake)
+
+    def test_fault_injection_is_not_reported_as_a_real_npu_error(self):
+        inference = self.read("services/erb_gru/erb_gru_inference.cpp")
+        header = self.read("services/erb_gru/erb_gru_inference.h")
+        app = self.read("app/main.c")
+        telemetry = self.read("services/audio_telemetry.c")
+
+        fault_branch = inference[
+            inference.index("#if M55M1_ERB_GRU_FAULT_INVOKE_FAIL") :
+            inference.index("#endif", inference.index("#if M55M1_ERB_GRU_FAULT_INVOKE_FAIL"))
+        ]
+        self.assertIn("g_fault_injected_count", fault_branch)
+        self.assertNotIn("g_invoke_error_count", fault_branch)
+        self.assertIn("fault_injected_count", header)
+        self.assertIn("g_telemetry.fault_injected", app)
+        self.assertIn("fault_injected=%lu", telemetry)
 
     def test_generated_contract_uses_vela_ordinals_and_raw_indices(self):
         contract = self.read("models/erb_gru/generated/erb_gru_deploy_contract.h")
@@ -151,6 +174,7 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
             "debug_uart_tx_try_enqueue",
             "[MODEL]",
             "[AUDIO]",
+            "[DSP]",
         ):
             self.assertIn(required, telemetry)
         for required in (

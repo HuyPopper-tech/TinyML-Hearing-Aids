@@ -27,6 +27,18 @@ void erb_gru_audio_diagnostics_record_gain_state(
     const int8_t *state1,
     const int8_t *state2,
     size_t state_count);
+void erb_gru_audio_diagnostics_record_dsp(
+    uint64_t spectrum_input_energy_q30,
+    uint64_t spectrum_output_energy_q30,
+    uint64_t ifft_energy_q30,
+    uint64_t wola_energy_q30,
+    uint32_t ifft_sample_count,
+    uint32_t wola_sample_count,
+    uint64_t bin_gain_sum_q15,
+    uint32_t bin_gain_count,
+    uint32_t bin_gain_min_q15,
+    uint32_t bin_gain_max_q15,
+    uint32_t wola_peak_q15);
 bool erb_gru_audio_diagnostics_take(erb_gru_audio_diagnostics_t *diagnostics);
 
 #ifdef __cplusplus

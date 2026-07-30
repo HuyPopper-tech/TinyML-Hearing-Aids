@@ -66,6 +66,7 @@ class AudioTelemetryTests(unittest.TestCase):
                 snapshot.npu_operator_count = 30U;
                 snapshot.cpu_operator_count = 0U;
                 snapshot.model_flash_bytes = 59232U;
+                snapshot.fault_injected = 100U;
                 snapshot.audio.frames = 100U;
                 snapshot.audio.pcm_samples = 4U;
                 snapshot.audio.input_energy = 400U;
@@ -89,6 +90,17 @@ class AudioTelemetryTests(unittest.TestCase):
                 snapshot.audio.state2_min = -12;
                 snapshot.audio.state2_max = 13;
                 snapshot.audio.state_sat_count = 3U;
+                snapshot.audio.spectrum_input_energy_q30 = 1000000ULL;
+                snapshot.audio.spectrum_output_energy_q30 = 998001ULL;
+                snapshot.audio.ifft_energy_q30 = 40000ULL;
+                snapshot.audio.wola_energy_q30 = 10000ULL;
+                snapshot.audio.ifft_sample_count = 100U;
+                snapshot.audio.wola_sample_count = 100U;
+                snapshot.audio.bin_gain_sum_q15 = 32768ULL * 161ULL;
+                snapshot.audio.bin_gain_count = 161U;
+                snapshot.audio.bin_gain_min_q15 = 32768U;
+                snapshot.audio.bin_gain_max_q15 = 32768U;
+                snapshot.audio.wola_peak_q15 = 456U;
                 audio_telemetry_poll(&snapshot, true);
                 if (messages != 0U) return 2;
                 snapshot.frame_count = 101U;
@@ -99,7 +111,8 @@ class AudioTelemetryTests(unittest.TestCase):
                 if (messages != 1U || enqueue_calls != 2U) return 4;
                 if (!strstr(last_message, "[PERF]") ||
                     !strstr(last_message, "[MODEL]") ||
-                    !strstr(last_message, "[AUDIO]")) return 5;
+                    !strstr(last_message, "[AUDIO]") ||
+                    !strstr(last_message, "[DSP]")) return 5;
                 if (!strstr(last_message, "enh_us=1049/1099/1098") ||
                     !strstr(last_message, "npu_us=300/300/300")) return 6;
                 if (!strstr(last_message, "e2e_gap=1") ||
@@ -115,8 +128,25 @@ class AudioTelemetryTests(unittest.TestCase):
                 if (!strstr(last_message, "gain_milli=0/500/996") ||
                     !strstr(last_message, "gain_zero_pct=25") ||
                     !strstr(last_message, "gain_unity_pct=50")) return 10;
+                if (!strstr(last_message, "fault_injected=100") ||
+                    !strstr(last_message, "valid=1") ||
+                    !strstr(last_message, "bin_gain_milli=1000/1000/1000") ||
+                    !strstr(last_message, "spec_ratio_milli=999") ||
+                    !strstr(last_message, "wola_peak=456")) return 11;
+                if (strlen(last_message) >= 896U) return 12;
                 audio_telemetry_poll(&snapshot, false);
-                return (messages == 1U) ? 0 : 11;
+                if (messages != 1U) return 13;
+
+                for (unsigned int i = 0; i < 100U; ++i) {
+                    audio_telemetry_record_processing_us(1000U);
+                }
+                memset(&snapshot.audio, 0, sizeof(snapshot.audio));
+                snapshot.frame_count = 201U;
+                audio_telemetry_poll(&snapshot, false);
+                if (messages != 2U) return 14;
+                if (!strstr(last_message, "gain_milli=0/0/0") ||
+                    !strstr(last_message, "valid=0")) return 15;
+                return 0;
             }
             """
         )

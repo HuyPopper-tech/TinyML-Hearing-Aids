@@ -37,6 +37,7 @@ constexpr uint32_t kFftSamples = 320U;
 constexpr uint32_t kFftBins = 161U;
 constexpr uint32_t kBands = 32U;
 constexpr float kPcmScale = 32768.0f;
+constexpr float kFftInverse = 1.0f / static_cast<float>(kFftSamples);
 constexpr float kLogEpsilon = 1.0e-6f;
 #if M55M1_ERB_GRU_INPUT_GAIN_DB == 12
 constexpr int32_t kInputGainMultiplier = 4;
@@ -62,6 +63,11 @@ alignas(16) int8_t g_next_state1[ERB_GRU_INFERENCE_STATE_SIZE];
 alignas(16) int8_t g_next_state2[ERB_GRU_INFERENCE_STATE_SIZE];
 #if M55M1_ERB_GRU_DIAGNOSTICS
 alignas(16) int16_t g_diagnostic_source_pcm[kHopSamples];
+uint64_t g_frame_spectrum_input_energy_q30;
+uint64_t g_frame_spectrum_output_energy_q30;
+uint64_t g_frame_bin_gain_sum_q15;
+uint32_t g_frame_bin_gain_min_q15;
+uint32_t g_frame_bin_gain_max_q15;
 #endif
 alignas(16) uint8_t g_forward_memory[4096];
 alignas(16) uint8_t g_inverse_memory[4096];
@@ -98,6 +104,44 @@ float input_to_float(int16_t sample)
     scaled = (scaled < INT16_MIN) ? INT16_MIN : scaled;
     return static_cast<float>(scaled) / kPcmScale;
 }
+
+#if M55M1_ERB_GRU_DIAGNOSTICS
+int32_t float_to_signed_q15(float value)
+{
+    const float scaled = value * 32768.0f;
+
+    if (scaled <= -32768.0f)
+    {
+        return -32768;
+    }
+    if (scaled >= 32767.0f)
+    {
+        return 32767;
+    }
+    return static_cast<int32_t>(scaled + ((scaled >= 0.0f) ? 0.5f : -0.5f));
+}
+
+uint32_t gain_to_unsigned_q15(float value)
+{
+    const float scaled = value * 32768.0f;
+
+    if (scaled <= 0.0f)
+    {
+        return 0U;
+    }
+    if (scaled >= 65535.0f)
+    {
+        return 65535U;
+    }
+    return static_cast<uint32_t>(scaled + 0.5f);
+}
+
+uint64_t square_q15(int32_t value)
+{
+    const int64_t promoted = value;
+    return static_cast<uint64_t>(promoted * promoted);
+}
+#endif
 
 void reset_recurrent_state()
 {
@@ -149,6 +193,13 @@ void analyze_frame()
 
 void expand_gains(bool inference_ok)
 {
+#if M55M1_ERB_GRU_DIAGNOSTICS
+    g_frame_spectrum_input_energy_q30 = 0U;
+    g_frame_spectrum_output_energy_q30 = 0U;
+    g_frame_bin_gain_sum_q15 = 0U;
+    g_frame_bin_gain_min_q15 = UINT32_MAX;
+    g_frame_bin_gain_max_q15 = 0U;
+#endif
     for (uint32_t bin = 0U; bin < kFftBins; ++bin)
     {
         float bin_gain = inference_ok ? 0.0f : 1.0f;
@@ -164,12 +215,53 @@ void expand_gains(bool inference_ok)
         g_bin_gains[bin] = bin_gain;
         g_scaled_spectrum[bin].r = g_spectrum[bin].r * bin_gain;
         g_scaled_spectrum[bin].i = g_spectrum[bin].i * bin_gain;
+#if M55M1_ERB_GRU_DIAGNOSTICS
+        const uint32_t weight = ((bin == 0U) || (bin == (kFftBins - 1U))) ?
+            1U : 2U;
+        const int32_t input_real_q15 =
+            float_to_signed_q15(g_spectrum[bin].r * kFftInverse);
+        const int32_t input_imaginary_q15 =
+            float_to_signed_q15(g_spectrum[bin].i * kFftInverse);
+        const int32_t output_real_q15 =
+            float_to_signed_q15(g_scaled_spectrum[bin].r * kFftInverse);
+        const int32_t output_imaginary_q15 =
+            float_to_signed_q15(g_scaled_spectrum[bin].i * kFftInverse);
+        const uint32_t gain_q15 = gain_to_unsigned_q15(bin_gain);
+
+        g_frame_spectrum_input_energy_q30 +=
+            weight * (square_q15(input_real_q15) + square_q15(input_imaginary_q15));
+        g_frame_spectrum_output_energy_q30 +=
+            weight * (square_q15(output_real_q15) + square_q15(output_imaginary_q15));
+        g_frame_bin_gain_sum_q15 += gain_q15;
+        if (gain_q15 < g_frame_bin_gain_min_q15)
+        {
+            g_frame_bin_gain_min_q15 = gain_q15;
+        }
+        if (gain_q15 > g_frame_bin_gain_max_q15)
+        {
+            g_frame_bin_gain_max_q15 = gain_q15;
+        }
+#endif
     }
 }
 
 void synthesize_hop(int16_t output[kHopSamples])
 {
+#if M55M1_ERB_GRU_DIAGNOSTICS
+    uint64_t ifft_energy_q30 = 0U;
+    uint64_t wola_energy_q30 = 0U;
+    uint32_t wola_peak_q15 = 0U;
+#endif
+
     kiss_fftri(g_inverse_fft, g_scaled_spectrum, g_ifft_output);
+#if M55M1_ERB_GRU_DIAGNOSTICS
+    for (uint32_t index = 0U; index < kFftSamples; ++index)
+    {
+        const int32_t sample_q15 =
+            float_to_signed_q15(g_ifft_output[index] * kFftInverse);
+        ifft_energy_q30 += square_q15(sample_q15);
+    }
+#endif
     for (uint32_t index = 0U; index < kHopSamples; ++index)
     {
         const float first = (g_ifft_output[index] / kFftSamples) *
@@ -177,10 +269,36 @@ void synthesize_hop(int16_t output[kHopSamples])
         const uint32_t overlap_index = index + kHopSamples;
         const float second = (g_ifft_output[overlap_index] / kFftSamples) *
             wola_synthesis_320[overlap_index] * wola_normalization_320[overlap_index];
+        const float wola_sample = first + g_synthesis_overlap[index];
 
-        output[index] = float_to_pcm(first + g_synthesis_overlap[index]);
+        output[index] = float_to_pcm(wola_sample);
         g_synthesis_overlap[index] = second;
+#if M55M1_ERB_GRU_DIAGNOSTICS
+        const int32_t wola_q15 = float_to_signed_q15(wola_sample);
+        const uint32_t amplitude_q15 = static_cast<uint32_t>(
+            (wola_q15 < 0) ? -wola_q15 : wola_q15);
+
+        wola_energy_q30 += square_q15(wola_q15);
+        if (amplitude_q15 > wola_peak_q15)
+        {
+            wola_peak_q15 = amplitude_q15;
+        }
+#endif
     }
+#if M55M1_ERB_GRU_DIAGNOSTICS
+    erb_gru_audio_diagnostics_record_dsp(
+        g_frame_spectrum_input_energy_q30,
+        g_frame_spectrum_output_energy_q30,
+        ifft_energy_q30,
+        wola_energy_q30,
+        kFftSamples,
+        kHopSamples,
+        g_frame_bin_gain_sum_q15,
+        kFftBins,
+        g_frame_bin_gain_min_q15,
+        g_frame_bin_gain_max_q15,
+        wola_peak_q15);
+#endif
 }
 
 } // namespace
@@ -297,7 +415,12 @@ extern "C" uint32_t erb_gru_audio_enhancer_static_bytes(void)
         sizeof(g_gain_q) + sizeof(g_state1) + sizeof(g_state2) +
         sizeof(g_next_state1) + sizeof(g_next_state2) +
         sizeof(g_diagnostic_source_pcm) + sizeof(g_forward_memory) +
-        sizeof(g_inverse_memory));
+        sizeof(g_inverse_memory) +
+        sizeof(g_frame_spectrum_input_energy_q30) +
+        sizeof(g_frame_spectrum_output_energy_q30) +
+        sizeof(g_frame_bin_gain_sum_q15) +
+        sizeof(g_frame_bin_gain_min_q15) +
+        sizeof(g_frame_bin_gain_max_q15));
 }
 #endif
 

@@ -105,6 +105,18 @@ static uint32_t integer_sqrt_u64(uint64_t value)
     return (uint32_t)result;
 }
 
+static uint32_t sqrt_ratio_milli(uint64_t numerator, uint64_t denominator)
+{
+    if (denominator == 0U) {
+        return 0U;
+    }
+    while (numerator > (UINT64_MAX / 1000000ULL)) {
+        numerator >>= 1U;
+        denominator = (denominator >> 1U) + (denominator & 1U);
+    }
+    return integer_sqrt_u64((numerator * 1000000ULL) / denominator);
+}
+
 static uint32_t gain_q_to_milli(int32_t quantized)
 {
     int32_t shifted = quantized + 128;
@@ -115,6 +127,11 @@ static uint32_t gain_q_to_milli(int32_t quantized)
         shifted = 255;
     }
     return (uint32_t)((shifted * 1000 + 128) / 256);
+}
+
+static uint32_t q15_to_milli(uint64_t value)
+{
+    return (uint32_t)((value * 1000U + 16384U) / 32768U);
 }
 
 static int32_t mean_int8(int64_t sum, uint32_t count)
@@ -186,6 +203,16 @@ void audio_telemetry_poll(
     uint32_t active_mmac_s_x1000;
     uint32_t stream_mmac_s_x1000;
     uint32_t duty_permille;
+    uint32_t gain_min_milli;
+    uint32_t gain_mean_milli;
+    uint32_t gain_max_milli;
+    uint32_t dsp_valid;
+    uint32_t bin_gain_min_milli;
+    uint32_t bin_gain_mean_milli;
+    uint32_t bin_gain_max_milli;
+    uint32_t spectrum_ratio_milli;
+    uint32_t ifft_rms;
+    uint32_t wola_rms;
     int length;
 
     if ((snapshot == NULL) || dmic_block_pending) {
@@ -225,13 +252,36 @@ void audio_telemetry_poll(
     duty_permille = (processing.count == 0U) ? 0U :
         (uint32_t)((invoke.sum * 1000U) /
                    ((uint64_t)processing.count * 10000U));
+    gain_min_milli = (audio->gain_count == 0U) ? 0U :
+        gain_q_to_milli(audio->gain_min);
+    gain_mean_milli = (audio->gain_count == 0U) ? 0U :
+        gain_q_to_milli(mean_int8(audio->gain_sum, audio->gain_count));
+    gain_max_milli = (audio->gain_count == 0U) ? 0U :
+        gain_q_to_milli(audio->gain_max);
+    dsp_valid = ((audio->bin_gain_count != 0U) &&
+                 (audio->ifft_sample_count != 0U) &&
+                 (audio->wola_sample_count != 0U)) ? 1U : 0U;
+    bin_gain_min_milli = (audio->bin_gain_count == 0U) ? 0U :
+        q15_to_milli(audio->bin_gain_min_q15);
+    bin_gain_mean_milli = (audio->bin_gain_count == 0U) ? 0U :
+        q15_to_milli(audio->bin_gain_sum_q15 / audio->bin_gain_count);
+    bin_gain_max_milli = (audio->bin_gain_count == 0U) ? 0U :
+        q15_to_milli(audio->bin_gain_max_q15);
+    spectrum_ratio_milli = sqrt_ratio_milli(
+        audio->spectrum_output_energy_q30,
+        audio->spectrum_input_energy_q30);
+    ifft_rms = (audio->ifft_sample_count == 0U) ? 0U :
+        integer_sqrt_u64(audio->ifft_energy_q30 / audio->ifft_sample_count);
+    wola_rms = (audio->wola_sample_count == 0U) ? 0U :
+        integer_sqrt_u64(audio->wola_energy_q30 / audio->wola_sample_count);
 
     length = snprintf(
         g_message, sizeof(g_message),
         "[PERF] f=%lu enh_us=%lu/%lu/%lu npu_us=%lu/%lu/%lu dsp_us=%lu "
         "e2e_us=%lu/%lu/%lu e2e_n=%lu e2e_gap=%lu e2e_40ms=%lu "
         "fallback=%lu deadline=%lu dmic_ovr=%lu dmic_dma=%lu dac_busy=%lu "
-        "underrun=%lu dac_dma=%lu npu_error=%lu uart_drop=%lu\r\n"
+        "underrun=%lu dac_dma=%lu npu_error=%lu fault_injected=%lu "
+        "uart_drop=%lu\r\n"
         "[MODEL] mac_inf=%lu npu_ops=%lu cpu_ops=%lu active_mmac_s_x1000=%lu "
         "stream_mmac_s_x1000=%lu duty_permille=%lu invoke_count=%lu "
         "model_flash=%lu arena=%lu/%lu dsp_static=%lu stack_cfg=%lu\r\n"
@@ -239,7 +289,9 @@ void audio_telemetry_poll(
         "out_peak=%lu out_rms=%lu out_clip=%lu rms_ratio_milli=%lu "
         "feat_q=%ld/%ld/%ld feat_sat=%lu/%lu gain_milli=%lu/%lu/%lu "
         "gain_zero_pct=%lu gain_unity_pct=%lu state1_q=%ld/%ld "
-        "state2_q=%ld/%ld state_sat=%lu\r\n",
+        "state2_q=%ld/%ld state_sat=%lu\r\n"
+        "[DSP] valid=%lu bin_gain_milli=%lu/%lu/%lu spec_ratio_milli=%lu "
+        "ifft_rms=%lu wola_rms=%lu wola_peak=%lu\r\n",
         (unsigned long)snapshot->frame_count,
         (unsigned long)processing.average,
         (unsigned long)processing.maximum,
@@ -263,6 +315,7 @@ void audio_telemetry_poll(
         (unsigned long)snapshot->dac_underrun,
         (unsigned long)snapshot->dac_dma_error,
         (unsigned long)snapshot->npu_error,
+        (unsigned long)snapshot->fault_injected,
         (unsigned long)debug_uart_tx_drop_count(),
         (unsigned long)snapshot->macs_per_inference,
         (unsigned long)snapshot->npu_operator_count,
@@ -289,19 +342,24 @@ void audio_telemetry_poll(
         (long)((audio->feature_count == 0U) ? 0 : audio->feature_max),
         (unsigned long)audio->feature_sat_low,
         (unsigned long)audio->feature_sat_high,
-        (unsigned long)gain_q_to_milli(
-            (audio->gain_count == 0U) ? -128 : audio->gain_min),
-        (unsigned long)gain_q_to_milli(
-            mean_int8(audio->gain_sum, audio->gain_count)),
-        (unsigned long)gain_q_to_milli(
-            (audio->gain_count == 0U) ? -128 : audio->gain_max),
+        (unsigned long)gain_min_milli,
+        (unsigned long)gain_mean_milli,
+        (unsigned long)gain_max_milli,
         (unsigned long)percentage(audio->gain_near_zero, audio->gain_count),
         (unsigned long)percentage(audio->gain_near_unity, audio->gain_count),
         (long)((audio->gain_count == 0U) ? 0 : audio->state1_min),
         (long)((audio->gain_count == 0U) ? 0 : audio->state1_max),
         (long)((audio->gain_count == 0U) ? 0 : audio->state2_min),
         (long)((audio->gain_count == 0U) ? 0 : audio->state2_max),
-        (unsigned long)audio->state_sat_count);
+        (unsigned long)audio->state_sat_count,
+        (unsigned long)dsp_valid,
+        (unsigned long)bin_gain_min_milli,
+        (unsigned long)bin_gain_mean_milli,
+        (unsigned long)bin_gain_max_milli,
+        (unsigned long)spectrum_ratio_milli,
+        (unsigned long)ifft_rms,
+        (unsigned long)wola_rms,
+        (unsigned long)audio->wola_peak_q15);
     if ((length <= 0) || ((size_t)length >= sizeof(g_message))) {
         return;
     }

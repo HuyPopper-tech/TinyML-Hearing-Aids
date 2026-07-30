@@ -29,6 +29,7 @@ typedef struct {
     uint32_t dac_underrun;
     uint32_t dac_dma_error;
     uint32_t npu_error;
+    uint32_t fault_injected;
     uint32_t invoke_count;
     uint32_t arena_used_bytes;
     uint32_t arena_capacity_bytes;

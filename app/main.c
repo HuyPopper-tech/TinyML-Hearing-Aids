@@ -141,6 +141,7 @@ static void audio_update_telemetry(
     g_telemetry.invoke_count = inference.invoke_count;
     g_telemetry.deadline_miss = inference.deadline_miss_count;
     g_telemetry.npu_error = inference.invoke_error_count;
+    g_telemetry.fault_injected = inference.fault_injected_count;
     g_telemetry.arena_used_bytes = (uint32_t)inference.arena_used_bytes;
     g_telemetry.arena_capacity_bytes = (uint32_t)inference.arena_capacity_bytes;
     g_telemetry.dsp_static_bytes = erb_gru_audio_enhancer_static_bytes();
@@ -170,6 +171,14 @@ int main(void)
 #if M55M1_ERB_GRU_DIAGNOSTICS
     m55m1_debug_uart_init();
     printf("\n[BOOT] ERB-GRU firmware starting\n");
+    printf("[BUILD] type=%s diagnostics=1 gain_db=%d "
+           "fault=%s dsp_probe=%s git=%s dirty=%d\n",
+           M55M1_ERB_GRU_BUILD_TYPE,
+           M55M1_ERB_GRU_INPUT_GAIN_DB,
+           M55M1_ERB_GRU_FAULT_MODE_NAME,
+           M55M1_ERB_GRU_DSP_PROBE_NAME,
+           M55M1_ERB_GRU_GIT_REV,
+           M55M1_ERB_GRU_GIT_DIRTY);
     printf("[BOOT] audio profile=%u Hz, hop=%u samples\n",
            16000U, (unsigned int)sample_count);
 #endif

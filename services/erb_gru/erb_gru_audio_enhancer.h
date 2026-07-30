@@ -52,6 +52,19 @@ typedef struct {
     int8_t state2_min;
     int8_t state2_max;
     uint32_t state_sat_count;
+
+    uint64_t spectrum_input_energy_q30;
+    uint64_t spectrum_output_energy_q30;
+    uint64_t ifft_energy_q30;
+    uint64_t wola_energy_q30;
+    uint32_t ifft_sample_count;
+    uint32_t wola_sample_count;
+
+    uint64_t bin_gain_sum_q15;
+    uint32_t bin_gain_count;
+    uint32_t bin_gain_min_q15;
+    uint32_t bin_gain_max_q15;
+    uint32_t wola_peak_q15;
 } erb_gru_audio_diagnostics_t;
 #endif
 

@@ -25,6 +25,7 @@ static void reset_extrema(void)
     g_diagnostics.state1_max = INT8_MIN;
     g_diagnostics.state2_min = INT8_MAX;
     g_diagnostics.state2_max = INT8_MIN;
+    g_diagnostics.bin_gain_min_q15 = UINT32_MAX;
 }
 
 static uint16_t pcm_amplitude(int16_t sample)
@@ -137,6 +138,40 @@ void erb_gru_audio_diagnostics_record_gain_state(
         if ((state2[index] == INT8_MIN) || (state2[index] == INT8_MAX)) {
             ++g_diagnostics.state_sat_count;
         }
+    }
+}
+
+void erb_gru_audio_diagnostics_record_dsp(
+    uint64_t spectrum_input_energy_q30,
+    uint64_t spectrum_output_energy_q30,
+    uint64_t ifft_energy_q30,
+    uint64_t wola_energy_q30,
+    uint32_t ifft_sample_count,
+    uint32_t wola_sample_count,
+    uint64_t bin_gain_sum_q15,
+    uint32_t bin_gain_count,
+    uint32_t bin_gain_min_q15,
+    uint32_t bin_gain_max_q15,
+    uint32_t wola_peak_q15)
+{
+    g_diagnostics.spectrum_input_energy_q30 += spectrum_input_energy_q30;
+    g_diagnostics.spectrum_output_energy_q30 += spectrum_output_energy_q30;
+    g_diagnostics.ifft_energy_q30 += ifft_energy_q30;
+    g_diagnostics.wola_energy_q30 += wola_energy_q30;
+    g_diagnostics.ifft_sample_count += ifft_sample_count;
+    g_diagnostics.wola_sample_count += wola_sample_count;
+    g_diagnostics.bin_gain_sum_q15 += bin_gain_sum_q15;
+    g_diagnostics.bin_gain_count += bin_gain_count;
+    if ((bin_gain_count != 0U) &&
+        (bin_gain_min_q15 < g_diagnostics.bin_gain_min_q15)) {
+        g_diagnostics.bin_gain_min_q15 = bin_gain_min_q15;
+    }
+    if ((bin_gain_count != 0U) &&
+        (bin_gain_max_q15 > g_diagnostics.bin_gain_max_q15)) {
+        g_diagnostics.bin_gain_max_q15 = bin_gain_max_q15;
+    }
+    if (wola_peak_q15 > g_diagnostics.wola_peak_q15) {
+        g_diagnostics.wola_peak_q15 = wola_peak_q15;
     }
 }
 

@@ -22,6 +22,7 @@ typedef struct {
     uint32_t max_invoke_cycles;
     uint32_t invoke_count;
     uint32_t invoke_error_count;
+    uint32_t fault_injected_count;
     uint32_t deadline_miss_count;
     size_t arena_used_bytes;
     size_t arena_capacity_bytes;

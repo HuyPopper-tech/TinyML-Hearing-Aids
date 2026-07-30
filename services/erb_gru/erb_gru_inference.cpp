@@ -31,6 +31,7 @@ uint32_t g_last_invoke_cycles;
 uint32_t g_max_invoke_cycles;
 uint32_t g_invoke_count;
 uint32_t g_invoke_error_count;
+uint32_t g_fault_injected_count;
 uint32_t g_deadline_miss_count;
 size_t g_arena_used_bytes;
 
@@ -176,7 +177,7 @@ extern "C" bool erb_gru_inference_invoke(
 
     start_cycle = ethosu_u55_cycles_now();
 #if M55M1_ERB_GRU_FAULT_INVOKE_FAIL
-    ++g_invoke_error_count;
+    ++g_fault_injected_count;
     return false;
 #endif
     if (g_interpreter->Invoke() != kTfLiteOk)
@@ -197,7 +198,6 @@ extern "C" bool erb_gru_inference_invoke(
     if (ethosu_u55_deadline_exceeded(start_cycle, 10U))
     {
         ++g_deadline_miss_count;
-        ++g_invoke_error_count;
         return false;
     }
 
@@ -222,6 +222,7 @@ extern "C" void erb_gru_inference_get_performance(
             g_max_invoke_cycles,
             g_invoke_count,
             g_invoke_error_count,
+            g_fault_injected_count,
             g_deadline_miss_count,
             g_arena_used_bytes,
             kTensorArenaBytes,
