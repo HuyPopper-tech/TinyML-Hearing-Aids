@@ -37,7 +37,9 @@ constexpr uint32_t kFftSamples = 320U;
 constexpr uint32_t kFftBins = 161U;
 constexpr uint32_t kBands = 32U;
 constexpr float kPcmScale = 32768.0f;
+#if M55M1_ERB_GRU_DIAGNOSTICS
 constexpr float kFftInverse = 1.0f / static_cast<float>(kFftSamples);
+#endif
 constexpr float kLogEpsilon = 1.0e-6f;
 #if M55M1_ERB_GRU_INPUT_GAIN_DB == 12
 constexpr int32_t kInputGainMultiplier = 4;
