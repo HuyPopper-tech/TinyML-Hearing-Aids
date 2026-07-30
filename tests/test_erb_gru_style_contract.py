@@ -9,6 +9,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT_SOURCE_SUFFIXES = {".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp"}
 EXCLUDED_PREFIXES = ("libs/", "models/erb_gru/generated/", "models/erb_gru/packages/")
+PUBLIC_HEADER_ROOTS = ("app", "board", "common", "drivers", "services")
 
 
 def branch_changed_source_hunks():
@@ -43,7 +44,29 @@ def branch_changed_source_hunks():
         yield relative_path, (ROOT / path).read_text(encoding="utf-8").splitlines(), ranges
 
 
+def project_public_headers():
+    """Yield project-owned public headers in deterministic path order."""
+    for root_name in PUBLIC_HEADER_ROOTS:
+        yield from sorted((ROOT / root_name).rglob("*.h"))
+
+
 class ErbGruStyleContractTests(unittest.TestCase):
+    def test_public_doxygen_uses_multiline_blocks_with_one_tag_per_line(self):
+        """Keep generated API documentation readable and diff-friendly."""
+        violations = []
+        tag_pattern = re.compile(r"@\w+")
+
+        for path in project_public_headers():
+            relative_path = path.relative_to(ROOT).as_posix()
+            source = path.read_text(encoding="utf-8")
+            for line_number, line in enumerate(source.splitlines(), start=1):
+                if "/**" in line and "*/" in line:
+                    violations.append(f"{relative_path}:{line_number}: single-line Doxygen")
+                if len(tag_pattern.findall(line)) > 1:
+                    violations.append(f"{relative_path}:{line_number}: multiple Doxygen tags")
+
+        self.assertEqual(violations, [], "Doxygen formatting violations:\n" + "\n".join(violations))
+
     def test_branch_added_functions_and_control_blocks_use_same_line_braces(self):
         """Catch added Allman braces without inspecting comments, macros, or initializers."""
         violations = []
