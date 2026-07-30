@@ -261,11 +261,11 @@ class ErbGruAudioDiagnosticsTests(unittest.TestCase):
                 if (diagnostics.state1_min != -1 || diagnostics.state1_max != -1 ||
                     diagnostics.state2_min != 2 || diagnostics.state2_max != 2) return 9;
                 if (diagnostics.bin_gain_count != 161U ||
-                    diagnostics.bin_gain_min_q15 < 32479U ||
-                    diagnostics.bin_gain_max_q15 > 32545U) return 10;
+                    diagnostics.bin_gain_min_q15 < 32480U ||
+                    diagnostics.bin_gain_max_q15 > 32544U) return 10;
                 const uint32_t bin_gain_mean = (uint32_t)(
                     diagnostics.bin_gain_sum_q15 / diagnostics.bin_gain_count);
-                if (bin_gain_mean < 32479U || bin_gain_mean > 32545U) return 11;
+                if (bin_gain_mean < 32480U || bin_gain_mean > 32544U) return 11;
                 return 0;
             }
             """

@@ -202,37 +202,28 @@ should the 128 KiB arena be reduced.
 
 The Release-only approximately 0.5 PCM ratio is not yet assigned to
 auto-vectorization. Debug normal inference and Debug unity fallback do not show
-the fixed attenuation, so the diagnostic Release build now identifies itself
-before audio start:
+the fixed attenuation. The successful whole-file `NO_VECTORIZE` investigation
+has been replaced by a scoped Armclang loop pragma on the `expand_gains()`
+32-term reduction; all other firmware remains at Release `-O3`. The diagnostic
+Release build identifies itself before audio start without a temporary probe
+field:
 
 ```text
-[BUILD] type=Release diagnostics=1 gain_db=0 fault=OFF dsp_probe=AUTO git=... dirty=...
+[BUILD] type=Release diagnostics=1 gain_db=0 fault=OFF git=... dirty=...
 ```
 
-`M55M1_ERB_GRU_DSP_PROBE=AUTO|NO_VECTORIZE|O2` is temporary investigation
-scaffolding. `NO_VECTORIZE` adds `-fno-vectorize -fno-slp-vectorize` only to the
-enhancer; `O2` appends `-O2` only to the enhancer after the Release `-O3`.
-Every other firmware translation unit remains at Release optimization.
-Non-AUTO probes are rejected when diagnostics are off.
-
 After the Arm Compiler license is restored, use a stable 1 kHz tone, discard
-startup snapshots, and capture at least 10 snapshots for each build:
+startup snapshots, and capture at least 10 snapshots for each diagnostic
+Release scenario:
 
-1. Release, diagnostics ON, `INVOKE_FAIL`, `AUTO`. A PCM ratio near 1000
+1. Release, diagnostics ON, `INVOKE_FAIL`. A PCM ratio near 1000
    clears the common optimized FFT/IFFT/WOLA fallback path; a ratio near 500
    places the first fault in that common path.
-2. Release, diagnostics ON, fault OFF, `AUTO`. Compare band gain, bin gain,
+2. Release, diagnostics ON, fault OFF. Compare band gain, bin gain,
    spectrum ratio, IFFT RMS, WOLA RMS and PCM ratio. The first boundary that
    falls from near 1000 to near 500 identifies the faulty stage.
-3. Repeat the model build with `NO_VECTORIZE`, then `O2`. Select no permanent
-   workaround until one probe restores the board ratios.
-
-If `NO_VECTORIZE` alone restores the ratios, replace the temporary probe with
-the narrowest Armclang loop pragma confirmed by the board. If only `O2`
-restores them, pin only `erb_gru_audio_enhancer.cpp` to `-O2`. If neither
-restores them, keep `AUTO`, retain the telemetry, compare AUTO/O2 assembly at
-the identified stage, and file the Armclang 6.24.0 issue. The temporary probe
-must be removed only after that board-backed decision.
+3. Confirm the installed loop-local workaround on the board before removing
+   it. Board loop-local A/B validation has not yet been completed.
 
 The first board boot after restoring the license must include:
 
