@@ -118,6 +118,7 @@ audio_transport_status_t audio_transport_start(void)
 
 void audio_transport_stop_safe(void)
 {
+    m55m1_audio_dmic_stop();
     (void)tlv320dac3100_stop();
 }
 

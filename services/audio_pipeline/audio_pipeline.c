@@ -14,9 +14,6 @@
 #include <stdio.h>
 #endif
 
-#if M55M1_ERB_GRU_DIAGNOSTICS
-#include "board/m55m1_debug_uart.h"
-#endif
 #include "drivers/audio_transport/audio_transport.h"
 #include "services/audio_pipeline/audio_pipeline.h"
 
@@ -30,9 +27,11 @@
 #define M55M1_ERB_GRU_DIAGNOSTICS 0
 #endif
 
-#if M55M1_ENABLE_ERB_GRU
 #if M55M1_ERB_GRU_DIAGNOSTICS
 #include "services/audio_telemetry.h"
+#endif
+#if M55M1_ENABLE_ERB_GRU
+#if M55M1_ERB_GRU_DIAGNOSTICS
 #include "services/erb_gru/erb_gru_stream_timing.h"
 #endif
 #include "services/erb_gru/erb_gru_audio_enhancer.h"
@@ -177,7 +176,11 @@ bool audio_pipeline_init(void)
         return true;
     }
 #if M55M1_ERB_GRU_DIAGNOSTICS
-    m55m1_debug_uart_init();
+    /*
+     * Initialize the non-blocking diagnostics transport before board, codec,
+     * or inference setup can fail. The driver owns the board UART bootstrap.
+     */
+    audio_telemetry_init();
     printf("\n[BOOT] ERB-GRU firmware starting\n");
     printf("[BUILD] type=%s diagnostics=1 gain_db=%d "
            "fault=%s git=%s dirty=%d\n",
@@ -228,6 +231,7 @@ bool audio_pipeline_init(void)
             "Ethos-U55 and TFLM initialization", -1);
         return false;
     }
+    erb_gru_audio_enhancer_reset();
 #if MODEL_GOLDEN_TEST_DATA
     {
         erb_gru_golden_result_t golden;
@@ -244,7 +248,6 @@ bool audio_pipeline_init(void)
     }
 #endif
 #if M55M1_ERB_GRU_DIAGNOSTICS
-    audio_telemetry_init();
     erb_gru_stream_timing_reset(&g_stream_timing);
     printf("[BOOT] Ethos-U55 and TFLM initialized\n");
     printf("[ERB-GRU] 16 kHz Ethos-U55 inference enabled\n");
@@ -363,9 +366,14 @@ void audio_pipeline_poll(void)
 
 void audio_pipeline_stop_safe(void)
 {
-    if (g_running) {
+    if (g_initialized || g_running) {
         audio_transport_stop_safe();
     }
+    /*
+     * Stop is terminal for this lifecycle. The hardware bindings and stream
+     * state must be rebuilt by audio_pipeline_init() before another start.
+     */
+    g_initialized = false;
     g_running = false;
     g_polling = false;
 }

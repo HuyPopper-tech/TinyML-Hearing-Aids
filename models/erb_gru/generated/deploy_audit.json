@@ -46,6 +46,17 @@
     "path": "erb_gru_int8_vela.tflite",
     "sha256": "45f59d59598d74d36daebbb0d61b4d05020e164e4f78a62fcc31b4bb6b7d8fe8"
   },
+  "frontend_contract": {
+    "header": "erb_gru_frontend_contract.h",
+    "symbols": [
+      "ERB_GRU_STATE1_ZERO_POINT",
+      "ERB_GRU_STATE2_ZERO_POINT",
+      "ERB_GRU_FEATURE_SCALE",
+      "ERB_GRU_FEATURE_ZERO_POINT",
+      "ERB_GRU_GAIN_SCALE",
+      "ERB_GRU_GAIN_ZERO_POINT"
+    ]
+  },
   "model_header_matches_vela": true,
   "package_version": "w4_erb-gru_deployment_v2_seed20260730",
   "passed": true,

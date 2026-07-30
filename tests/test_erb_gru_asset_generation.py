@@ -40,6 +40,52 @@ class ErbGruAssetGenerationTests(unittest.TestCase):
 
         self.assertEqual(violations, [])
 
+    def test_frontend_contract_is_generated_and_contains_only_dsp_quantization(self):
+        generator = GENERATOR.read_text(encoding="utf-8")
+        frontend = (
+            ROOT / "models" / "erb_gru" / "generated"
+            / "erb_gru_frontend_contract.h"
+        ).read_text(encoding="utf-8")
+        audit = json.loads(
+            (
+                ROOT / "models" / "erb_gru" / "generated" / "deploy_audit.json"
+            ).read_text(encoding="utf-8")
+        )
+
+        self.assertIn("def render_frontend_contract(", generator)
+        self.assertIn('"erb_gru_frontend_contract.h"', generator)
+        for required in (
+            "ERB_GRU_STATE1_ZERO_POINT",
+            "ERB_GRU_STATE2_ZERO_POINT",
+            "ERB_GRU_FEATURE_SCALE",
+            "ERB_GRU_FEATURE_ZERO_POINT",
+            "ERB_GRU_GAIN_SCALE",
+            "ERB_GRU_GAIN_ZERO_POINT",
+        ):
+            self.assertIn(required, frontend)
+        for forbidden in (
+            "ERB_GRU_MODEL_BYTES",
+            "ERB_GRU_MODEL_SHA256",
+            "ERB_GRU_INPUT_STATE1_ORDINAL",
+            "ERB_GRU_INPUT_STATE1_INDEX",
+            "ERB_GRU_MACS_PER_INFERENCE",
+        ):
+            self.assertNotIn(forbidden, frontend)
+        self.assertEqual(
+            audit["frontend_contract"],
+            {
+                "header": "erb_gru_frontend_contract.h",
+                "symbols": [
+                    "ERB_GRU_STATE1_ZERO_POINT",
+                    "ERB_GRU_STATE2_ZERO_POINT",
+                    "ERB_GRU_FEATURE_SCALE",
+                    "ERB_GRU_FEATURE_ZERO_POINT",
+                    "ERB_GRU_GAIN_SCALE",
+                    "ERB_GRU_GAIN_ZERO_POINT",
+                ],
+            },
+        )
+
     @unittest.skipUnless(
         importlib.util.find_spec("tensorflow") is not None,
         "TensorFlow is required only for full model-package generation",

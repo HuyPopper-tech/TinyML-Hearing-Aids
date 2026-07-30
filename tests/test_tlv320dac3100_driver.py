@@ -624,6 +624,32 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
         self.assertNotIn("UART_Open(", diagnostic_app)
         self.assertNotIn("UART5_MODULE", diagnostic_app)
 
+    def test_production_capture_stop_quiesces_dmic_dma_and_irq_state(self):
+        board_header = (REPO_ROOT / "board" / "m55m1_audio.h").read_text(
+            encoding="utf-8"
+        )
+        board_source = (REPO_ROOT / "board" / "m55m1_audio.c").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("void m55m1_audio_dmic_stop(void);", board_header)
+        stop = board_source[
+            board_source.index("void m55m1_audio_dmic_stop(void)") :
+            board_source.index("bool m55m1_audio_dmic_take_block")
+        ]
+        for required in (
+            "DMIC_DISABLE_LPPDMA(DMIC0);",
+            "LPPDMA_DisableInt(",
+            "NVIC_DisableIRQ(LPPDMA_IRQn);",
+            "LPPDMA_Close(LPPDMA);",
+            "LPPDMA_CLR_TD_FLAG(",
+            "LPPDMA_CLR_ABORT_FLAG(",
+            "NVIC_ClearPendingIRQ(LPPDMA_IRQn);",
+            "g_dmic_state.block_ready = false;",
+            "g_dmic_state.samples_per_block = 0U;",
+        ):
+            self.assertIn(required, stop)
+
     def test_cmake_and_driver_documentation_are_integrated(self):
         cmake = (REPO_ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
         documentation = (REPO_ROOT / "docs" / "driver" / "tlv320dac3100.md").read_text(

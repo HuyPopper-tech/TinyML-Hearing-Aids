@@ -96,6 +96,14 @@ bool m55m1_audio_get_clock_snapshot(m55m1_audio_clock_snapshot_t *snapshot);
 
 bool m55m1_audio_dmic_start(m55m1_audio_profile_t profile);
 
+/**
+ * @brief Quiesce DMIC capture, LPPDMA requests, and the capture IRQ.
+ *
+ * Foreground-only. The function is idempotent and leaves no completed block
+ * pending. A later capture session must call m55m1_audio_dmic_start().
+ */
+void m55m1_audio_dmic_stop(void);
+
 bool m55m1_audio_dmic_take_block(
     int16_t *destination, uint16_t sample_count);
 

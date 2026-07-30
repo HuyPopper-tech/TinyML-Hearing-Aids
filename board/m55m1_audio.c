@@ -425,6 +425,37 @@ bool m55m1_audio_dmic_start(m55m1_audio_profile_t profile)
     return true;
 }
 
+void m55m1_audio_dmic_stop(void)
+{
+    const uint32_t channel_mask = 1UL << M55M1_AUDIO_LPPDMA_CH;
+    uint32_t primask;
+
+    /*
+     * Stop new peripheral requests before disabling the interrupt and channel.
+     * This is foreground-only; the short critical section below only resets
+     * the descriptor ownership state shared with LPPDMA_IRQHandler().
+     */
+    DMIC_DISABLE_LPPDMA(DMIC0);
+    DMIC_DisableChMsk(DMIC0, DMIC_CTL_CHEN2_Msk);
+    LPPDMA_DisableInt(
+        LPPDMA, M55M1_AUDIO_LPPDMA_CH, LPPDMA_INT_TRANS_DONE);
+    NVIC_DisableIRQ(LPPDMA_IRQn);
+    LPPDMA_Close(LPPDMA);
+    LPPDMA_CLR_TD_FLAG(LPPDMA, channel_mask);
+    LPPDMA_CLR_ABORT_FLAG(LPPDMA, channel_mask);
+    NVIC_ClearPendingIRQ(LPPDMA_IRQn);
+    DMIC_Close(DMIC0);
+
+    primask = __get_PRIMASK();
+    __disable_irq();
+    g_dmic_state.block_ready = false;
+    g_dmic_state.active_slot = 0U;
+    g_dmic_state.completed_slot = 0U;
+    g_dmic_state.samples_per_block = 0U;
+    g_dmic_state.last_completed_cycle = 0U;
+    __set_PRIMASK(primask);
+}
+
 bool m55m1_audio_dmic_take_block(
     int16_t *destination, uint16_t sample_count)
 {

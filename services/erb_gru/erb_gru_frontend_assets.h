@@ -8,4 +8,4 @@
 #pragma once
 
 #include "models/erb_gru/generated/dsp_constants.h"
-#include "models/erb_gru/generated/erb_gru_deploy_contract.h"
+#include "models/erb_gru/generated/erb_gru_frontend_contract.h"

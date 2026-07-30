@@ -41,6 +41,20 @@ class ErbGruArchitectureTests(unittest.TestCase):
 
         self.assertEqual(violations, {})
 
+    def test_services_never_depend_directly_on_board_headers(self):
+        violations = {}
+        for source in sorted((ROOT / "services").rglob("*")):
+            if source.suffix not in {".c", ".cc", ".cpp", ".h", ".hpp"}:
+                continue
+            board_includes = re.findall(
+                r'#include "(board/[^"]+)"',
+                source.read_text(encoding="utf-8"),
+            )
+            if board_includes:
+                violations[source.relative_to(ROOT).as_posix()] = board_includes
+
+        self.assertEqual(violations, {})
+
     def test_production_target_uses_the_production_audio_board_module(self):
         cmake = self.read("CMakeLists.txt")
 
@@ -60,16 +74,23 @@ class ErbGruArchitectureTests(unittest.TestCase):
 
     def test_enhancer_uses_the_service_internal_frontend_assets(self):
         enhancer = self.read("services/erb_gru/erb_gru_audio_enhancer.cpp")
+        frontend = self.read("services/erb_gru/erb_gru_frontend_assets.h")
 
         self.assertIn(
             '#include "services/erb_gru/erb_gru_frontend_assets.h"',
             enhancer,
         )
         self.assertNotIn("models/erb_gru/generated/erb_gru_assets.h", enhancer)
+        self.assertIn(
+            '#include "models/erb_gru/generated/erb_gru_frontend_contract.h"',
+            frontend,
+        )
+        self.assertNotIn("erb_gru_deploy_contract.h", frontend)
 
     def test_model_bytes_and_deploy_contract_enter_only_inference(self):
         source_roots = ("app", "board", "common", "drivers", "services")
         model_data_users = []
+        deploy_contract_users = []
         umbrella_users = []
         for source_root in source_roots:
             for source in (ROOT / source_root).rglob("*"):
@@ -79,11 +100,17 @@ class ErbGruArchitectureTests(unittest.TestCase):
                 relative = source.relative_to(ROOT).as_posix()
                 if "erb_gru_model_data.h" in text:
                     model_data_users.append(relative)
+                if "erb_gru_deploy_contract.h" in text:
+                    deploy_contract_users.append(relative)
                 if "models/erb_gru/generated/erb_gru_assets.h" in text:
                     umbrella_users.append(relative)
 
         self.assertEqual(
             model_data_users,
+            ["services/erb_gru/erb_gru_inference.cpp"],
+        )
+        self.assertEqual(
+            deploy_contract_users,
             ["services/erb_gru/erb_gru_inference.cpp"],
         )
         self.assertEqual(umbrella_users, [])

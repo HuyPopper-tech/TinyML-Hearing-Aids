@@ -24,6 +24,7 @@ void debug_uart_tx_init(void)
         return;
     }
 
+    m55m1_debug_uart_init();
     fixed_byte_ring_init(&g_tx_ring, g_tx_storage, sizeof(g_tx_storage));
     g_drop_count = 0U;
     UART_DisableInt(UART1, UART_INTEN_THREIEN_Msk);

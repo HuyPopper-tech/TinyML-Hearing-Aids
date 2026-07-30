@@ -65,6 +65,38 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
         self.assertIn("M55M1_ERB_GRU_GIT_REV", cmake)
         self.assertIn("M55M1_ERB_GRU_GIT_DIRTY", cmake)
 
+    def test_diagnostics_transport_is_ready_before_any_fatal_init_path(self):
+        pipeline = self.read("services/audio_pipeline/audio_pipeline.c")
+        uart_driver = self.read("drivers/debug_uart_tx/debug_uart_tx.c")
+
+        diagnostics_init = pipeline.index("audio_telemetry_init();")
+        transport_failure = pipeline.index("if (!audio_transport_init(")
+        enhancer_failure = pipeline.index("if (!erb_gru_audio_enhancer_init())")
+        self.assertLess(diagnostics_init, transport_failure)
+        self.assertLess(diagnostics_init, enhancer_failure)
+        self.assertNotIn('#include "board/', pipeline)
+        self.assertIn('#include "board/m55m1_debug_uart.h"', uart_driver)
+        self.assertLess(
+            uart_driver.index("m55m1_debug_uart_init();"),
+            uart_driver.index("m55m1_debug_uart_enable_tx_irq();"),
+        )
+
+    def test_stop_is_terminal_until_pipeline_is_reinitialized(self):
+        pipeline = self.read("services/audio_pipeline/audio_pipeline.c")
+        header = self.read("services/audio_pipeline/audio_pipeline.h")
+        transport = self.read("drivers/audio_transport/audio_transport.c")
+        stop = pipeline[pipeline.index("void audio_pipeline_stop_safe(void)") :]
+
+        self.assertIn("audio_transport_stop_safe();", stop)
+        self.assertIn("g_initialized = false;", stop)
+        self.assertIn("Re-initialize", header)
+        self.assertIn("m55m1_audio_dmic_stop();", transport)
+        self.assertLess(
+            transport.index("m55m1_audio_dmic_stop();"),
+            transport.index("(void)tlv320dac3100_stop();",
+                            transport.index("void audio_transport_stop_safe")),
+        )
+
     def test_fault_injection_is_not_reported_as_a_real_npu_error(self):
         inference = self.read("services/erb_gru/erb_gru_inference.cpp")
         header = self.read("services/erb_gru/erb_gru_inference.h")
