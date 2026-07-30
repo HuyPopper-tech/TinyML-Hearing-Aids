@@ -21,7 +21,14 @@ typedef struct {
     uint16_t processed_frames;
 } erb_gru_golden_result_t;
 
-/** @brief Run the compiled finite golden corpus through the static enhancer. @param result Caller-owned aggregate destination. @return True on complete parity run; false for invalid destination or mismatch. Test/foreground-only and terminal for the corpus invocation. */
+/**
+ * @brief Run the compiled finite golden corpus through the static enhancer.
+ * @param result Caller-owned aggregate destination.
+ * @return True on complete parity; false for NULL or any mismatch.
+ *
+ * Test foreground only and non-reentrant. The runner resets model state, consumes
+ * the finite corpus, flushes WOLA overlap, and does not retain result.
+ */
 bool erb_gru_golden_run(erb_gru_golden_result_t *result);
 
 #ifdef __cplusplus

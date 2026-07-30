@@ -13,16 +13,38 @@
 extern "C" {
 #endif
 
-/** @brief Bind NPU clocks, pins, memory and cache policy. @return True once foreground inference may register its driver. */
+/**
+ * @brief Bind NPU clocks, pins, memory and cache policy.
+ * @return True once foreground inference may register its driver.
+ *
+ * Foreground-only during board initialization.
+ */
 bool m55m1_ethosu_u55_board_init(void);
 
-/** @brief Enable the board-owned NPU interrupt binding after driver registration. @return None. Foreground-only. */
+/**
+ * @brief Enable the board-owned NPU interrupt binding after driver registration.
+ * @return None.
+ *
+ * Foreground-only. The Ethos-U driver must be registered before this call.
+ */
 void m55m1_ethosu_u55_board_enable_irq(void);
 
-/** @brief Return the board SysTick counter used for foreground inference profiling. @return Wrap-prone cycle value. */
+/**
+ * @brief Return the board SysTick counter used for foreground inference profiling.
+ * @return Current cycle value; wrap is expected.
+ *
+ * Safe for foreground timing snapshots. The returned value owns no resources.
+ */
 uint32_t m55m1_ethosu_u55_board_cycles_now(void);
 
-/** @brief Return wrap-safe elapsed SysTick cycles for Ethos-U timing. @param start_cycle Earlier sample. @param end_cycle Later sample. @return Unsigned delta. */
+/**
+ * @brief Return wrap-safe elapsed SysTick cycles for Ethos-U timing.
+ * @param start_cycle Earlier sample.
+ * @param end_cycle Later sample.
+ * @return Unsigned delta.
+ *
+ * The calculation is wrap-safe for one counter period.
+ */
 uint32_t m55m1_ethosu_u55_board_cycles_elapsed(
     uint32_t start_cycle,
     uint32_t end_cycle);

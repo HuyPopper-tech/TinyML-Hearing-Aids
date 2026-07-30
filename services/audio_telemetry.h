@@ -42,18 +42,63 @@ typedef struct {
     erb_gru_audio_diagnostics_t audio;
 } audio_telemetry_snapshot_t;
 
-/** @brief Reset foreground telemetry counters. @return None. */
+/**
+ * @brief Reset foreground telemetry counters and histogram state.
+ * @return None.
+ *
+ * Foreground-only before the diagnostic observation interval begins.
+ */
 void audio_telemetry_init(void);
-/** @brief Record an enhancer duration. @param elapsed_us Frame processing time. @return None. Foreground-only. */
+
+/**
+ * @brief Record one enhancer duration.
+ * @param elapsed_us Complete frame processing time in microseconds.
+ * @return None.
+ *
+ * Foreground-only and constant-time; no formatting or allocation occurs.
+ */
 void audio_telemetry_record_processing_us(uint32_t elapsed_us);
-/** @brief Record one model invocation duration. @param elapsed_us Invoke time. @return None. Foreground-only. */
+
+/**
+ * @brief Record one model invocation duration.
+ * @param elapsed_us Ethos-U invocation time in microseconds.
+ * @return None.
+ *
+ * Foreground-only and constant-time.
+ */
 void audio_telemetry_record_invoke_us(uint32_t elapsed_us);
-/** @brief Record capture-to-DAC latency. @param elapsed_us End-to-end duration. @param sequence Source frame ordinal. @return None. Foreground-only. */
+
+/**
+ * @brief Record capture-to-DAC latency for one source frame.
+ * @param elapsed_us End-to-end duration in microseconds.
+ * @param sequence Source capture ordinal used for gap detection.
+ * @return None.
+ *
+ * Foreground-only. The source sequence must follow WOLA one-hop attribution.
+ */
 void audio_telemetry_record_e2e_us(uint32_t elapsed_us, uint32_t sequence);
-/** @brief Rate-limit and emit a telemetry snapshot. @param snapshot Caller-owned aggregate read only for this call. @param dmic_block_pending Current capture availability. @return None. Foreground-only; never blocks audio or runs in an ISR. */
+
+/**
+ * @brief Rate-limit, format, and enqueue one atomic telemetry snapshot.
+ * @param snapshot Caller-owned aggregate read only during this call.
+ * @param dmic_block_pending True when capture work must take priority.
+ * @return None.
+ *
+ * Foreground-only and non-blocking. Formatting is deferred while audio is
+ * pending, and a full UART queue drops the whole message.
+ */
 void audio_telemetry_poll(
     const audio_telemetry_snapshot_t *snapshot, bool dmic_block_pending);
-/** @brief Emit a terminal failure report. @param stage Static failure stage text. @param status Platform status. @return None. Foreground-only; caller retains stage lifetime. */
+
+/**
+ * @brief Emit a terminal diagnostic failure report.
+ * @param stage Null-terminated failure-stage text.
+ * @param status Platform status value.
+ * @return None.
+ *
+ * Foreground-only before safe shutdown. The caller retains stage ownership and
+ * must keep it valid for this call.
+ */
 void audio_telemetry_fatal(const char *stage, int status);
 
 #ifdef __cplusplus

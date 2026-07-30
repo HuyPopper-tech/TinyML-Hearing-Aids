@@ -81,34 +81,104 @@ typedef void (*audio_transport_progress_callback_t)(
     audio_transport_board_stage_t stage,
     void *context);
 
-/** @brief Bind the production board/codec transport. @param report Optional init result destination. @param progress_callback Optional synchronous foreground observer. @param progress_context Caller-owned observer context retained only during init. @return True on a usable transport. Foreground-only before start; call stop before reinitializing. */
+/**
+ * @brief Bind the production board/codec transport.
+ * @param report Optional init result destination.
+ * @param progress_callback Optional synchronous foreground observer.
+ * @param progress_context Caller-owned observer context retained only during init.
+ * @return True when the transport is ready for audio_transport_start().
+ *
+ * Foreground-only before audio starts. The callback context remains caller-owned
+ * and is retained only for the duration of this call.
+ */
 bool audio_transport_init(
     audio_transport_init_report_t *report,
     audio_transport_progress_callback_t progress_callback,
     void *progress_context);
-/** @brief Start DMIC capture and DAC DMA. @return OK when the active lifecycle starts, otherwise ERROR/BUSY. Foreground-only. */
+
+/**
+ * @brief Start DMIC capture and DAC DMA.
+ * @return OK when the active lifecycle starts; otherwise BUSY or ERROR.
+ *
+ * Foreground-only. The transport must be initialized first.
+ */
 audio_transport_status_t audio_transport_start(void);
-/** @brief Quiesce capture before playback and terminate DMA ownership. @return None. Foreground-only, idempotent terminal operation until init. */
+
+/**
+ * @brief Quiesce capture before playback and terminate DMA ownership.
+ * @return None.
+ *
+ * Foreground-only and idempotent. A new lifecycle requires initialization.
+ */
 void audio_transport_stop_safe(void);
-/** @brief Take a completed DMIC block and timestamp. @param destination Exact-size caller buffer. @param timing Output capture tag. @return True if copied. Foreground-only; ISR publishes blocks. */
+
+/**
+ * @brief Take a completed DMIC block and timestamp.
+ * @param destination Exact-size caller buffer.
+ * @param timing Output capture tag.
+ * @return True when a completed capture block was copied.
+ *
+ * Foreground-only; the ISR publishes blocks. Both destinations remain
+ * caller-owned.
+ */
 bool audio_transport_take_capture(
     int16_t destination[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
     audio_transport_capture_timing_t *timing);
-/** @brief Check for a completed capture block. @return Best-effort ISR-shared availability. */
+
+/**
+ * @brief Check for a completed capture block.
+ * @return True when a capture block appears available.
+ *
+ * This best-effort ISR-shared snapshot does not reserve the block.
+ */
 bool audio_transport_capture_pending(void);
-/** @brief Submit one playback block. @param samples Exact-size caller buffer copied before return. @return OK, BUSY, or ERROR. Foreground-only/non-blocking. */
+
+/**
+ * @brief Submit one playback block.
+ * @param samples Exact-size caller buffer copied before return.
+ * @return OK, BUSY, or ERROR.
+ *
+ * Foreground-only and non-blocking. The caller may reuse samples after return.
+ */
 audio_transport_status_t audio_transport_submit(
     const int16_t samples[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK]);
-/** @brief Submit playback with its prior capture source tag. @param samples Copied block. @param tag Optional caller-owned source metadata copied on success. @return OK, BUSY, or ERROR. Foreground-only. */
+
+/**
+ * @brief Submit playback with its prior capture source tag.
+ * @param samples Copied block.
+ * @param tag Optional caller-owned source metadata copied on success.
+ * @return OK, BUSY, or ERROR.
+ *
+ * Foreground-only and non-blocking. Both inputs remain caller-owned.
+ */
 audio_transport_status_t audio_transport_submit_tagged(
     const int16_t samples[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
     const audio_transport_block_tag_t *tag);
-/** @brief Take one DAC completion tag. @param completion Destination. @return True when available. Foreground-only. */
+
+/**
+ * @brief Take one DAC completion tag.
+ * @param completion Destination.
+ * @return True when a completion tag was consumed.
+ *
+ * Foreground-only. The caller owns the destination storage.
+ */
 bool audio_transport_take_completion(audio_transport_completion_t *completion);
-/** @brief Snapshot transport health. @param health Destination, ignored when NULL. @return None. Foreground-only. */
+
+/**
+ * @brief Snapshot transport health.
+ * @param health Destination, ignored when NULL.
+ * @return None.
+ *
+ * Foreground-only best-effort snapshot of ISR-updated counters.
+ */
 void audio_transport_get_health(audio_transport_health_t *health);
-/** @brief Read profiling timebase. @return Wrap-prone cycle count. */
+
+/**
+ * @brief Read profiling timebase.
+ * @return Current cycle count; wrap is expected.
+ */
 uint32_t audio_transport_cycles_now(void);
+
 /**
  * @brief Calculate a wrap-safe elapsed interval on the shared board timebase.
  * @param start_cycle Earlier captured cycle value.
@@ -118,7 +188,14 @@ uint32_t audio_transport_cycles_now(void);
 uint32_t audio_transport_cycles_elapsed(
     uint32_t start_cycle,
     uint32_t end_cycle);
-/** @brief Convert a cycle delta to microseconds. @param cycles Delta. @return Truncated microseconds. */
+
+/**
+ * @brief Convert a cycle delta to microseconds.
+ * @param cycles Delta.
+ * @return Truncated microseconds.
+ *
+ * Uses the board timebase configured during transport initialization.
+ */
 uint32_t audio_transport_cycles_to_us(uint32_t cycles);
 
 #ifdef __cplusplus

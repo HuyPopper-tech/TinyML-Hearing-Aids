@@ -31,6 +31,7 @@ typedef struct {
  * resets any queued data and has no allocation or ownership transfer.
  */
 void fixed_byte_ring_init(fixed_byte_ring_t *ring, uint8_t *storage, size_t capacity);
+
 /**
  * @brief Atomically enqueue an entire message from foreground context.
  * @param ring Initialized SPSC ring whose producer is the caller.
@@ -43,6 +44,7 @@ void fixed_byte_ring_init(fixed_byte_ring_t *ring, uint8_t *storage, size_t capa
  */
 bool fixed_byte_ring_try_enqueue(
     fixed_byte_ring_t *ring, const uint8_t *message, size_t length);
+
 /**
  * @brief Pop one byte from the ISR consumer side of the ring.
  * @param ring Initialized SPSC ring whose consumer is the caller.
@@ -53,6 +55,7 @@ bool fixed_byte_ring_try_enqueue(
  * tail follows the read, so foreground may reuse the slot only afterward.
  */
 bool fixed_byte_ring_try_pop(fixed_byte_ring_t *ring, uint8_t *value);
+
 /**
  * @brief Return a snapshot of queued bytes.
  * @param ring Initialized SPSC ring, or NULL.

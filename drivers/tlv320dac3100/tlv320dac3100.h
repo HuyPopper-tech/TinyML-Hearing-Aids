@@ -16,36 +16,62 @@
 extern "C" {
 #endif
 
-/** TLV320DAC3100 7-bit I2C address. */
+/**
+ * @brief TLV320DAC3100 7-bit I2C address.
+ */
 #define TLV320DAC3100_I2C_ADDRESS                 0x18U
-/** Fixed duration of each real-time PCM/DMA block. */
+/**
+ * @brief Fixed duration of each real-time PCM/DMA block.
+ */
 #define TLV320DAC3100_BLOCK_DURATION_MS            10U
-/** 16 kHz profile PCM rate. */
+/**
+ * @brief 16 kHz profile PCM rate.
+ */
 #define TLV320DAC3100_16KHZ_SAMPLE_RATE_HZ         16000UL
-/** 16 kHz profile direct codec MCLK, 256 times the PCM rate. */
+/**
+ * @brief 16 kHz profile direct codec MCLK, 256 times the PCM rate.
+ */
 #define TLV320DAC3100_16KHZ_MCLK_HZ                4096000UL
-/** 16 kHz profile mono samples in one 10 ms block. */
+/**
+ * @brief 16 kHz profile mono samples in one 10 ms block.
+ */
 #define TLV320DAC3100_16KHZ_SAMPLES_PER_BLOCK      160U
-/** 32 kHz profile PCM rate. */
+/**
+ * @brief 32 kHz profile PCM rate.
+ */
 #define TLV320DAC3100_32KHZ_SAMPLE_RATE_HZ         32000UL
-/** 32 kHz profile direct codec MCLK, 256 times the PCM rate. */
+/**
+ * @brief 32 kHz profile direct codec MCLK, 256 times the PCM rate.
+ */
 #define TLV320DAC3100_32KHZ_MCLK_HZ                8192000UL
-/** 32 kHz profile mono samples in one 10 ms block. */
+/**
+ * @brief 32 kHz profile mono samples in one 10 ms block.
+ */
 #define TLV320DAC3100_32KHZ_SAMPLES_PER_BLOCK      320U
-/** Maximum foreground PCM storage required by either supported profile. */
+/**
+ * @brief Maximum foreground PCM storage required by either supported profile.
+ */
 #define TLV320DAC3100_MAX_SAMPLES_PER_BLOCK        TLV320DAC3100_32KHZ_SAMPLES_PER_BLOCK
-/** Compatibility aliases for existing fixed-16-kHz applications. */
+/**
+ * @brief Compatibility aliases for existing fixed-16-kHz applications.
+ */
 #define TLV320DAC3100_SAMPLE_RATE_HZ               TLV320DAC3100_16KHZ_SAMPLE_RATE_HZ
 #define TLV320DAC3100_MCLK_HZ                      TLV320DAC3100_16KHZ_MCLK_HZ
 #define TLV320DAC3100_MONO_SAMPLES_PER_BLOCK       TLV320DAC3100_16KHZ_SAMPLES_PER_BLOCK
 
-/** Supported PCM and codec-clock profiles. Profile changes require a new init. */
+/**
+ * @brief Supported PCM and codec-clock profiles.
+ *
+ * Profile changes require a new driver initialization lifecycle.
+ */
 typedef enum {
     TLV320DAC3100_AUDIO_PROFILE_16KHZ = 0,
     TLV320DAC3100_AUDIO_PROFILE_32KHZ,
 } tlv320dac3100_audio_profile_t;
 
-/** Driver operation result. */
+/**
+ * @brief Driver operation result.
+ */
 typedef enum {
     TLV320DAC3100_STATUS_OK = 0,
     TLV320DAC3100_STATUS_INVALID_ARGUMENT,
@@ -76,21 +102,29 @@ typedef struct {
     I2S_T *i2s;
     PDMA_T *pdma;
     uint8_t pdma_channel;
-    /** Selected fixed profile; the board must prepare matching I2S clocks. */
+    /**
+     * @brief Selected fixed profile; the board must prepare matching I2S clocks.
+     */
     tlv320dac3100_audio_profile_t profile;
-    /** Highest allowed per-channel digital gain in dB, inclusive, from -63 to 0. */
+    /**
+     * @brief Highest allowed per-channel digital gain in dB, inclusive, from -63 to 0.
+     */
     int8_t max_digital_gain_db;
     tlv320dac3100_block_callback_t block_callback;
     void *callback_context;
 } tlv320dac3100_config_t;
 
-/** Opaque capture timestamp and sequence transported with one PCM block. */
+/**
+ * @brief Opaque capture timestamp and sequence transported with one PCM block.
+ */
 typedef struct {
     uint32_t sequence;
     uint32_t capture_completed_cycle;
 } tlv320dac3100_audio_block_tag_t;
 
-/** Foreground-readable completion record for one tagged DAC DMA block. */
+/**
+ * @brief Foreground-readable completion record for one tagged DAC DMA block.
+ */
 typedef struct {
     uint32_t sequence;
     uint32_t capture_completed_cycle;
@@ -106,49 +140,95 @@ typedef struct {
  * page-select write and phase 2 is the requested codec-register write.
  */
 typedef struct {
-    /** Number of PDMA descriptors completed since the current init. */
+    /**
+     * @brief Number of PDMA descriptors completed since the current init.
+     */
     uint32_t completed_blocks;
-    /** Number of PCM blocks accepted and copied into a PDMA slot. */
+    /**
+     * @brief Number of PCM blocks accepted and copied into a PDMA slot.
+     */
     uint32_t queued_blocks;
-    /** Number of completed slots that played silence after a missed refill. */
+    /**
+     * @brief Number of completed slots that played silence after a missed refill.
+     */
     uint32_t underrun_blocks;
-    /** Number of PDMA abort conditions observed by the driver's IRQ handler. */
+    /**
+     * @brief Number of PDMA abort conditions observed by the driver's IRQ handler.
+     */
     uint32_t dma_errors;
-    /** Number of I2C operations that exhausted their bounded retry budget. */
+    /**
+     * @brief Number of I2C operations that exhausted their bounded retry budget.
+     */
     uint32_t i2c_failures;
-    /** Codec page requested by the latest exhausted I2C operation. */
+    /**
+     * @brief Codec page requested by the latest exhausted I2C operation.
+     */
     uint8_t last_i2c_page;
-    /** Codec register requested by the latest exhausted I2C operation. */
+    /**
+     * @brief Codec register requested by the latest exhausted I2C operation.
+     */
     uint8_t last_i2c_register;
-    /** Failed I2C phase: 1 for page select, 2 for target register. */
+    /**
+     * @brief Failed I2C phase: 1 for page select, 2 for target register.
+     */
     uint8_t last_i2c_phase;
-    /** Number of attempts consumed by the latest exhausted I2C operation. */
+    /**
+     * @brief Number of attempts consumed by the latest exhausted I2C operation.
+     */
     uint8_t last_i2c_attempts;
-    /** I2C STATUS0 captured before the latest bounded transaction was aborted. */
+    /**
+     * @brief I2C STATUS0 captured before the latest bounded transaction was aborted.
+     */
     uint8_t last_i2c_status;
-    /** I2C CTL0 captured before the latest bounded transaction was aborted. */
+    /**
+     * @brief I2C CTL0 captured before the latest bounded transaction was aborted.
+     */
     uint32_t last_i2c_control;
-    /** Bit n is one when PDMA has released stereo descriptor slot n to foreground code. */
+    /**
+     * @brief Bit n is one when PDMA has released stereo descriptor slot n.
+     */
     uint8_t available_slot_mask;
-    /** Bit n is one when stereo descriptor slot n currently points at caller PCM, not silence. */
+    /**
+     * @brief Bit n is one when the descriptor currently points at caller PCM.
+     */
     uint8_t audio_slot_mask;
-    /** Descriptor slot expected to complete on the next PDMA transfer-done IRQ. */
+    /**
+     * @brief Descriptor slot expected to complete on the next transfer-done IRQ.
+     */
     uint8_t next_completed_slot;
-    /** True after configuration completes successfully. */
+    /**
+     * @brief True after configuration completes successfully.
+     */
     bool initialized;
-    /** True while I2S transmit DMA is actively playing the descriptor ring. */
+    /**
+     * @brief True while I2S transmit DMA is actively playing the descriptor ring.
+     */
     bool running;
-    /** True when both DAC channels are digitally muted. */
+    /**
+     * @brief True when both DAC channels are digitally muted.
+     */
     bool muted;
 } tlv320dac3100_driver_status_t;
 
-/** @brief Return the PCM rate for a supported profile, or zero when invalid. */
+/**
+ * @brief Return the PCM rate for a supported profile.
+ * @param profile Audio profile to query.
+ * @return Sample rate in hertz, or zero when profile is invalid.
+ */
 uint32_t tlv320dac3100_profile_sample_rate_hz(tlv320dac3100_audio_profile_t profile);
 
-/** @brief Return the required direct MCLK for a supported profile, or zero when invalid. */
+/**
+ * @brief Return the required direct MCLK for a supported profile.
+ * @param profile Audio profile to query.
+ * @return MCLK in hertz, or zero when profile is invalid.
+ */
 uint32_t tlv320dac3100_profile_mclk_hz(tlv320dac3100_audio_profile_t profile);
 
-/** @brief Return mono signed-16 samples required in one 10 ms block, or zero when invalid. */
+/**
+ * @brief Return the mono sample count for one 10 ms block.
+ * @param profile Audio profile to query.
+ * @return Signed-16 sample count, or zero when profile is invalid.
+ */
 uint16_t tlv320dac3100_profile_samples_per_block(tlv320dac3100_audio_profile_t profile);
 
 /**
@@ -187,6 +267,10 @@ tlv320dac3100_status_t tlv320dac3100_submit_mono_block(
 
 /**
  * @brief Submit PCM with a capture timestamp for end-to-end latency tracking.
+ * @param samples Caller-owned mono PCM copied before return.
+ * @param sample_count Number of samples; must match the selected profile.
+ * @param tag Optional capture metadata copied on successful submission.
+ * @return `OK`, `BUSY`, or an argument/state error.
  *
  * The tag is copied into the released PDMA slot and returned by
  * `tlv320dac3100_take_audio_completion` after that slot is played.
@@ -194,7 +278,13 @@ tlv320dac3100_status_t tlv320dac3100_submit_mono_block(
 tlv320dac3100_status_t tlv320dac3100_submit_mono_block_tagged(
     const int16_t *samples, uint16_t sample_count, const tlv320dac3100_audio_block_tag_t *tag);
 
-/** @brief Copy and consume the newest completed tagged DAC block, if present. */
+/**
+ * @brief Copy and consume the newest completed tagged DAC block.
+ * @param completion Caller-owned destination.
+ * @return True when a completion was consumed; false for NULL or no completion.
+ *
+ * Foreground-only; the driver does not retain the destination.
+ */
 bool tlv320dac3100_take_audio_completion(tlv320dac3100_audio_completion_t *completion);
 
 /**
@@ -223,6 +313,9 @@ tlv320dac3100_status_t tlv320dac3100_mute(bool enabled);
 /**
  * @brief Copy driver counters and current state into caller-owned storage.
  * @param status Output destination; must not be null.
+ * @return None.
+ *
+ * Foreground-only best-effort snapshot of IRQ-updated state.
  */
 void tlv320dac3100_get_status(tlv320dac3100_driver_status_t *status);
 
@@ -236,6 +329,8 @@ tlv320dac3100_status_t tlv320dac3100_recover(void);
 
 /**
  * @brief Service transfer-done and abort flags for the configured PDMA channel.
+ * @param completed_cycle Board cycle captured for the completed descriptor.
+ * @return None.
  *
  * Call only from the matching PDMA IRQ handler. The handler marks a completed
  * descriptor free and switches it to silence before notifying the callback.

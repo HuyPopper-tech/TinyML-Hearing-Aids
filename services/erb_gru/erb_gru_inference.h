@@ -32,9 +32,28 @@ typedef struct {
     uint32_t model_flash_bytes;
 } erb_gru_inference_performance_t;
 
-/** @brief Construct the static no-heap TFLM/Ethos-U inference lifetime. @return True if model, tensors and accelerator contract validate. Foreground-only and idempotent after success. */
+/**
+ * @brief Construct the static TFLM/Ethos-U inference lifetime.
+ * @return True when the model, tensors, and accelerator contract validate.
+ *
+ * Foreground-only and idempotent after success. All interpreter and tensor
+ * storage is static; no ownership is transferred to the caller.
+ */
 bool erb_gru_inference_init(void);
-/** @brief Invoke one recurrent model frame. @param feature Quantized 32-band input. @param state1 First committed recurrent state. @param state2 Second committed recurrent state. @param gain Output gains. @param next_state1 Destination for candidate state one. @param next_state2 Destination for candidate state two. @return True only when all outputs are valid; caller must commit candidate states only after true. Foreground-only, non-reentrant. */
+
+/**
+ * @brief Invoke one recurrent ERB-GRU frame.
+ * @param feature Caller-owned quantized 32-band input.
+ * @param state1 Caller-owned committed first recurrent state.
+ * @param state2 Caller-owned committed second recurrent state.
+ * @param gain Caller-owned destination for quantized band gains.
+ * @param next_state1 Caller-owned destination for candidate state one.
+ * @param next_state2 Caller-owned destination for candidate state two.
+ * @return True only when every output is valid.
+ *
+ * Foreground-only and non-reentrant. Inputs and outputs are not retained. The
+ * caller must commit candidate states only after a true result.
+ */
 bool erb_gru_inference_invoke(
     const int8_t feature[ERB_GRU_INFERENCE_BANDS],
     const int8_t state1[ERB_GRU_INFERENCE_STATE_SIZE],
@@ -42,7 +61,15 @@ bool erb_gru_inference_invoke(
     int8_t gain[ERB_GRU_INFERENCE_BANDS],
     int8_t next_state1[ERB_GRU_INFERENCE_STATE_SIZE],
     int8_t next_state2[ERB_GRU_INFERENCE_STATE_SIZE]);
-/** @brief Snapshot inference counters. @param performance Destination, ignored when NULL. @return None. Foreground-only best-effort telemetry. */
+
+/**
+ * @brief Snapshot inference timing, memory, and error counters.
+ * @param performance Caller-owned destination, ignored when NULL.
+ * @return None.
+ *
+ * Foreground-only best-effort telemetry; the service does not retain the
+ * destination.
+ */
 void erb_gru_inference_get_performance(erb_gru_inference_performance_t *performance);
 
 #ifdef __cplusplus
