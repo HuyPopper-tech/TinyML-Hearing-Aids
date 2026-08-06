@@ -1,0 +1,268 @@
+{
+  "schema_version": 1,
+  "model": "deepfilternet_u55",
+  "inputs": {
+    "complex_conv_cache": {
+      "name": "serving_default_complex_conv_cache:0",
+      "shape": [
+        1,
+        1,
+        144,
+        2
+      ],
+      "dtype": "int8",
+      "index": 3,
+      "scale": 0.266775518655777,
+      "zero_point": 8
+    },
+    "complex_feature": {
+      "name": "serving_default_complex_feature:0",
+      "shape": [
+        1,
+        144,
+        2
+      ],
+      "dtype": "int8",
+      "index": 2,
+      "scale": 0.266775518655777,
+      "zero_point": 8
+    },
+    "df_state_0": {
+      "name": "serving_default_df_state_0:0",
+      "shape": [
+        1,
+        320
+      ],
+      "dtype": "int8",
+      "index": 6,
+      "scale": 0.007839353755116463,
+      "zero_point": -1
+    },
+    "df_state_1": {
+      "name": "serving_default_df_state_1:0",
+      "shape": [
+        1,
+        320
+      ],
+      "dtype": "int8",
+      "index": 7,
+      "scale": 0.007808499038219452,
+      "zero_point": 0
+    },
+    "enc_state_0": {
+      "name": "serving_default_enc_state_0:0",
+      "shape": [
+        1,
+        320
+      ],
+      "dtype": "int8",
+      "index": 8,
+      "scale": 0.007843137718737125,
+      "zero_point": -1
+    },
+    "enc_state_1": {
+      "name": "serving_default_enc_state_1:0",
+      "shape": [
+        1,
+        320
+      ],
+      "dtype": "int8",
+      "index": 5,
+      "scale": 0.007840175181627274,
+      "zero_point": -1
+    },
+    "enc_state_2": {
+      "name": "serving_default_enc_state_2:0",
+      "shape": [
+        1,
+        320
+      ],
+      "dtype": "int8",
+      "index": 1,
+      "scale": 0.007841632701456547,
+      "zero_point": 0
+    },
+    "erb_conv_cache": {
+      "name": "serving_default_erb_conv_cache:0",
+      "shape": [
+        1,
+        32
+      ],
+      "dtype": "int8",
+      "index": 0,
+      "scale": 0.04027445986866951,
+      "zero_point": 41
+    },
+    "erb_feature": {
+      "name": "serving_default_erb_feature:0",
+      "shape": [
+        1,
+        32
+      ],
+      "dtype": "int8",
+      "index": 4,
+      "scale": 0.04027445986866951,
+      "zero_point": 41
+    }
+  },
+  "outputs": {
+    "alpha": {
+      "name": "StatefulPartitionedCall:0",
+      "shape": [
+        1,
+        1
+      ],
+      "dtype": "int8",
+      "index": 482,
+      "scale": 0.00390625,
+      "zero_point": -128
+    },
+    "df_coefficients": {
+      "name": "StatefulPartitionedCall:1",
+      "shape": [
+        1,
+        5,
+        144,
+        2
+      ],
+      "dtype": "int8",
+      "index": 758,
+      "scale": 0.005129678640514612,
+      "zero_point": 27
+    },
+    "gain_bins": {
+      "name": "StatefulPartitionedCall:2",
+      "shape": [
+        1,
+        257
+      ],
+      "dtype": "int8",
+      "index": 761,
+      "scale": 0.0038486530538648367,
+      "zero_point": -128
+    },
+    "next_complex_conv_cache": {
+      "name": "StatefulPartitionedCall:3",
+      "shape": [
+        1,
+        1,
+        144,
+        2
+      ],
+      "dtype": "int8",
+      "index": 187,
+      "scale": 0.266775518655777,
+      "zero_point": 8
+    },
+    "next_df_state_0": {
+      "name": "StatefulPartitionedCall:4",
+      "shape": [
+        1,
+        320
+      ],
+      "dtype": "int8",
+      "index": 603,
+      "scale": 0.007839352823793888,
+      "zero_point": -1
+    },
+    "next_df_state_1": {
+      "name": "StatefulPartitionedCall:5",
+      "shape": [
+        1,
+        320
+      ],
+      "dtype": "int8",
+      "index": 724,
+      "scale": 0.007808499038219452,
+      "zero_point": 0
+    },
+    "next_enc_state_0": {
+      "name": "StatefulPartitionedCall:6",
+      "shape": [
+        1,
+        320
+      ],
+      "dtype": "int8",
+      "index": 358,
+      "scale": 0.007843137718737125,
+      "zero_point": -1
+    },
+    "next_enc_state_1": {
+      "name": "StatefulPartitionedCall:7",
+      "shape": [
+        1,
+        320
+      ],
+      "dtype": "int8",
+      "index": 419,
+      "scale": 0.007840175181627274,
+      "zero_point": -1
+    },
+    "next_enc_state_2": {
+      "name": "StatefulPartitionedCall:8",
+      "shape": [
+        1,
+        320
+      ],
+      "dtype": "int8",
+      "index": 480,
+      "scale": 0.007841632701456547,
+      "zero_point": 0
+    },
+    "next_erb_conv_cache": {
+      "name": "serving_default_erb_feature:0",
+      "shape": [
+        1,
+        32
+      ],
+      "dtype": "int8",
+      "index": 4,
+      "scale": 0.04027445986866951,
+      "zero_point": 41
+    }
+  },
+  "state_mapping": [
+    {
+      "input": "enc_state_0",
+      "output": "next_enc_state_0",
+      "copy_mode": "raw_int8",
+      "reset": "zero_on_boot_or_stream_discontinuity"
+    },
+    {
+      "input": "enc_state_1",
+      "output": "next_enc_state_1",
+      "copy_mode": "raw_int8",
+      "reset": "zero_on_boot_or_stream_discontinuity"
+    },
+    {
+      "input": "enc_state_2",
+      "output": "next_enc_state_2",
+      "copy_mode": "raw_int8",
+      "reset": "zero_on_boot_or_stream_discontinuity"
+    },
+    {
+      "input": "df_state_0",
+      "output": "next_df_state_0",
+      "copy_mode": "requantize",
+      "reset": "zero_on_boot_or_stream_discontinuity"
+    },
+    {
+      "input": "df_state_1",
+      "output": "next_df_state_1",
+      "copy_mode": "raw_int8",
+      "reset": "zero_on_boot_or_stream_discontinuity"
+    },
+    {
+      "input": "erb_conv_cache",
+      "output": "next_erb_conv_cache",
+      "copy_mode": "raw_int8",
+      "reset": "zero_on_boot_or_stream_discontinuity"
+    },
+    {
+      "input": "complex_conv_cache",
+      "output": "next_complex_conv_cache",
+      "copy_mode": "raw_int8",
+      "reset": "zero_on_boot_or_stream_discontinuity"
+    }
+  ]
+}

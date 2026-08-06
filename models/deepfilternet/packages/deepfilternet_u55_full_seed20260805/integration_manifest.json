@@ -1,0 +1,43 @@
+{
+  "schema_version": 2,
+  "model": "deepfilternet_u55",
+  "variant": "faithful",
+  "profile": "full",
+  "quality": {
+    "mean_metrics": {
+      "si_sdr": {
+        "fp32": 5.76919623066547,
+        "int8": 5.866758545649813
+      },
+      "pesq_wb": {
+        "fp32": 1.7318970314227045,
+        "int8": 1.741668169386685
+      },
+      "stoi": {
+        "fp32": 0.8002697907850216,
+        "int8": 0.8024989526161216
+      }
+    },
+    "delta_si_sdr_db": -0.09756231498434342,
+    "delta_pesq": -0.009771137963980436,
+    "delta_stoi": -0.0022291618311000017,
+    "limits": {
+      "delta_si_sdr_db": 0.5,
+      "delta_pesq": 0.05,
+      "delta_stoi": 0.01
+    },
+    "passed": true,
+    "enforced": false,
+    "scope": "smoke_128_not_release_gate"
+  },
+  "parity": {
+    "gain_max_abs": 0.014451771974563599,
+    "coeff_max_abs": 0.01525893434882164,
+    "alpha_abs": 0.001126125454902649,
+    "audio_max_abs": 0.0052054524421691895,
+    "host_status": "fp32_vs_int8_reported",
+    "board_status": "board_mve_parity_pending"
+  },
+  "flash_estimate_bytes": 1265696,
+  "release_status": "engineering_ready_smoke_passed"
+}

@@ -5,13 +5,13 @@
 This document records the NuMaker GestureAI-M55M1 onboard MP34DT05 capture
 path for later TinyML hearing-aid applications. It is transport/reference
 firmware, not a complete hearing-aid front end. The board layer produces
-signed-16 mono PCM in 10 ms blocks through DMIC0 and LPPDMA; application code
+signed-16 mono PCM blocks through DMIC0 and LPPDMA; application code
 may inspect or process that block before submitting it to the DAC transport.
 
-| PCM profile | Samples / 10 ms | DMIC OSR | PDM clock |
-| --- | ---: | ---: | ---: |
-| 16 kHz | 160 | OSR=128 | 2.048 MHz |
-| 32 kHz | 320 | OSR=64 | 2.048 MHz |
+| PCM profile | Samples / block | Block time | DMIC OSR | PDM clock |
+| --- | ---: | ---: | ---: | ---: |
+| 16 kHz | 256 | 16 ms | OSR=128 | 2.048 MHz |
+| 32 kHz | 320 | 10 ms | OSR=64 | 2.048 MHz |
 
 APLL1 supplies the DMIC clock. Both profiles deliberately hold the PDM clock
 at 2.048 MHz, inside the MP34DT05 normal-mode range of 1.2–3.25 MHz. The
@@ -34,7 +34,7 @@ period and produces distorted PCM even when clocks look correct.
 ## LPPDMA Ownership
 
 LPPDMA0 channel 0 runs a two-descriptor scatter-gather ring of non-cacheable
-buffers. Each descriptor copies exactly the selected profile's 160 or 320
+buffers. Each descriptor copies exactly the selected profile's 256 or 320
 16-bit FIFO words. The LPPDMA IRQ only clears transfer/abort flags, advances
 the completed slot, and sets a ready flag. It must not write UART, call codec
 I2C APIs, copy PCM, allocate, or perform TinyML/DSP.
@@ -51,11 +51,12 @@ drop rather than blocking the next capture deadline.
   MP34DT05 normal range, and can sound distorted. Use OSR=128 at 16 kHz.
 - **Latch falling edge is wrong for L/R-low U4.** Symptoms include malformed,
   low-level, or heavily distorted voice. Use channel-2 rising edge.
-- **Never log from a DMA IRQ.** UART waits can consume a 10 ms capture/refill
+- **Never log from a DMA IRQ.** UART waits can consume a capture/refill
   budget and turn an observability change into an audio defect.
 - **Distinguish mic from output timing.** A healthy capture reports the selected
   sample rate, PDM=2.048 MHz, and no LPPDMA errors/overruns. Compare capture
-  completion rate to I2S PDMA completion rate: both should be 100 blocks/s.
+  completion rate to I2S PDMA completion rate: both should match the selected
+  profile (62.5 blocks/s for 16 kHz DeepFilterNet, 100 blocks/s for 32 kHz).
   The earlier halfword I2S DMA bug produced `win_cap=100`, `win_out=50` and
   one-octave-low speech; it was not a microphone fault.
 - **Ignore intentional output pre-roll silence.** DAC starts before DMIC so
@@ -71,4 +72,4 @@ for a shared 16/32 kHz foreground block. Measure PB2 PDM clock/data, verify
 the matching I2S clocks, and run both profiles for 30 minutes while tracking
 LPPDMA overrun/error and DAC queue/underrun counters. TinyML models, AGC,
 feedback cancellation, and user gain policy belong between capture and DAC
-submit; their CPU time must fit inside the 10 ms block deadline.
+submit; DeepFilterNet PCM-to-output-ready time must fit the 16 ms hop.

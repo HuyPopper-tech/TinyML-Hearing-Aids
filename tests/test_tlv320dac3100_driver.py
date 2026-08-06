@@ -146,7 +146,7 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
         ):
             self.assertIn(required, transport)
         for required in (
-            "erb_gru_audio_enhancer_process(g_dmic_block, g_enhanced_block)",
+            "deepfilternet_audio_enhancer_process(g_dmic_block, g_enhanced_block)",
             "audio_transport_submit_tagged(",
         ):
             self.assertIn(required, pipeline)
@@ -157,9 +157,6 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         board_source = (
             REPO_ROOT / "board" / "m55m1_audio.c"
-        ).read_text(encoding="utf-8")
-        pipeline = (
-            REPO_ROOT / "services" / "audio_pipeline" / "audio_pipeline.c"
         ).read_text(encoding="utf-8")
         board = board_header + board_source
 
@@ -185,14 +182,8 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
         ]
         self.assertIn("if (!g_clock_snapshot_valid)", dmic_start)
         self.assertEqual(dmic_start.count("CLK_EnableAPLL"), 1)
-        for field in (
-            "core_hz",
-            "apll0_hz",
-            "apll1_hz",
-            "i2s_src_hz",
-            "mclk_hz",
-        ):
-            self.assertIn(field, pipeline)
+        for field in ("core_hz", "apll0_hz", "apll1_hz", "i2s_src_hz", "mclk_hz"):
+            self.assertIn(field, board)
 
     def test_driver_uses_direct_mclk_headphone_route_and_pdma_ping_pong(self):
         source = (REPO_ROOT / "drivers" / "tlv320dac3100" / "tlv320dac3100.c").read_text(

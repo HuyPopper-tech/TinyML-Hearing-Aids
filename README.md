@@ -1,297 +1,128 @@
-# TinyML Hearing Aids — M55M1 ERB-GRU firmware
+# TinyML Hearing Aids — DeepFilterNet U55 firmware
 
-Bare-metal hearing-aid firmware for the **NuMaker-GestureAI-M55M1** board
-(M55M1R2LJAE, Cortex-M55 at 220 MHz) with ERB-GRU inference accelerated by the
-on-chip **Ethos-U55** NPU.
+Bare-metal speech-enhancement firmware for NuMaker-GestureAI-M55M1
+(Cortex-M55, 220 MHz) and Ethos-U55. Production build contains one model:
+`deepfilternet_u55_full_seed20260805`; ERB-GRU remains only as immutable
+provenance and is not linked.
 
-The production data path captures mono PCM at 16 kHz in 160-sample (10 ms)
-hops, constructs a causal 320-sample analysis frame, runs the recurrent model,
-and sends enhanced PCM to a TLV320DAC3100 headphone output.
+Current package status is `engineering_ready_smoke_passed` with quality scope
+`smoke_512_not_release_gate`. Host integration is implemented. Board timing,
+memory-map, parity and soak gates are still pending real hardware evidence.
 
-> **Validation status:** host parity, package audit, unit tests, and Debug/Release
-> Arm Compiler builds pass. The firmware is **not production-ready** until the
-> final board A/B, runtime arena/stack measurements, five-scenario board parity,
-> fault checks, and 10-minute soak pass.
-
-## Quick start
-
-### Requirements
-
-- Arm Compiler for Embedded 6.24 with a valid user license
-- CMake 3.20 or newer
-- Ninja
-- Python 3.10 or newer for host validation
-
-The Windows build script automatically adds the standard Arm Compiler 6.24
-installation directory and an available Ninja installation to `PATH` when
-needed.
-
-### Build production firmware
-
-Windows:
-
-```powershell
-build.bat release build
-build.bat debug build
-```
-
-Linux, macOS, or WSL:
-
-```bash
-./build.sh release build
-./build.sh debug build
-```
-
-Release uses `build/`; Debug uses `build-debug/`. Both scripts configure before
-building and update the root `compile_commands.json` for clangd.
-
-Canonical outputs:
-
-| Artifact | Release path | Purpose |
-| --- | --- | --- |
-| AXF | `build/M55M1_GestureAI.axf` | Symbols and debugger input |
-| Binary | `build/M55M1_GestureAI.axf.bin` | Firmware image for flashing |
-| Map | `build/M55M1_GestureAI.axf.map` | Flash/RAM and symbol inspection |
-| HTML report | `build/M55M1_GestureAI.htm` | Arm linker report |
-
-Replace `build/` with `build-debug/` for Debug artifacts.
-
-Other script actions:
+## Audio path
 
 ```text
-[release|debug] [build|config|only|clean]
+DMIC DMA, 256 PCM16 samples at 16 kHz
+  -> 512-sample periodic sqrt-Hann + FFT, 257 bins
+  -> 32 ERB log-magnitude + 144 complex-bin features
+  -> DeepFilterNet INT8 on Ethos-U55
+  -> 257 gains + complex DF 5 x 144 + alpha
+  -> IFFT + 50% WOLA
+  -> DAC DMA, 256 PCM16 samples
 ```
 
-- `config`: configure without building.
-- `only`: build an existing configured tree.
-- `clean`: remove and rebuild only the selected profile.
+First hop primes the analysis frame and emits silence. Invoke failure sends a
+unity spectrum through the same IFFT/WOLA path, resets neural/DF history, and
+preserves WOLA continuity. Realtime code is foreground-only, static after
+initialisation, and follows `app -> services -> drivers -> board -> libs`.
 
-The equivalent CMake presets are `m55m1-release` and `m55m1-debug`.
-
-## Firmware architecture
-
-Project-owned dependencies follow one direction:
-
-```text
-app -> services -> drivers -> board -> libs
-```
-
-- `app/` composes the board and audio-pipeline lifecycle.
-- `services/audio_pipeline/` owns the foreground DMIC → enhancement → DAC flow.
-- `services/erb_gru/` owns DSP, TFLM, model validation, recurrent state, and
-  WOLA processing.
-- `drivers/` owns audio transport, codec behavior, Ethos-U, and diagnostic UART
-  transmission.
-- `board/` owns M55M1 clocks, pins, DMA channels, IRQ priorities, and peripheral
-  bindings.
-- `libs/` is the vendored Nuvoton BSP, CMSIS, TFLM, and Ethos-U foundation.
-- `models/` contains immutable deployment packages and generated, audited
-  artifacts; only the inference service includes model bytes.
-
-Realtime audio remains foreground-only and non-reentrant. ISRs acknowledge
-hardware, publish buffer descriptors, and drain the bounded UART FIFO; they do
-not allocate, log, run DSP/inference, or block. No dynamic allocation occurs
-after audio starts.
-
-### Audio processing
-
-```text
-DMIC DMA
-  -> 160-sample capture queue
-  -> sqrt-Hann window + FFT
-  -> 32-band ERB/log features
-  -> INT8 ERB-GRU on Ethos-U55
-  -> 32-to-161 gain expansion
-  -> IFFT + WOLA
-  -> PCM16
-  -> I2S/PDMA
-  -> TLV320DAC3100
-```
-
-The first hop produces silence without FFT or inference. The second hop creates
-the first complete 320-sample frame. An invocation failure uses unity gains
-through the same IFFT/WOLA path, resets both recurrent states, and preserves
-stream continuity.
-
-## Deployed model
-
-Current immutable package:
-
-```text
-models/erb_gru/packages/w4_erb-gru_deployment_v2_seed20260730/
-```
+## Model identity
 
 | Property | Value |
 | --- | --- |
-| Vela model size | 59,232 bytes |
-| Vela SHA-256 | `45f59d59598d74d36daebbb0d61b4d05020e164e4f78a62fcc31b4bb6b7d8fe8` |
-| MACs per inference | 45,056 |
-| Vela NPU operators | 30 |
-| Vela CPU operators | 0 |
-| Tensor arena capacity | 128 KiB bring-up allocation |
+| Post-Vela bytes | 1,197,856 |
+| SHA-256 | `7ee81189598812499796635c3f88ae4c4bca1ff9be81c79ceb4d1fd6d723e475` |
+| MAC/frame | 1,174,528 |
+| NPU / CPU operators | 426 / 0 |
+| Tensor contract | 9 inputs, 10 outputs, 21 tensors, one `ethos-u` op |
+| Bring-up arena | 256 KiB; final size requires board measurement |
 
-The model consumes two recurrent states and one 32-band feature tensor. It
-produces two next-state tensors and 32 INT8 band gains. Firmware copies
-successful next states byte-for-byte and expands the 32 gains to 161 FFT-bin
-gains using the package matrix.
+Firmware-owned artifacts live in `models/deepfilternet/`. The user-owned root
+`deepfilternet/` export package is not modified.
 
-Armclang 6.24 miscompiled that stride-161 reduction under Release `-O3` during
-board investigation, producing approximately half-scale bin gains. The current
-workaround disables vectorization/interleaving only for the affected reduction
-loop; the rest of the firmware remains at `-O3`. The exact loop-level diagnosis
-still requires final board A/B confirmation.
+## Build
 
-See [ERB-GRU model deployment](docs/erb-gru-model-deployment.md) for the CPU
-post-processing strategy and preferred replacement-model contract.
-
-## Build options
-
-Production defaults:
-
-| CMake option | Default | Meaning |
-| --- | --- | --- |
-| `M55M1_ENABLE_ERB_GRU` | `ON` | Build the 16 kHz ERB-GRU application |
-| `M55M1_ENABLE_TFLM` | `ON` | Build TFLM with Ethos-U support |
-| `M55M1_ENABLE_NPU` | `OFF` | Keep the separate NPU self-test disabled |
-| `M55M1_ERB_GRU_DIAGNOSTICS` | `OFF` | Exclude diagnostic UART and telemetry |
-| `M55M1_ERB_GRU_INPUT_GAIN_DB` | `0` | Production PCM input gain |
-| `M55M1_ERB_GRU_GOLDEN_SCENARIO` | empty | Exclude golden corpus data |
-| `M55M1_ERB_GRU_FAULT_INJECTION` | `OFF` | Disable injected faults |
-| `M55M1_STACK_SIZE` | `0x2000` | Reserve an 8 KiB stack |
-
-Valid golden scenarios:
-
-```text
-silence | sine_1khz | clean_speech | speech_noise | near_full_scale
-```
-
-Valid fault modes:
-
-```text
-OFF | INVOKE_FAIL | INVOKE_SLOW | DAC_BUSY
-```
-
-Golden scenarios require diagnostics. A production Release build with
-diagnostics disabled rejects golden data and fault injection.
-
-### Diagnostic Release build
-
-Keep diagnostic output in a separate build directory:
+Requirements: Arm Compiler for Embedded 6.24 with a valid license, CMake 3.20+
+and Ninja.
 
 ```powershell
-cmake --preset m55m1-release -B build-diagnostics `
-  -DM55M1_ERB_GRU_DIAGNOSTICS=ON `
-  -DM55M1_ERB_GRU_INPUT_GAIN_DB=0 `
-  -DM55M1_ERB_GRU_FAULT_INJECTION=OFF
-cmake --build build-diagnostics
+build.bat debug config
+build.bat release config
+build.bat debug build
+build.bat release build
 ```
 
-Diagnostics use UART1 at 115200-8N1:
+Linux/macOS equivalents use `./build.sh`. Outputs are AXF, binary and map files
+under `build-debug/` or `build/`.
 
-- PA2: RX
-- PA3: TX
+Key CMake options:
 
-One atomic snapshot is emitted every 100 processed hops when no DMIC block is
-pending. It reports performance, model/memory metadata, acoustic statistics,
-and DSP-stage measurements. With diagnostics `OFF`, the UART binding,
-telemetry accumulator, formatter, and project log strings are not linked into
-production firmware.
-
-## Flashing and debugging
-
-For the normal USB mass-storage workflow:
-
-1. Build the selected profile.
-2. Copy `M55M1_GestureAI.axf.bin` from its build directory to the board volume
-   named `M55M1`.
-3. Use the matching AXF when attaching a debugger.
-
-Keep the ICE recovery header accessible:
-
-| Signal | Board pin/use |
+| Option | Default |
 | --- | --- |
-| SWDIO | PF0 |
-| SWCLK | PF1 |
-| nRESET | Reset recovery |
-| GND | Probe ground |
-| VREF/3V3 | Target voltage reference |
+| `M55M1_ENABLE_DEEPFILTERNET` | `ON` |
+| `M55M1_DEEPFILTERNET_DIAGNOSTICS` | `OFF` |
+| `M55M1_DEEPFILTERNET_DSP_MODE` | `MVE` (`SCALAR`, `PARITY`) |
+| `M55M1_DEEPFILTERNET_INPUT_GAIN_DB` | `12` diagnostic (`0` production) |
+| `M55M1_DEEPFILTERNET_GOLDEN_SCENARIO` | empty |
+| `M55M1_DEEPFILTERNET_FAULT_INJECTION` | `OFF` |
 
-Do not repurpose PF0/PF1 or cross-power the target through VREF. The checked-in
-VS Code Attach configuration uses the Debug AXF and does not program Flash.
+Golden scenarios: `silence`, `impulse`, `sine_440`, `sine_3000`, `noise`.
+Fault modes: `INVOKE_FAIL`, `INVOKE_SLOW`, `DAC_BUSY`. Production Release
+rejects scalar/parity, golden and fault builds. MVE/PARITY require CMSIS-DSP.
 
-### TrustZone and NSCBA
+## Diagnostics
 
-M55M1 implements Armv8.1-M TrustZone, but this firmware is built secure-only:
-there is no Secure/Non-secure application split and no `-mcmse`.
+Diagnostic UART remains UART1, PA2/PA3, 115200-8N1. Every 100 processed frames
+one ≤1536-byte atomic snapshot reports avg/max/p99 stage timing, transport
+latency, model/arena/DSP/stack metadata, all feature/output/state ranges and
+saturation, PCM peak/RMS/clip, parity delta, and cumulative audio/NPU/UART
+errors. Formatting is deferred while capture is pending; a full 2048-byte TX
+ring drops the whole message.
 
-If the device was previously programmed by a TrustZone BSP sample, Flash CONFIG
-may contain an incompatible Non-Secure Code Base Address. Back up CONFIG before
-vendor recovery. The normal USB-load and debugger-attach workflows must not
-write CONFIG, LDROM, or NSCBA.
+`e2e_us` measures PCM input to output-ready and gates at 16,000 us.
+`transport_us` separately measures capture completion to DAC completion.
 
-## Validation
-
-Package reproducibility:
-
-```powershell
-python tools/generate_erb_gru_assets.py `
-  --package models/erb_gru/packages/w4_erb-gru_deployment_v2_seed20260730 `
-  --output models/erb_gru/generated `
-  --check
-```
-
-Host tests and whitespace validation:
+## Verification
 
 ```powershell
+python tools/generate_deepfilternet_assets.py --check
 python -m unittest discover -s tests -v
 git diff --check
 ```
 
-Current completed validation includes package/hash auditing, five-scenario host
-golden parity, failure recovery, telemetry/DSP tests, architecture contracts,
-and licensed Debug/Release builds producing AXF, binary, map, and HTML reports.
+Host gates cover artifact identity, tensor mapping, transactional recurrent
+state, scalar formulas/WOLA, five deterministic scenarios, 256-sample
+transport, telemetry aggregation/atomic drop, MVE build contract and layering.
 
-Still required before production acceptance:
+Before board acceptance:
 
-- stable-tone board A/B for the loop-local Release workaround;
-- runtime tensor-arena use and final arena sizing;
-- stack high-water with at least 2 KiB headroom;
-- five-scenario board parity and fault-boundary checks;
-- diagnostic latency/acoustic measurements;
-- 10-minute production soak with audio/DMA/NPU error counters at zero.
+1. Keep PF0 SWDIO, PF1 SWCLK, nRESET, GND and VREF/3V3 recovery access.
+2. Run five scalar golden scenarios, then PARITY; require max PCM difference
+   ≤1 LSB.
+3. Capture at least ten diagnostic windows; require `e2e_us max <= 16000`,
+   stack headroom ≥2 KiB and no frame/error gaps.
+4. Verify map: one model, Flash ≤1.8 MiB, SRAM ≤1.5 MiB, no golden/ERB
+   expansion/scalar code in production.
+5. Set arena from measured use (16 KiB rounding + 16 KiB guard), then run a
+   10-minute production soak with audio/NPU/DMA errors at zero.
 
-See the [ERB-GRU integration handoff](docs/session-erb-gru-ethosu-handoff.md)
-for current evidence, counters, memory results, and remaining board work.
+No board result is inferred from host tests. See
+[deployment](docs/deepfilternet-u55-deployment.md) and
+[current handoff](docs/session-deepfilternet-u55-handoff.md).
 
-## Repository layout
+## Layout
 
 ```text
-TinyML-Hearing-Aids/
-├── app/                    # boot composition and diagnostic applications
-├── board/                  # M55M1 clocks, pins, DMA and IRQ bindings
-├── common/                 # dependency-free fixed-capacity utilities
-├── drivers/                # audio transport, codec, Ethos-U and UART TX
-├── services/
-│   ├── audio_pipeline/     # production foreground audio orchestration
-│   └── erb_gru/            # frontend, inference, WOLA and diagnostics
-├── models/erb_gru/
-│   ├── packages/           # immutable source deployment packages
-│   └── generated/          # audited firmware contracts and model assets
-├── tools/                  # model asset generator
-├── tests/                  # host and architecture regression tests
-├── docs/                   # deployment, handoff and hardware documentation
-├── libs/                   # vendored BSP/CMSIS/TFLM/Ethos-U sources
-├── CMakeLists.txt
-├── CMakePresets.json
-├── build.bat
-└── build.sh
+app/                         boot composition
+services/audio_pipeline/     foreground audio orchestration
+services/deepfilternet/       enhancer and inference adapter
+drivers/                     transport, codec, Ethos-U, UART TX
+board/                       pins, clocks, DMA, IRQ, stack monitor
+models/deepfilternet/         audited firmware model package
+tools/                       deterministic asset generator
+tests/                       host and architecture gates
+libs/                        vendored BSP/CMSIS/TFLM; unchanged
 ```
 
-Detailed references:
-
-- [ERB-GRU model deployment and replacement strategy](docs/erb-gru-model-deployment.md)
-- [Current ERB-GRU integration handoff](docs/session-erb-gru-ethosu-handoff.md)
-- [TLV320DAC3100 driver notes](docs/driver/tlv320dac3100.md)
-- [MP34DT05 DMIC notes](docs/driver/mp34dt05_dmic.md)
-- [NuMaker-GestureAI-M55M1 user manual](docs/en-us--UM_NuMaker-GestureAI-M55M1_EN_Rev1.00.pdf)
-- [M55M1 series datasheet](docs/en-us--DS_M55M1_Series_EN_Rev1.00.pdf)
+Legacy ERB-GRU documents remain historical evidence, not current build
+instructions.

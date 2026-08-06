@@ -25,7 +25,7 @@
 #define DAC_DIAGNOSTIC_REPORT_INTERVAL_BLOCKS  100UL
 /** Bytes in the bounded foreground UART format buffer, including its NUL. */
 #define DAC_DIAGNOSTIC_UART_LOG_BUFFER_SIZE    96UL
-/** The diagnostic waveform is defined for this profile's 160-sample 10 ms block. */
+/** The diagnostic waveform is defined for this profile's 10 ms block. */
 #define DAC_DIAGNOSTIC_PROFILE                 TLV320DAC3100_AUDIO_PROFILE_16KHZ
 
 /*

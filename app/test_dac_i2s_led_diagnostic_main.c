@@ -27,7 +27,7 @@
 #define LED_HEARTBEAT_HALF_PERIOD_MS     500UL
 /** No PDMA completion for this long after start is a playback stall. */
 #define LED_PLAYBACK_STALL_MS             100UL
-/** The LED tone is a phase-continuous 160-sample waveform for this profile. */
+/** The LED tone is a phase-continuous waveform for this profile. */
 #define DAC_LED_DIAGNOSTIC_PROFILE         TLV320DAC3100_AUDIO_PROFILE_16KHZ
 
 /** Fault stage: HXT/APLL0 clock setup and fixed audio peripheral binding. */
@@ -100,7 +100,7 @@ typedef struct {
 
 /*
  * One 1 kHz period at 16 kHz has 16 samples. This repeating cycle makes the
- * driver-sized 160-sample block phase continuous and starts at a safe level.
+ * driver-sized block phase continuous and starts at a safe level.
  */
 static const int16_t g_tone_cycle[16] = {
     0, 2296, 4243, 5543, 6000, 5543, 4243, 2296,

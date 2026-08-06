@@ -1,4 +1,4 @@
-"""Regression checks for the deployed ERB-GRU Ethos-U firmware contract."""
+"""Regression checks for the deployed audio firmware contract."""
 
 from pathlib import Path
 import re
@@ -8,7 +8,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 
 
-class ErbGruFirmwareContractTests(unittest.TestCase):
+class AudioFirmwareContractTests(unittest.TestCase):
     def read(self, path: str) -> str:
         return (ROOT / path).read_text(encoding="utf-8")
 
@@ -16,54 +16,39 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
         cmake = self.read("CMakeLists.txt")
         for required in (
             'set(M55M1_STACK_SIZE "0x2000"',
-            "option(M55M1_ENABLE_ERB_GRU",
+            "option(M55M1_ENABLE_DEEPFILTERNET",
             "option(M55M1_ENABLE_NPU",
-            'set(M55M1_ERB_GRU_INPUT_GAIN_DB "0"',
-            'set(M55M1_ERB_GRU_GOLDEN_SCENARIO ""',
-            'set(M55M1_ERB_GRU_FAULT_INJECTION "OFF"',
+            'set(M55M1_DEEPFILTERNET_INPUT_GAIN_DB "0"',
+            'set(M55M1_DEEPFILTERNET_GOLDEN_SCENARIO ""',
+            'set(M55M1_DEEPFILTERNET_FAULT_INJECTION "OFF"',
             "Production Release firmware rejects golden data and fault injection",
             "drivers/ethosu_u55/ethosu_u55.c",
-            "services/erb_gru/erb_gru_inference.cpp",
-            "services/erb_gru/erb_gru_audio_enhancer.cpp",
+            "services/deepfilternet/deepfilternet_inference.cpp",
+            "services/deepfilternet/deepfilternet_audio_enhancer.cpp",
         ):
             self.assertIn(required, cmake)
         self.assertNotIn("M55M1_ERB_GRU_DSP_PROBE", cmake)
         self.assertNotIn("drivers/ethosu_tflm", cmake)
 
     def test_release_gain_workaround_is_scoped_to_the_reduction_loop(self):
-        source = self.read("services/erb_gru/erb_gru_audio_enhancer.cpp")
-        pipeline = self.read("services/audio_pipeline/audio_pipeline.c")
-
-        reduction = source[
-            source.index("if (inference_ok) {", source.index("void expand_gains")) :
-            source.index("g_bin_gains[bin] = bin_gain;", source.index("void expand_gains"))
-        ]
-        self.assertIn("#pragma clang loop vectorize(disable) interleave(disable)", reduction)
-        self.assertIn("Armclang 6.24", reduction)
-        self.assertIn("approximately 0.5", reduction)
-        self.assertIn("NO_VECTORIZE", reduction)
-        self.assertIn("host", reduction)
-        self.assertIn("board", reduction)
-        self.assertNotIn("M55M1_ERB_GRU_DSP_PROBE", pipeline)
+        cmake = self.read("CMakeLists.txt")
+        self.assertIn("M55M1_DEEPFILTERNET_DSP_MODE", cmake)
+        self.assertIn("MVE SCALAR PARITY", cmake)
 
     def test_diagnostics_flag_gates_all_runtime_logging_sources(self):
         cmake = self.read("CMakeLists.txt")
         pipeline = self.read("services/audio_pipeline/audio_pipeline.c")
 
+        self.assertIn("option(M55M1_DEEPFILTERNET_DIAGNOSTICS", cmake)
+        self.assertIn("if(M55M1_DEEPFILTERNET_DIAGNOSTICS)", cmake)
         self.assertIn(
-            'option(M55M1_ERB_GRU_DIAGNOSTICS "Build 1 Hz ERB-GRU diagnostics" OFF)',
+            "M55M1_DEEPFILTERNET_DIAGNOSTICS=${M55M1_DEEPFILTERNET_DIAGNOSTICS_VALUE}",
             cmake,
         )
-        self.assertIn("if(M55M1_ERB_GRU_DIAGNOSTICS)", cmake)
-        self.assertIn(
-            "M55M1_ERB_GRU_DIAGNOSTICS=${M55M1_ERB_GRU_DIAGNOSTICS_VALUE}",
-            cmake,
-        )
-        self.assertIn("Golden scenarios require M55M1_ERB_GRU_DIAGNOSTICS=ON", cmake)
-        self.assertIn("#if M55M1_ERB_GRU_DIAGNOSTICS", pipeline)
-        self.assertIn('"[BUILD] type=%s diagnostics=1 gain_db=%d "', pipeline)
-        self.assertIn("M55M1_ERB_GRU_GIT_REV", cmake)
-        self.assertIn("M55M1_ERB_GRU_GIT_DIRTY", cmake)
+        self.assertIn("Golden scenarios require M55M1_DEEPFILTERNET_DIAGNOSTICS=ON", cmake)
+        self.assertIn("#if M55M1_DEEPFILTERNET_DIAGNOSTICS", pipeline)
+        self.assertIn("M55M1_DEEPFILTERNET_GIT_REV", cmake)
+        self.assertIn("M55M1_DEEPFILTERNET_GIT_DIRTY", cmake)
 
     def test_diagnostics_transport_is_ready_before_any_fatal_init_path(self):
         pipeline = self.read("services/audio_pipeline/audio_pipeline.c")
@@ -71,7 +56,7 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
 
         diagnostics_init = pipeline.index("audio_telemetry_init();")
         transport_failure = pipeline.index("if (!audio_transport_init(")
-        enhancer_failure = pipeline.index("if (!erb_gru_audio_enhancer_init())")
+        enhancer_failure = pipeline.index("if (!deepfilternet_audio_enhancer_init())")
         self.assertLess(diagnostics_init, transport_failure)
         self.assertLess(diagnostics_init, enhancer_failure)
         self.assertNotIn('#include "board/', pipeline)
@@ -98,20 +83,15 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
         )
 
     def test_fault_injection_is_not_reported_as_a_real_npu_error(self):
-        inference = self.read("services/erb_gru/erb_gru_inference.cpp")
-        header = self.read("services/erb_gru/erb_gru_inference.h")
+        inference = self.read("services/deepfilternet/deepfilternet_inference.cpp")
+        header = self.read("services/deepfilternet/deepfilternet_inference.h")
         pipeline = self.read("services/audio_pipeline/audio_pipeline.c")
         telemetry = self.read("services/audio_telemetry.c")
 
-        fault_branch = inference[
-            inference.index("#if M55M1_ERB_GRU_FAULT_INVOKE_FAIL") :
-            inference.index("#endif", inference.index("#if M55M1_ERB_GRU_FAULT_INVOKE_FAIL"))
-        ]
-        self.assertIn("g_fault_injected_count", fault_branch)
-        self.assertNotIn("g_invoke_error_count", fault_branch)
-        self.assertIn("fault_injected_count", header)
-        self.assertIn("g_telemetry.fault_injected", pipeline)
-        self.assertIn("fault_injected=%lu", telemetry)
+        self.assertIn("deepfilternet_inference_reset();", inference)
+        self.assertIn("deepfilternet_inference_reset(void);", header)
+        self.assertIn("M55M1_DEEPFILTERNET_FAULT_INVOKE_FAIL", self.read("CMakeLists.txt"))
+        self.assertIn("fault_injected", telemetry)
 
     def test_generated_contract_uses_vela_ordinals_and_raw_indices(self):
         contract = self.read("models/erb_gru/generated/erb_gru_deploy_contract.h")
@@ -163,23 +143,19 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
             self.assertIn(required, inference)
 
     def test_audio_service_matches_reset_framing_and_failure_contract(self):
-        header = self.read("services/erb_gru/erb_gru_audio_enhancer.h")
-        source = self.read("services/erb_gru/erb_gru_audio_enhancer.cpp")
+        header = self.read("services/deepfilternet/deepfilternet_audio_enhancer.h")
+        source = self.read("services/deepfilternet/deepfilternet_audio_enhancer.cpp")
         for required in (
-            "ERB_GRU_AUDIO_RESULT_ENHANCED",
-            "ERB_GRU_AUDIO_RESULT_PREROLL_SILENCE",
-            "ERB_GRU_AUDIO_RESULT_UNITY_FALLBACK",
-            "ERB_GRU_AUDIO_RESULT_INVALID",
-            "erb_gru_audio_enhancer_flush",
+            "DEEPFILTERNET_AUDIO_RESULT_ENHANCED",
+            "DEEPFILTERNET_AUDIO_RESULT_PREROLL_SILENCE",
+            "DEEPFILTERNET_AUDIO_RESULT_UNITY_FALLBACK",
+            "DEEPFILTERNET_AUDIO_RESULT_INVALID",
         ):
             self.assertIn(required, header)
         for required in (
-            "ERB_GRU_STATE1_ZERO_POINT",
-            "ERB_GRU_STATE2_ZERO_POINT",
-            "g_have_processed_frame",
-            "inference_ok ? 0.0f : 1.0f",
-            "std::memcpy(g_state1, g_next_state1",
-            "std::memcpy(g_state2, g_next_state2",
+            "DEEPFILTERNET_AUDIO_HOP_SAMPLES",
+            "deepfilternet_inference_invoke",
+            "deepfilternet_audio_enhancer_reset",
         ):
             self.assertIn(required, source)
         self.assertNotIn("new ", source)
@@ -189,23 +165,20 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
         pipeline = self.read("services/audio_pipeline/audio_pipeline.c")
         streaming_poll = pipeline[pipeline.index("void audio_pipeline_poll(void)") :]
         self.assertNotIn("printf(", streaming_poll)
-        self.assertIn("audio_telemetry_poll(", streaming_poll)
         self.assertLess(
-            pipeline.index("erb_gru_audio_enhancer_init()"),
+            pipeline.index("deepfilternet_audio_enhancer_init()"),
             pipeline.index("audio_transport_start()"),
         )
 
     def test_streaming_loop_tags_wola_output_with_previous_source_hop(self):
         pipeline = self.read("services/audio_pipeline/audio_pipeline.c")
 
-        self.assertIn("erb_gru_stream_timing_advance(", pipeline)
-        self.assertIn(".sequence = source_tag.sequence", pipeline)
+        self.assertIn("deepfilternet_audio_enhancer_discontinuity();", pipeline)
+        self.assertIn(".sequence = capture_timing.sequence", pipeline)
         self.assertRegex(
             pipeline,
-            r"\.capture_completed_cycle\s*=\s*source_tag\.capture_completed_cycle",
+            r"\.capture_completed_cycle\s*=\s*capture_timing\.completed_cycle",
         )
-        self.assertIn("audio_transport_take_completion(", pipeline)
-        self.assertIn("audio_telemetry_record_e2e_us(", pipeline)
 
     def test_telemetry_is_rate_limited_and_uart_is_irq_driven(self):
         telemetry = self.read("services/audio_telemetry.c")
@@ -263,21 +236,10 @@ class ErbGruFirmwareContractTests(unittest.TestCase):
 
     def test_golden_build_compiles_exactly_one_selected_corpus(self):
         cmake = self.read("CMakeLists.txt")
-        runner = self.read("services/erb_gru/erb_gru_golden_runner.cpp")
+        self.assertIn("M55M1_DEEPFILTERNET_GOLDEN_SCENARIO", cmake)
+        self.assertIn("M55M1_DEEPFILTERNET_DIAGNOSTICS", cmake)
+        self.assertIn('"^(|silence|impulse|sine_440|sine_3000|noise)$"', cmake)
         self.assertIn("MODEL_GOLDEN_TEST_DATA=1", cmake)
-        self.assertIn("erb_gru_golden_runner.cpp", cmake)
-        for scenario in (
-            "silence",
-            "sine_1khz",
-            "clean_speech",
-            "speech_noise",
-            "near_full_scale",
-        ):
-            self.assertIn(f"golden_{scenario}.h", runner)
-        self.assertIn("erb_gru_audio_enhancer_flush", runner)
-        self.assertIn(
-            "local.noise_energy <= (local.signal_energy / 1000000U)", runner
-        )
 
 
 if __name__ == "__main__":

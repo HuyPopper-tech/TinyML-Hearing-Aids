@@ -17,3 +17,4 @@ build_codex/
 __pycache__/
 *.py[cod]
 .worktrees/
+.superpowers/sdd/

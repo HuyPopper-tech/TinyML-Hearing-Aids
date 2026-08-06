@@ -6,3 +6,5 @@
 # rewrite their line endings when checking them out on Windows.
 models/erb_gru/packages/** -text
 models/erb_gru/generated/** -text
+models/deepfilternet/packages/** -text
+models/deepfilternet/generated/** -text

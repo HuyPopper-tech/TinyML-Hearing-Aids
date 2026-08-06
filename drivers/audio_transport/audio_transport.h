@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 #define AUDIO_TRANSPORT_SAMPLE_RATE_HZ       16000UL
-#define AUDIO_TRANSPORT_SAMPLES_PER_BLOCK    160U
+#define AUDIO_TRANSPORT_SAMPLES_PER_BLOCK    256U
 #define AUDIO_TRANSPORT_SAFE_MAX_GAIN_DB     (-3)
 
 typedef enum {
@@ -197,6 +197,10 @@ uint32_t audio_transport_cycles_elapsed(
  * Uses the board timebase configured during transport initialization.
  */
 uint32_t audio_transport_cycles_to_us(uint32_t cycles);
+
+uint32_t audio_transport_stack_configured_bytes(void);
+uint32_t audio_transport_stack_high_water_bytes(void);
+uint32_t audio_transport_stack_headroom_bytes(void);
 
 #ifdef __cplusplus
 }

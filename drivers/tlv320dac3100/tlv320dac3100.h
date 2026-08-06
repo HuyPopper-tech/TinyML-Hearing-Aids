@@ -35,7 +35,7 @@ extern "C" {
 /**
  * @brief 16 kHz profile mono samples in one 10 ms block.
  */
-#define TLV320DAC3100_16KHZ_SAMPLES_PER_BLOCK      160U
+#define TLV320DAC3100_16KHZ_SAMPLES_PER_BLOCK      256U
 /**
  * @brief 32 kHz profile PCM rate.
  */

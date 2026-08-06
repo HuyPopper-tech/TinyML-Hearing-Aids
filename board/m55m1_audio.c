@@ -8,6 +8,7 @@
 #include <stddef.h>
 
 #include "board/m55m1_audio.h"
+#include "board/m55m1_stack_monitor.h"
 #include "board/m55m1_timebase.h"
 #include "NuMicro.h"
 
@@ -70,7 +71,7 @@ static uint32_t m55m1_audio_profile_sample_rate_hz(
 static uint16_t m55m1_audio_profile_samples_per_block(
     m55m1_audio_profile_t profile) {
     if (profile == M55M1_AUDIO_PROFILE_16KHZ) {
-        return 160U;
+        return 256U;
     }
     if (profile == M55M1_AUDIO_PROFILE_32KHZ) {
         return 320U;
@@ -158,6 +159,9 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
     uint32_t i2s_module_divider;
     uint32_t required_mclk_hz;
 
+#if M55M1_DEEPFILTERNET_DIAGNOSTICS
+    m55m1_stack_monitor_init();
+#endif
     required_mclk_hz = m55m1_audio_profile_mclk_hz(profile);
     if ((binding == NULL) || (playback_irq_callback == NULL) ||
         (required_mclk_hz == 0UL)) {

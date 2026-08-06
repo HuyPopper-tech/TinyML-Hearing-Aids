@@ -1,4 +1,4 @@
-"""Configure-level checks for ERB-GRU production and diagnostic build policy."""
+"""Configure-level checks for DeepFilterNet production and diagnostic policy."""
 
 from pathlib import Path
 import shutil
@@ -13,7 +13,7 @@ TOOLCHAIN = ROOT / "cmake" / "armclang.cmake"
 
 @unittest.skipUnless(shutil.which("cmake"), "cmake is required")
 @unittest.skipUnless(shutil.which("ninja"), "ninja is required")
-class ErbGruCMakePolicyTests(unittest.TestCase):
+class DeepFilterNetCMakePolicyTests(unittest.TestCase):
     def configure(self, *definitions: str):
         temporary = tempfile.TemporaryDirectory()
         build = Path(temporary.name) / "build"
@@ -36,8 +36,8 @@ class ErbGruCMakePolicyTests(unittest.TestCase):
 
     def test_production_release_rejects_fault_injection(self):
         temporary, _, result = self.configure(
-            "-DM55M1_ERB_GRU_DIAGNOSTICS=OFF",
-            "-DM55M1_ERB_GRU_FAULT_INJECTION=INVOKE_FAIL",
+            "-DM55M1_DEEPFILTERNET_DIAGNOSTICS=OFF",
+            "-DM55M1_DEEPFILTERNET_FAULT_INJECTION=INVOKE_FAIL",
         )
         with temporary:
             self.assertNotEqual(result.returncode, 0)
@@ -48,8 +48,8 @@ class ErbGruCMakePolicyTests(unittest.TestCase):
 
     def test_diagnostic_release_accepts_fault_injection(self):
         temporary, _, result = self.configure(
-            "-DM55M1_ERB_GRU_DIAGNOSTICS=ON",
-            "-DM55M1_ERB_GRU_FAULT_INJECTION=INVOKE_FAIL",
+            "-DM55M1_DEEPFILTERNET_DIAGNOSTICS=ON",
+            "-DM55M1_DEEPFILTERNET_FAULT_INJECTION=INVOKE_FAIL",
         )
         with temporary:
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -60,15 +60,15 @@ class ErbGruCMakePolicyTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             cache = (build / "CMakeCache.txt").read_text(encoding="utf-8")
             commands = (build / "compile_commands.json").read_text(encoding="utf-8")
-            self.assertIn("M55M1_ERB_GRU_DIAGNOSTICS:BOOL=OFF", cache)
-            self.assertIn("M55M1_ERB_GRU_FAULT_INJECTION:STRING=OFF", cache)
-            self.assertNotIn("M55M1_ERB_GRU_DSP_PROBE", cache)
+            self.assertIn("M55M1_DEEPFILTERNET_DIAGNOSTICS:BOOL=OFF", cache)
+            self.assertIn("M55M1_DEEPFILTERNET_FAULT_INJECTION:STRING=OFF", cache)
+            self.assertIn("M55M1_DEEPFILTERNET_DSP_MODE:STRING=MVE", cache)
             self.assertNotIn("services/audio_telemetry.c", commands)
             self.assertNotIn("drivers/debug_uart_tx/debug_uart_tx.c", commands)
             enhancer_command = next(
                 line
                 for line in commands.splitlines()
-                if '"command":' in line and "erb_gru_audio_enhancer.cpp" in line
+                if '"command":' in line and "deepfilternet_audio_enhancer.cpp" in line
             )
             self.assertNotIn("-fno-vectorize", enhancer_command)
 

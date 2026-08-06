@@ -72,8 +72,8 @@ class WrappingCounterTests(unittest.TestCase):
         ethosu = (ROOT / "drivers" / "ethosu_u55" / "ethosu_u55.c").read_text(
             encoding="utf-8"
         )
-        inference = (
-            ROOT / "services" / "erb_gru" / "erb_gru_inference.cpp"
+        ethosu_driver = (
+            ROOT / "drivers" / "ethosu_u55" / "ethosu_u55.c"
         ).read_text(encoding="utf-8")
         pipeline = (
             ROOT / "services" / "audio_pipeline" / "audio_pipeline.c"
@@ -98,9 +98,9 @@ class WrappingCounterTests(unittest.TestCase):
             ethosu,
         )
         self.assertRegex(
-            inference,
+            ethosu_driver,
             re.compile(
-                r"ethosu_u55_cycles_elapsed\(\s*start_cycle,",
+                r"m55m1_ethosu_u55_board_cycles_elapsed\(\s*start_cycle,",
                 re.MULTILINE,
             ),
         )
