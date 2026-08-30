@@ -1,136 +1,149 @@
-# Tối ưu Vela và bộ nhớ cho Speech Boosting Chunk64
+# Vela and Memory Optimisation for Speech Boosting Chunk64
 
-## 1. Mục tiêu và phạm vi
+## 1. Objective and scope
 
-Tài liệu này xác định cách tối ưu **deployment** của Speech Boosting Chunk64
-trên M55M1/Ethos-U55 mà không thay đổi topology, chất lượng model, sample rate,
-chunk ABI hoặc train lại model.
+This document defines deployment optimisation for Speech Boosting Chunk64 on
+M55M1/Ethos-U55. It does not change model topology, model quality, sample rate,
+streaming ABI, or training.
 
-Mục tiêu theo thứ tự ưu tiên:
+The priorities are:
 
-1. Giữ tất cả 197 operator trên Ethos-U55, không có CPU fallback.
-2. Giảm `Ethos-U55 neural network invocation` và jitter của nó.
-3. Giảm thời gian CPU quanh invoke, đặc biệt là copy/requantize 20 state tensor.
-4. Bảo toàn realtime 16 kHz, chunk 64 mẫu, look-ahead 16 mẫu.
-5. Dùng SRAM0/1 có kiểm soát; DMA và CPU-only data không được cạnh tranh vô ích
-   với model/U55 arena.
+1. Keep all 197 operators on Ethos-U55 with no central processing unit fallback.
+2. Reduce `Ethos-U55 neural network invocation` time and jitter.
+3. Reduce central processing unit time around invocation, especially the copy and
+   requantisation of 20 state tensors.
+4. Preserve 16 kHz real-time operation, 64-sample chunks, and 16-sample
+   look-ahead.
+5. Use SRAM0/1 deliberately so direct memory access and central-processing-unit-only
+   data do not contend unnecessarily with the model or Ethos-U55 arena.
 
-Phạm vi này không bao gồm thay đổi model architecture, retraining, sample rate,
-chunk size, state ABI, hoặc thiết kế paging model tự phát triển.
+This scope excludes architecture changes, retraining, sample-rate changes,
+chunk-size changes, state-ABI changes, and custom model paging.
 
-## 2. Contract deployment cố định
+## 2. Fixed deployment contract
 
-| Thuộc tính | Giá trị |
+| Property | Value |
 |---|---:|
 | Sample rate | 16,000 Hz |
-| Chunk hiện tại | 64 PCM16 samples = 4 ms |
-| Look-ahead | 16 samples = 1 ms logic |
+| Current chunk | 64 PCM16 samples = 4 ms |
+| Look-ahead | 16 samples = 1 ms of signal context |
 | Input/output tensors | 21 / 21 |
 | Persistent state tensors | 20 |
 | Persistent stream state | 5,632 bytes |
-| Dtype stream | INT8 |
+| Stream data type | INT8 |
 | Ethos-U55 operators | 197 |
-| CPU operators | 0 |
-| Raw INT8 regression | 100 chunks golden trace |
+| Central processing unit operators | 0 |
+| Raw INT8 regression | 100-chunk golden trace |
 
-Một output chunk chỉ được phát hành sau khi 16 mẫu đầu của chunk kế tiếp đã có.
-Vì DMIC hiện bàn giao block 64 mẫu, latency `capture_to_model_output_ready`
-gồm gần một block 4 ms chờ look-ahead cộng với thời gian xử lý. Nó không đồng
-nghĩa với riêng thời gian U55 invoke.
+An output chunk is released only after the first 16 samples of the following
+chunk are available. Because the digital microphone delivers 64-sample blocks,
+`capture_to_model_output_ready` includes almost one 4 ms block of look-ahead
+waiting time in addition to processing time. It is not Ethos-U55 invocation
+latency by itself.
 
-## 3. Số đo đã xác minh
+## 3. Verified measurements
 
 ### 3.1 `aprom_x100`
 
-Model giữ trong APROM; tensor arena ở SRAM. Board đo được invocation khoảng
-6.13 ms (maximum 6.153 ms), chỉ xử lý xấp xỉ 166 invoke/s và phát sinh capture
-gaps/DMIC overruns liên tục. Profile này vượt ngân sách 4 ms của chunk.
+The model remains in APROM while the tensor arena is in SRAM. Board measurements
+showed invocation near 6.13 ms, with a maximum of 6.153 ms. The firmware handled
+about 166 invocations per second and continuously produced capture gaps and
+digital-microphone overruns. This profile exceeds the 4 ms chunk budget.
 
 ### 3.2 `sram01_x100`
 
-FlatBuffer Vela 959,920 bytes được đặt ở SRAM0/1, tensor arena 64 KiB ngay sau
-model. Board đã đo 60 cửa sổ một giây:
+The 959,920-byte Vela FlatBuffer is stored in SRAM0/1, followed by a 64 KiB
+tensor arena. Sixty one-second board windows measured:
 
-| Chỉ số | Kết quả |
+| Metric | Result |
 |---|---:|
-| U55 invoke min / mean / max | 3.150 / 3.151–3.152 / 3.164 ms |
-| Look-ahead + PCM quantization | 73–80 us |
-| Input state tensor copy | 43–48 us |
-| Output state tensor copy + requantize | 343–389 us |
-| Output dequantization | 2–9 us |
-| Capture gaps / DMIC overruns / invoke errors | 0 / 0 / 0 |
-| Invocations | 14,999; một pre-roll chunk nên thấp hơn 15,000 capture đúng một lần |
+| Ethos-U55 invocation minimum / mean / maximum | 3.150 / 3.151-3.152 / 3.164 ms |
+| Look-ahead assembly + PCM quantisation | 73-80 microseconds |
+| Input state-tensor copy | 43-48 microseconds |
+| Output state-tensor copy + requantisation | 343-389 microseconds |
+| Output dequantisation | 2-9 microseconds |
+| Capture gaps / digital-microphone overruns / invocation errors | 0 / 0 / 0 |
+| Invocations | 14,999; one pre-roll chunk makes this one lower than 15,000 captures |
 
-Kết quả cho thấy bottleneck chính của `aprom_x100` là access constant/model từ
-APROM. Copy state không phải bottleneck lớn nhất, nhưng output state copy chiếm
-khoảng 0.35 ms và là phần CPU lớn nhất sau invoke.
+These results identify APROM constant/model access as the main `aprom_x100`
+bottleneck. State copying is not the largest bottleneck, but output-state copy
+is the largest central processing unit stage after invocation, at about 0.35 ms.
 
-## 4. Phân vùng vật lý của M55M1
+## 4. M55M1 physical memory regions
 
-| Vùng | Dung lượng | Mục đích trong firmware |
+| Region | Capacity | Firmware use |
 |---|---:|---|
-| SRAM0 + SRAM1 | 1 MiB | Model Vela và TFLM tensor arena U55-visible |
-| SRAM2 | 320 KiB | DMA descriptors/buffers non-cacheable; CPU buffer lớn khi không U55-visible |
-| DTCM | 128 KiB | Stack và CPU-only foreground data có latency xác định |
-| ITCM | 64 KiB | Code hot được chọn rõ ràng, không phải vùng model |
-| APROM | 2 MiB | Firmware code, hằng số, load image model |
+| SRAM0 + SRAM1 | 1 MiB | Ethos-U55-visible Vela model and TensorFlow Lite Micro tensor arena |
+| SRAM2 | 320 KiB | Non-cacheable direct-memory-access descriptors/buffers and large central-processing-unit-only buffers when Ethos-U55 visibility is not required |
+| DTCM | 128 KiB | Stack and central-processing-unit-only foreground data with deterministic latency |
+| ITCM | 64 KiB | Explicitly selected hot code; not model storage |
+| APROM | 2 MiB | Firmware code, constants, and model load image |
 
-Ethos-U55 deployment hiện dùng SRAM0/1 cho model và arena. Không chuyển
-FlatBuffer, TFLM tensor arena, hoặc tensor mà U55 nhận trực tiếp sang DTCM hay
-SRAM2. Các region Vela, linker, MPU/cache và driver phải khớp nhau; Vela chỉ
-mô tả/schedule logical memory, không tự cấu hình phần cứng firmware.
-[Tài liệu Arm CMSIS-Ethos-U](https://github.com/ARM-software/CMSIS-Ethos-U/blob/main/documentation/doxygen/vela/src/main.md)
+The current Ethos-U55 deployment uses SRAM0/1 for model and arena. Do not move
+the FlatBuffer, TensorFlow Lite Micro arena, or tensors accessed directly by
+Ethos-U55 to DTCM or SRAM2. The Vela configuration, linker, memory protection
+unit/cache configuration, and driver setup must agree: Vela describes and
+schedules logical memory; it does not configure firmware hardware on its own.
+[Arm CMSIS-Ethos-U documentation](https://github.com/ARM-software/CMSIS-Ethos-U/blob/main/documentation/doxygen/vela/src/main.md)
 
-### 4.1 Layout hiện tại của `sram01_x100`
+### 4.1 Current `sram01_x100` layout
 
 ```text
 0x20100000  g_speech_boosting_u55_vela_model      959,920 B
 0x201EA5B0  g_tensor_arena                         65,536 B
-             generic RW + heap trong SRAM0/1
-0x20200000  kết thúc SRAM0/1
+             generic read-write data + heap in SRAM0/1
+0x20200000  end of SRAM0/1
 
 0x2000xxxx  DTCM: stack, audio working set 6,048 B,
-             UART TX ring 2,048 B, TFLM interpreter/resolver storage
+             UART transmit ring 2,048 B, TensorFlow Lite Micro
+             interpreter/resolver storage
 
-0x20230000  SRAM2 non-cacheable: DMIC/I2S PDMA buffers và descriptors
+0x20230000  SRAM2 non-cacheable: digital microphone/I2S direct-memory-access
+             buffers and descriptors
 ```
 
-`sram01_x100` giữ một load image trong APROM để startup nạp model vào SRAM; tại
-runtime, TFLM và U55 dùng con trỏ model tại SRAM0/1. D-cache của model SRAM
-được clean một lần trước `AllocateTensors()`/invoke đầu tiên.
+`sram01_x100` retains an APROM load image so startup can copy the model into
+SRAM. At runtime, TensorFlow Lite Micro and Ethos-U55 use the SRAM0/1 model
+pointer. The SRAM model data cache is cleaned once before `AllocateTensors()`
+and the first invocation.
 
-### 4.2 State copy đúng vùng
+### 4.2 Correct state-copy placement
 
-`speech_boosting_stream_state_t` là CPU-owned state 5,632 bytes. Mỗi invoke:
+`speech_boosting_stream_state_t` is a 5,632-byte central-processing-unit-owned
+state object. Each invocation:
 
-1. CPU copy state vào input tensor trong TFLM arena SRAM0/1.
-2. U55 invoke chỉ làm việc với model/arena U55-visible.
-3. CPU đọc output state từ arena, requantize semantic mapping và ghi lại state.
+1. Copies state into the TensorFlow Lite Micro input tensor in the SRAM0/1 arena.
+2. Runs Ethos-U55 only on the Ethos-U55-visible model and arena.
+3. Reads output state from the arena, requantises it using the semantic mapping,
+   and updates persistent state.
 
-Do U55 không nhận con trỏ tới `speech_boosting_stream_state_t`, state container,
-capture/rolling/playback buffer và UART ring đặt DTCM là hợp lệ. Động tác này
-giảm áp lực SRAM0/1 nhưng không loại được copy vào/ra TFLM arena; vì thế không
-kỳ vọng làm U55 invocation ngắn đi đáng kể.
+Ethos-U55 does not receive a pointer to `speech_boosting_stream_state_t`.
+Therefore the state object, capture/rolling/playback buffers, and UART ring may
+be placed in DTCM. This reduces SRAM0/1 pressure, but does not eliminate copies
+into or out of the TensorFlow Lite Micro arena and should not materially reduce
+Ethos-U55 invocation duration.
 
-## 5. Vela 5.1: điều gì thực sự ảnh hưởng latency
+## 5. Vela 5.1: factors that actually affect latency
 
-Vela compile ahead-of-time TFLite cho Ethos-U. Ba field trong `[Memory_Mode]`
-quyết định vai trò logical của bộ nhớ:
+Vela compiles TFLite ahead of time for Ethos-U. The following `[Memory_Mode]`
+fields determine logical memory roles:
 
-| Field | Nội dung |
+| Field | Contents |
 |---|---|
-| `const_mem_area` | command stream, encoded weights, scales, constants/model read-only |
-| `arena_mem_area` | feature maps, IO, intermediate tensor, runtime scratch read-write |
-| `cache_mem_area` | staging/fast scratch khi là vùng vật lý khác arena |
+| `const_mem_area` | Command stream, encoded weights, scales, constants, and read-only model data |
+| `arena_mem_area` | Feature maps, inputs/outputs, intermediate tensors, and run-time read-write scratch |
+| `cache_mem_area` | Staging or fast scratch when it is physically distinct from the arena |
 
-`arena_cache_size` là ngân sách schedule tính bằng **bytes** khi dùng
-`--optimise Performance`. Nó không đồng nghĩa trực tiếp với
-`SPEECH_BOOSTING_TENSOR_ARENA_BYTES`: firmware vẫn phải cấp phát đủ TFLM arena
-và linker vẫn phải đặt đúng các vùng. `--optimise Size` bỏ qua cache budget để
-giảm peak SRAM, đổi lại có thể tăng traffic và latency.
-[Vela options và memory mapping](https://arm-software.github.io/CMSIS-Ethos-U/main/vela/index.html)
+`arena_cache_size` is a scheduling budget in **bytes** with
+`--optimise Performance`. It is not a direct synonym for
+`SPEECH_BOOSTING_TENSOR_ARENA_BYTES`: firmware must still allocate a sufficient
+TensorFlow Lite Micro arena and the linker must place all memory regions
+correctly. `--optimise Size` ignores this cache budget to reduce peak SRAM, but
+may increase traffic and latency.
+[Vela options and memory mapping](https://arm-software.github.io/CMSIS-Ethos-U/main/vela/index.html)
 
-`Axi0`, `Axi1`, `Sram`, `OffChipFlash` trong Vela là tên logical. Trong project:
+`Axi0`, `Axi1`, `Sram`, and `OffChipFlash` are logical Vela names. The project
+uses them as follows:
 
 ```ini
 [System_Config.Ethos_U55_M55M1_FLASH_X0.300]
@@ -148,90 +161,97 @@ arena_mem_area=Axi0
 cache_mem_area=Axi0
 ```
 
-`OffChipFlash` là nhãn bandwidth của Vela, không đổi APROM vật lý thành flash
-ngoài và không tăng clock APROM của MCU. M55M1 core/NPU chạy tối đa 220 MHz;
-firmware đã cấu hình mức đó.
+`OffChipFlash` is Vela's bandwidth label; it neither moves physical APROM to an
+external flash device nor increases the M55M1 APROM clock. The M55M1 core and
+neural-processing unit are configured for 220 MHz.
 
-## 6. Chiến lược tối ưu theo tầng
+## 6. Tiered optimisation strategy
 
-### Tầng A — giữ model/ABI y nguyên, ưu tiên áp dụng
+### Tier A - preserve model and ABI; apply first
 
-1. **Giữ `sram01_x100` làm baseline production.** Đây là profile duy nhất đã
-   chứng minh max invoke dưới 3.5 ms và không có capture gap trong 60 giây.
-2. **Giữ `--optimise Performance` và `tensor-allocator HillClimb`.** Không đổi
-   sang `Size` khi mục tiêu đang là latency thấp nhất.
-3. **Giữ model, arena và direct-U55 tensors trong SRAM0/1.** Không tách một
-   phần FlatBuffer sang APROM: standard TFLM/Ethos-U delegate dùng FlatBuffer
-   liên tục; split/paging cần runtime/driver riêng và tạo jitter DMA.
-4. **Chuyển CPU-only RW sang DTCM.** Giữ DMA target ở SRAM2 non-cacheable.
-5. **Cache discipline:** model data writable chỉ khi startup copy; clean D-cache
-   một lần trước U55 dùng. DMA buffer dùng non-cacheable region, tránh cache
-   clean trong realtime path.
-6. **Không format UART trong ISR.** UART log chỉ foreground; ISR chỉ chuyển
-   descriptor/event.
+1. **Keep `sram01_x100` as the production baseline.** It is the only verified
+   profile with maximum invocation below 3.5 ms and no capture gap over 60
+   seconds.
+2. **Keep `--optimise Performance` and `tensor-allocator HillClimb`.** Do not
+   switch to `Size` while minimum latency is the objective.
+3. **Keep model, arena, and direct Ethos-U55 tensors in SRAM0/1.** The standard
+   TensorFlow Lite Micro/Ethos-U runtime consumes a contiguous FlatBuffer;
+   custom splitting or paging needs a new runtime/driver and can add
+   direct-memory-access jitter.
+4. **Move central-processing-unit-only read-write data to DTCM.** Keep
+   direct-memory-access targets in non-cacheable SRAM2.
+5. **Maintain cache discipline.** Model data is writable only during the startup
+   copy; clean its data cache once before Ethos-U55 access. Avoid cache
+   maintenance in the real-time path.
+6. **Do not format UART text in an interrupt service routine.** UART logging is
+   foreground-only; interrupt handlers move descriptors/events only.
 
-### Tầng B — tối ưu CPU state transaction, không đổi model output
+### Tier B - optimise central processing unit state transactions
 
-Output-state stage hiện gồm 20 semantic mappings và requantization per byte.
-Thứ tự thử nghiệm:
+The output-state stage contains 20 semantic mappings and per-byte
+requantisation. Evaluate changes in this order:
 
-1. Tách đo `audio-output memcpy`, `state-output requantize`, `state-input
-   memcpy` để biết phần thực sự chiếm 0.35 ms.
-2. Giữ mapping theo manifest, không copy theo ordinal tensor.
-3. Nếu float `round` là bottleneck, tạo fixed-point requantization tương đương
-   theo từng cặp scale/zero-point. Mọi byte của 100 golden chunks, state cuối
-   mỗi chunk và PCM16 output phải byte-identical với baseline trước khi dùng.
-4. Chỉ sau parity pass mới thay thế loop float. Không gộp state output/input,
-   không bỏ zero-point reset, và không thay đổi state quantization contract.
+1. Measure audio-output `memcpy`, output-state requantisation, and input-state
+   `memcpy` separately to identify the component responsible for the 0.35 ms
+   stage.
+2. Preserve manifest-defined semantic mapping; never copy by tensor ordinal.
+3. If floating-point `round` is the bottleneck, implement equivalent fixed-point
+   requantisation per scale/zero-point pair. Every byte of the 100-chunk golden
+   trace, final state after each chunk, and PCM16 output must remain
+   byte-identical to baseline before use.
+4. Replace the floating-point loop only after parity passes. Do not merge state
+   output/input copies, skip zero-point reset, or change the state-quantisation
+   contract.
 
-Tầng này có thể giảm CPU stage và jitter, nhưng U55 invocation ~3.15 ms sẽ chỉ
-thay đổi gián tiếp.
+This tier can reduce central processing unit time and jitter, but affects the
+approximately 3.15 ms Ethos-U55 invocation only indirectly.
 
-### Tầng C — Vela compile experiment có kiểm soát
+### Tier C - controlled Vela compiler experiments
 
-Mỗi experiment phải sinh package/profile riêng; không ghi đè baseline.
+Every experiment must create an independent package/profile and must never
+overwrite the baseline.
 
-| Biến số | Giá trị thử | Ý nghĩa |
+| Variable | Values to evaluate | Purpose |
 |---|---|---|
-| `arena_cache_size` | 64, 128, 256, 512 KiB, 1 MiB | Trade-off on-chip reuse và memory traffic |
-| `tensor-allocator` | HillClimb, Greedy, LinearAlloc | Layout intermediate tensor / peak arena |
-| `max-block-dependency` | 0, 1, 2, 3 | Trade-off interrupt/dependency latency và throughput |
-| `--optimise` | Performance trước; Size chỉ benchmark memory | Performance ưu tiên latency; Size ưu tiên SRAM |
-| const placement | APROM vs SRAM0/1 | Đã xác minh SRAM0/1 là quyết định lớn nhất |
+| `arena_cache_size` | 64, 128, 256, 512 KiB, 1 MiB | Trade-off between on-chip reuse and memory traffic |
+| `tensor-allocator` | HillClimb, Greedy, LinearAlloc | Intermediate-tensor layout and peak arena use |
+| `max-block-dependency` | 0, 1, 2, 3 | Trade-off between interrupt/dependency latency and throughput |
+| `--optimise` | Performance first; Size only as a memory benchmark | Performance prioritises latency; Size prioritises SRAM |
+| Constant placement | APROM versus SRAM0/1 | SRAM0/1 is the verified dominant choice |
 
-Không thay đổi nhiều biến trong một profile. Tên profile phải phản ánh đúng biến
-được thay đổi, ví dụ `sram01_perf_cache256k_hillclimb`.
+Change only one variable per profile. The profile name must identify that
+variable, for example `sram01_perf_cache256k_hillclimb`.
 
-Không dùng `--debug-force-legacy-core`: raw model hiện tại sinh CPU operator
-với lựa chọn đó, vi phạm contract U55-only.
+Do not use `--debug-force-legacy-core`: it introduces central processing unit
+operators for the current raw model and violates the Ethos-U55-only contract.
 
-## 7. Quy trình tạo và kiểm chứng profile
+## 7. Profile-generation and verification procedure
 
-### 7.1 Baseline bất biến
+### 7.1 Immutable baseline
 
-Input là:
+Input model:
 
 ```text
 models/speech_boosting/generated/speech_boosting_qat_raw_int8.tflite
 ```
 
-`aprom_x030` phải tái tạo SHA-256:
+`aprom_x030` must reproduce this SHA-256:
 
 ```text
 c0c2a641f2b317925003632b5eabcf1f4b1f4f9018f3ed5386e76f105be1f6c7
 ```
 
-Lệnh generator hiện tại:
+Current generator:
 
 ```powershell
 python tools/generate_speech_boosting_vela_profiles.py sram01_x100
 ```
 
-Nó phải lưu trong profile package: Vela TFLite, C/C++ model array, manifest,
-Vela command/report, contracts, tensor map, quantization metadata và golden
-trace.
+Each generated profile package must contain the Vela TFLite file, C/C++ model
+array, manifest, Vela command and report, contracts, tensor map, quantisation
+metadata, and golden trace.
 
-### 7.2 Lệnh thử một profile mới
+### 7.2 Command for one new profile experiment
 
 ```powershell
 python -m ethosu.vela `
@@ -247,58 +267,67 @@ python -m ethosu.vela `
   --output-dir build/vela_experiments/sram01_perf_cache256k
 ```
 
-Sau thử nghiệm, không chọn output thủ công. Cập nhật generator với profile mới,
-generate package đầy đủ, rồi để CMake chọn profile qua
-`M55M1_SPEECH_BOOSTING_MEMORY_PROFILE`.
+Do not select generated output manually. Add the profile to the generator,
+produce a complete package, and select it through
+`M55M1_SPEECH_BOOSTING_MEMORY_PROFILE` in CMake.
 
-### 7.3 Gates bắt buộc
+### 7.3 Mandatory gates
 
-Host:
+Host checks:
 
-1. SHA/manifest/ordinal/shape/INT8 quantization contract pass.
-2. 20 mappings, zero-state byte values và 100 raw-INT8 golden chunks pass.
-3. Vela report: 197 NPU operators, 0 CPU operators.
-4. `python -m unittest discover -s tests -v` và `git diff --check` pass.
+1. SHA, manifest, ordinal, shape, and INT8 quantisation contracts pass.
+2. All 20 mappings, zero-state byte values, and the 100 raw-INT8 golden chunks
+   pass.
+3. The Vela report contains 197 neural-processing-unit operators and zero
+   central-processing-unit operators.
+4. `python -m unittest discover -s tests -v` and `git diff --check` pass.
 
-Firmware/map:
+Firmware/map checks:
 
-1. `U55_MODEL_RAM` và `U55_TENSOR_ARENA` nằm hoàn toàn trong
-   `0x20100000–0x201FFFFF`.
-2. Model/arena/RW/heap không vượt linker assert SRAM0/1.
-3. DTCM chỉ chứa CPU-only data; DMA region vẫn SRAM2 non-cacheable.
-4. U55 model SRAM được clean D-cache trước first allocation/invoke.
+1. `U55_MODEL_RAM` and `U55_TENSOR_ARENA` lie entirely within
+   `0x20100000-0x201FFFFF`.
+2. Model, arena, read-write data, and heap do not exceed the SRAM0/1 linker
+   assertion.
+3. DTCM contains only central-processing-unit-only data; direct-memory-access
+   memory remains non-cacheable SRAM2.
+4. The SRAM model data cache is cleaned before first allocation/invocation.
 
-Board, sau warm-up 50 chunks và tối thiểu 60 giây:
+Board checks after 50 warm-up chunks and for at least 60 seconds:
 
-1. maximum U55 invoke <= 3.5 ms ở **mọi** cửa sổ một giây;
-2. 0 CPU operators, 0 invoke error;
-3. 0 capture gap, 0 DMIC overrun, 0 DMA error;
-4. log memory range, stage min/mean/max và end-to-end khi DAC/I2S được bật;
-5. invocation count/interrupt count tăng đồng nhất; PMU cycle/MAC counters có
-   dữ liệu hợp lệ nếu đánh giá utilization.
+1. Maximum Ethos-U55 invocation is at most 3.5 ms in **every** one-second
+   window.
+2. There are zero central-processing-unit operators and zero invocation errors.
+3. There are zero capture gaps, digital-microphone overruns, and
+   direct-memory-access errors.
+4. The log reports memory ranges, minimum/mean/maximum per stage, and
+   end-to-end latency when digital-to-analogue/I2S output is enabled.
+5. Invocation/interrupt counts advance consistently; neural-processing-unit and
+   multiply-accumulate counters contain valid data when utilisation is assessed.
 
-## 8. Cách đọc kết quả và quyết định
+## 8. Interpreting results and selecting a profile
 
-Ưu tiên theo dữ liệu board, không theo cycle estimate duy nhất của Vela.
+Use board measurements rather than Vela cycle estimates alone.
 
-- Nếu một profile giảm model SRAM nhưng max invoke vượt 3.5 ms: không chọn.
-- Nếu `--optimise Size` giảm arena nhưng tăng invoke/gap: chỉ lưu báo cáo,
-  không thay production profile.
-- Nếu cache budget nhỏ hơn giữ max invoke <= 3.5 ms và map headroom lớn hơn:
-  chọn profile nhỏ nhất đạt toàn bộ gate.
-- Nếu state fixed-point giữ golden parity và giảm output-state stage: chọn nó
-  độc lập với profile Vela vì nó là CPU transaction optimization.
-- Nếu không có profile nào cải thiện `sram01_x100`, giữ `sram01_x100`; tối ưu
-  tiếp theo phải là model redesign/retraining, nằm ngoài tài liệu này.
+- If a profile reduces model SRAM but its maximum invocation exceeds 3.5 ms, do
+  not select it.
+- If `--optimise Size` reduces the arena but raises invocation time or produces
+  capture gaps, retain the report but do not make it the production profile.
+- If a smaller cache budget keeps maximum invocation at or below 3.5 ms while
+  increasing map headroom, choose the smallest profile that passes every gate.
+- If fixed-point state requantisation preserves golden parity and reduces the
+  output-state stage, select it independently of the Vela profile because it is
+  a central-processing-unit transaction optimisation.
+- If no profile improves `sram01_x100`, retain `sram01_x100`; the next work is
+  model redesign or retraining, outside this document.
 
-## 9. Checklist trước khi đổi production profile
+## 9. Checklist before changing the production profile
 
-- [ ] Profile package độc lập, command/reports/manifest đầy đủ.
-- [ ] Vela SHA và raw model provenance được ghi lại.
-- [ ] 197 U55 / 0 CPU operators.
-- [ ] Contract 21 input/21 output, 20 state mapping pass.
-- [ ] Raw-INT8 100 chunks pass.
-- [ ] Map/linker/cache validation pass.
-- [ ] Board warm-up + >=60 s đo pass.
-- [ ] UART log không bị truncate; memory fields được tách dòng nếu cần.
-- [ ] DAC/I2S end-to-end được đo lại khi phần cứng khả dụng.
+- [ ] Independent profile package with complete command, reports, and manifest.
+- [ ] Recorded Vela SHA and raw-model provenance.
+- [ ] 197 Ethos-U55 / 0 central processing unit operators.
+- [ ] Passing contract for 21 inputs/21 outputs and 20 state mappings.
+- [ ] Passing 100-chunk raw-INT8 golden trace.
+- [ ] Passing map, linker, and cache validation.
+- [ ] Passing board warm-up and at least 60 seconds of measurements.
+- [ ] UART boot messages are not truncated; split memory fields across lines when necessary.
+- [ ] Re-measured digital-to-analogue/I2S end-to-end latency when hardware is available.
