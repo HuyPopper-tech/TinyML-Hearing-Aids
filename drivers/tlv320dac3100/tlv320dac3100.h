@@ -23,7 +23,7 @@ extern "C" {
 /**
  * @brief Fixed duration of each real-time PCM/DMA block.
  */
-#define TLV320DAC3100_BLOCK_DURATION_MS            10U
+#define TLV320DAC3100_BLOCK_DURATION_MS            6U
 /**
  * @brief 16 kHz profile PCM rate.
  */
@@ -35,7 +35,7 @@ extern "C" {
 /**
  * @brief 16 kHz profile mono samples in one 10 ms block.
  */
-#define TLV320DAC3100_16KHZ_SAMPLES_PER_BLOCK      256U
+#define TLV320DAC3100_16KHZ_SAMPLES_PER_BLOCK      96U
 /**
  * @brief 32 kHz profile PCM rate.
  */

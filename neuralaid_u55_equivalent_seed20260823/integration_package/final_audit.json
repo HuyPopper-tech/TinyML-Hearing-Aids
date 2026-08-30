@@ -1,0 +1,23 @@
+{
+  "track": "u55_equivalent",
+  "input_tflite": "/kaggle/working/neuralaid_u55_equivalent_seed20260823/integration_package/neuralaid_int8.tflite",
+  "accelerator": "ethos-u55-256",
+  "variants": [
+    {
+      "mode": "Size",
+      "exit_status": 0,
+      "cpu_operators_zero": true,
+      "vela_tflite": "/kaggle/working/neuralaid_u55_equivalent_seed20260823/integration_package/vela_final_size/neuralaid_int8_vela.tflite",
+      "report": "vela_report_final_size.txt"
+    },
+    {
+      "mode": "Performance",
+      "exit_status": 0,
+      "cpu_operators_zero": true,
+      "vela_tflite": "/kaggle/working/neuralaid_u55_equivalent_seed20260823/integration_package/vela_final_performance/neuralaid_int8_vela.tflite",
+      "report": "vela_report_final_performance.txt"
+    }
+  ],
+  "deploy_ready": true,
+  "deployment_status": "deploy_ready"
+}

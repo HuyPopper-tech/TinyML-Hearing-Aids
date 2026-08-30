@@ -1,0 +1,22 @@
+{
+  "dsp_identity_max_error": 1.1920928955078125e-06,
+  "decoder_history_delta": 2.1934430599212646,
+  "temporal_lstm_vectorization_error": 2.384185791015625e-07,
+  "state_names": [
+    "conv_history",
+    "dual_path_history",
+    "lstm_c_0",
+    "lstm_c_1",
+    "lstm_c_2",
+    "lstm_c_3",
+    "lstm_c_4",
+    "lstm_c_5",
+    "lstm_h_0",
+    "lstm_h_1",
+    "lstm_h_2",
+    "lstm_h_3",
+    "lstm_h_4",
+    "lstm_h_5"
+  ],
+  "debug_stream_endurance": null
+}

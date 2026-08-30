@@ -1,0 +1,1 @@
+{"phase": "qat", "global_step": 4, "session_epoch": 1, "step_in_session_epoch": 4, "loss": 0.29731279611587524, "validation_loss": 0.35654693841934204, "learning_rate": 0.0010000000474974513, "seconds_per_step": 833.8412698445009, "remaining_seconds": 0.0, "target_steps": 300}\n

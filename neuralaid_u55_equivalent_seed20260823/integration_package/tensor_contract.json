@@ -1,0 +1,550 @@
+{
+  "track": "u55_equivalent",
+  "inputs": [
+    "conv_history",
+    "dual_path_history",
+    "lstm_h_0",
+    "lstm_h_1",
+    "lstm_h_2",
+    "lstm_h_3",
+    "lstm_h_4",
+    "lstm_h_5",
+    "lstm_c_0",
+    "lstm_c_1",
+    "lstm_c_2",
+    "lstm_c_3",
+    "lstm_c_4",
+    "lstm_c_5",
+    "tf_frame"
+  ],
+  "state_shapes": {
+    "conv_history": [
+      1,
+      2,
+      129,
+      2
+    ],
+    "dual_path_history": [
+      1,
+      2,
+      129,
+      32
+    ],
+    "lstm_h_0": [
+      1,
+      33,
+      32
+    ],
+    "lstm_h_1": [
+      1,
+      33,
+      32
+    ],
+    "lstm_h_2": [
+      1,
+      33,
+      32
+    ],
+    "lstm_h_3": [
+      1,
+      33,
+      32
+    ],
+    "lstm_h_4": [
+      1,
+      33,
+      32
+    ],
+    "lstm_h_5": [
+      1,
+      33,
+      32
+    ],
+    "lstm_c_0": [
+      1,
+      33,
+      32
+    ],
+    "lstm_c_1": [
+      1,
+      33,
+      32
+    ],
+    "lstm_c_2": [
+      1,
+      33,
+      32
+    ],
+    "lstm_c_3": [
+      1,
+      33,
+      32
+    ],
+    "lstm_c_4": [
+      1,
+      33,
+      32
+    ],
+    "lstm_c_5": [
+      1,
+      33,
+      32
+    ]
+  },
+  "state_reset": "zero_on_boot_or_stream_discontinuity",
+  "dataset": {
+    "dataset": "speech_enhancement_board_response_v1",
+    "sample_rate": 16000,
+    "channels": 1,
+    "sample_format": "PCM16 little-endian",
+    "samples_per_clip": 64000,
+    "splits": {
+      "train": 17500,
+      "val": 3750,
+      "test": 3750
+    },
+    "pair_manifest_fields": [
+      "mixture_id",
+      "mixture_path",
+      "clean_path",
+      "target_snr_db",
+      "background_profile",
+      "board_response_effective_snr_db"
+    ],
+    "ir_sha256": "4686a5945797bc27baf1db7c038a6df3ad949308d1d5ebccfd092d1b63161cf3",
+    "transform_mode": "causal convolution of clean and residual noise with shared gain",
+    "source_type": "board_response_custom",
+    "paper_base_recipe": false,
+    "reproduction_label": "custom_dataset_architecture_reproduction",
+    "clip_seconds": 4.0
+  },
+  "tflite_inputs": [
+    {
+      "index": 0,
+      "name": "tf_frame",
+      "shape": [
+        1,
+        129,
+        2
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.01358956191688776,
+        -15
+      ]
+    },
+    {
+      "index": 1,
+      "name": "conv_history",
+      "shape": [
+        1,
+        2,
+        129,
+        2
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.01358956191688776,
+        -15
+      ]
+    },
+    {
+      "index": 2,
+      "name": "dual_path_history",
+      "shape": [
+        1,
+        2,
+        129,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.009053030051290989,
+        11
+      ]
+    },
+    {
+      "index": 3,
+      "name": "lstm_h_0",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.0009034819668158889,
+        -3
+      ]
+    },
+    {
+      "index": 4,
+      "name": "lstm_h_1",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.0021036709658801556,
+        40
+      ]
+    },
+    {
+      "index": 5,
+      "name": "lstm_h_2",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.0035252380184829235,
+        -18
+      ]
+    },
+    {
+      "index": 6,
+      "name": "lstm_h_3",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.001685239956714213,
+        -16
+      ]
+    },
+    {
+      "index": 7,
+      "name": "lstm_h_4",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.002239418914541602,
+        11
+      ]
+    },
+    {
+      "index": 8,
+      "name": "lstm_h_5",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.0032754417043179274,
+        1
+      ]
+    },
+    {
+      "index": 9,
+      "name": "lstm_c_0",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.001829399261623621,
+        0
+      ]
+    },
+    {
+      "index": 10,
+      "name": "lstm_c_1",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.004489436279982328,
+        30
+      ]
+    },
+    {
+      "index": 11,
+      "name": "lstm_c_2",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.006221972405910492,
+        -14
+      ]
+    },
+    {
+      "index": 12,
+      "name": "lstm_c_3",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.0035123361740261316,
+        2
+      ]
+    },
+    {
+      "index": 13,
+      "name": "lstm_c_4",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.003740469226613641,
+        -5
+      ]
+    },
+    {
+      "index": 14,
+      "name": "lstm_c_5",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.006600851193070412,
+        -28
+      ]
+    }
+  ],
+  "tflite_outputs": [
+    {
+      "index": 4463,
+      "name": "Identity",
+      "shape": [
+        1,
+        129,
+        2
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.012382527813315392,
+        -37
+      ]
+    },
+    {
+      "index": 4470,
+      "name": "Identity_1",
+      "shape": [
+        1,
+        2,
+        129,
+        2
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.01358956191688776,
+        -15
+      ]
+    },
+    {
+      "index": 4464,
+      "name": "Identity_2",
+      "shape": [
+        1,
+        2,
+        129,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.009053030051290989,
+        11
+      ]
+    },
+    {
+      "index": 1399,
+      "name": "Identity_3",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.001829399261623621,
+        0
+      ]
+    },
+    {
+      "index": 2009,
+      "name": "Identity_4",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.004489436745643616,
+        30
+      ]
+    },
+    {
+      "index": 2620,
+      "name": "Identity_5",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.006221972871571779,
+        -14
+      ]
+    },
+    {
+      "index": 3230,
+      "name": "Identity_6",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.0035123364068567753,
+        2
+      ]
+    },
+    {
+      "index": 3840,
+      "name": "Identity_7",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.0037404694594442844,
+        -5
+      ]
+    },
+    {
+      "index": 4450,
+      "name": "Identity_8",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.006600852124392986,
+        -28
+      ]
+    },
+    {
+      "index": 4469,
+      "name": "Identity_9",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.0009034821996465325,
+        -3
+      ]
+    },
+    {
+      "index": 2012,
+      "name": "Identity_10",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.0021036711987107992,
+        40
+      ]
+    },
+    {
+      "index": 4468,
+      "name": "Identity_11",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.00352523778565228,
+        -18
+      ]
+    },
+    {
+      "index": 4467,
+      "name": "Identity_12",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.001685239956714213,
+        -16
+      ]
+    },
+    {
+      "index": 4466,
+      "name": "Identity_13",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.0022394193802028894,
+        11
+      ]
+    },
+    {
+      "index": 4465,
+      "name": "Identity_14",
+      "shape": [
+        1,
+        33,
+        32
+      ],
+      "dtype": "<class 'numpy.int8'>",
+      "quantization": [
+        0.0032754414714872837,
+        1
+      ]
+    }
+  ],
+  "tflite_output_mapping": "export_logical_output_order_fallback"
+}

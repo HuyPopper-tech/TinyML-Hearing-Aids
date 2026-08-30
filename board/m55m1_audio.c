@@ -12,6 +12,10 @@
 #include "board/m55m1_timebase.h"
 #include "NuMicro.h"
 
+#ifndef M55M1_ENABLE_DAC_I2S_OUTPUT
+#define M55M1_ENABLE_DAC_I2S_OUTPUT 0
+#endif
+
 #define M55M1_AUDIO_CORE_HZ       220000000UL
 #define M55M1_AUDIO_AUDIO_APLL_HZ 475136006UL
 /* TLV320DAC3100 supports I2C Fast-mode; control transfers do not gate PDMA audio. */
@@ -44,6 +48,7 @@ static NVT_NONCACHEABLE LPDSCT_T g_dmic_descriptors[2] __ALIGNED(4);
 static m55m1_audio_dmic_state_t g_dmic_state;
 static m55m1_audio_clock_snapshot_t g_clock_snapshot;
 static bool g_clock_snapshot_valid;
+#if M55M1_ENABLE_DAC_I2S_OUTPUT
 static m55m1_audio_playback_irq_callback_t g_playback_irq_callback;
 static void *g_playback_irq_context;
 
@@ -56,6 +61,7 @@ static uint32_t m55m1_audio_profile_mclk_hz(m55m1_audio_profile_t profile) {
     }
     return 0U;
 }
+#endif
 
 static uint32_t m55m1_audio_profile_sample_rate_hz(
     m55m1_audio_profile_t profile) {
@@ -71,7 +77,7 @@ static uint32_t m55m1_audio_profile_sample_rate_hz(
 static uint16_t m55m1_audio_profile_samples_per_block(
     m55m1_audio_profile_t profile) {
     if (profile == M55M1_AUDIO_PROFILE_16KHZ) {
-        return 256U;
+        return 64U;
     }
     if (profile == M55M1_AUDIO_PROFILE_32KHZ) {
         return 320U;
@@ -88,6 +94,7 @@ static uint16_t m55m1_audio_profile_samples_per_block(
  * standard maximum of nine SCL pulses, followed by a STOP, before I2C1 owns
  * the pins. No push-pull high level is ever driven onto this shared bus.
  */
+#if M55M1_ENABLE_DAC_I2S_OUTPUT
 static bool m55m1_audio_recover_i2c_bus(void) {
     uint32_t pulse;
 
@@ -117,6 +124,7 @@ static bool m55m1_audio_recover_i2c_bus(void) {
 
     return (PB0 != 0U) && (PB1 != 0U);
 }
+#endif
 
 /**
  * @brief Notify an optional foreground diagnostic observer of a board boundary.
@@ -156,19 +164,32 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
     void *playback_irq_context,
     m55m1_audio_board_progress_callback_t progress_callback,
     void *progress_context) {
+#if M55M1_ENABLE_DAC_I2S_OUTPUT
     uint32_t i2s_module_divider;
     uint32_t required_mclk_hz;
+#endif
 
 #if M55M1_DEEPFILTERNET_DIAGNOSTICS
     m55m1_stack_monitor_init();
 #endif
+#if M55M1_ENABLE_DAC_I2S_OUTPUT
     required_mclk_hz = m55m1_audio_profile_mclk_hz(profile);
     if ((binding == NULL) || (playback_irq_callback == NULL) ||
         (required_mclk_hz == 0UL)) {
         return M55M1_AUDIO_BOARD_INIT_CLOCK_MISMATCH;
     }
+#else
+    (void)binding;
+    (void)playback_irq_callback;
+    (void)playback_irq_context;
+    if (m55m1_audio_profile_sample_rate_hz(profile) == 0UL) {
+        return M55M1_AUDIO_BOARD_INIT_CLOCK_MISMATCH;
+    }
+#endif
     g_clock_snapshot_valid = false;
+#if M55M1_ENABLE_DAC_I2S_OUTPUT
     i2s_module_divider = (profile == M55M1_AUDIO_PROFILE_16KHZ) ? 58UL : 29UL;
+#endif
     m55m1_audio_notify_progress(
         progress_callback, progress_context, M55M1_AUDIO_BOARD_STAGE_ENTER);
     SYS_UnlockReg();
@@ -244,6 +265,9 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
         .apll0_hz = CLK_GetAPLL0ClockFreq(),
         .apll1_hz = CLK_GetAPLL1ClockFreq(),
     };
+    g_clock_snapshot.i2s_src_hz = 0UL;
+    g_clock_snapshot.mclk_hz = 0UL;
+#if M55M1_ENABLE_DAC_I2S_OUTPUT
     g_clock_snapshot.i2s_src_hz = g_clock_snapshot.apll1_hz / 2UL;
     g_clock_snapshot.mclk_hz =
         g_clock_snapshot.i2s_src_hz / i2s_module_divider;
@@ -253,6 +277,14 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
         SYS_LockReg();
         return M55M1_AUDIO_BOARD_INIT_CLOCK_MISMATCH;
     }
+#else
+    if ((g_clock_snapshot.core_hz != M55M1_AUDIO_CORE_HZ) ||
+        (g_clock_snapshot.apll0_hz != M55M1_AUDIO_CORE_HZ)) {
+        SYS_LockReg();
+        return M55M1_AUDIO_BOARD_INIT_CLOCK_MISMATCH;
+    }
+#endif
+#if M55M1_ENABLE_DAC_I2S_OUTPUT
     if (i2s_module_divider == 58UL) {
         CLK_SetModuleClock(I2S0_MODULE, CLK_I2SSEL_I2S0SEL_APLL1_DIV2,
                            CLK_I2SDIV_I2S0DIV(58));
@@ -264,12 +296,16 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
     CLK_EnableModuleClock(I2S0_MODULE);
     CLK_EnableModuleClock(I2C1_MODULE);
     CLK_EnableModuleClock(PDMA0_MODULE);
+#endif
     CLK_EnableModuleClock(GPIOB_MODULE);
+#if M55M1_ENABLE_DAC_I2S_OUTPUT
     CLK_EnableModuleClock(GPIOF_MODULE);
+#endif
     m55m1_audio_notify_progress(
         progress_callback, progress_context,
         M55M1_AUDIO_BOARD_STAGE_MODULE_CLOCKS_READY);
 
+#if M55M1_ENABLE_DAC_I2S_OUTPUT
     /* These assignments intentionally disable J2 SWD and UART5 while audio is active. */
     SET_I2S0_DO_PF0();
     SET_I2S0_LRCK_PF1();
@@ -293,15 +329,17 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
 
     /* Clear any boot-ROM/debugger I2C state before I2C_Open enables master mode. */
     SYS_ResetModule(SYS_I2C1RST);
-    SYS_LockReg();
     m55m1_audio_notify_progress(
         progress_callback, progress_context,
         M55M1_AUDIO_BOARD_STAGE_I2C_RESET_READY);
+#endif
+    SYS_LockReg();
     m55m1_timebase_init();
     m55m1_audio_notify_progress(
         progress_callback, progress_context,
         M55M1_AUDIO_BOARD_STAGE_CYCLE_COUNTER_READY);
 
+#if M55M1_ENABLE_DAC_I2S_OUTPUT
     /* The codec supports 400 kHz Fast-mode; nRESET now resets codec and MCU together. */
     (void)I2C_Open(I2C1, M55M1_AUDIO_I2C_HZ);
     NVIC_SetPriority(PDMA0_IRQn, 1U);
@@ -317,6 +355,7 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
     };
     g_playback_irq_callback = playback_irq_callback;
     g_playback_irq_context = playback_irq_context;
+#endif
     m55m1_audio_notify_progress(
         progress_callback, progress_context,
         M55M1_AUDIO_BOARD_STAGE_PERIPHERALS_READY);
@@ -365,6 +404,7 @@ bool m55m1_audio_dmic_start(m55m1_audio_profile_t profile) {
 
     DMIC_Open(DMIC0);
     DMIC_SetFIFOWidth(DMIC0, DMIC_FIFOWIDTH_16);
+    DMIC_SetDSPGainVolume(DMIC0, DMIC_CTL_CHEN2_Msk, M55M1_SPEECH_BOOSTING_DMIC_GAIN_DB);
     /*
      * MP34DT05 requires a 1.2..3.25 MHz PDM clock in normal operation. Both
      * profiles retain 2.048 MHz: 16 kHz needs OSR=128, while 32 kHz needs
@@ -500,10 +540,12 @@ void m55m1_audio_dmic_get_status(
 }
 
 void PDMA0_IRQHandler(void) {
+#if M55M1_ENABLE_DAC_I2S_OUTPUT
     if (g_playback_irq_callback != NULL) {
         g_playback_irq_callback(
             m55m1_timebase_cycles_now(), g_playback_irq_context);
     }
+#endif
 }
 
 void LPPDMA_IRQHandler(void) {

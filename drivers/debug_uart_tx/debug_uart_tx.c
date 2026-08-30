@@ -14,7 +14,8 @@
 /* DEBUG_UART_TX_RING_BYTES 1024U was insufficient for 1536-byte snapshots. */
 #define DEBUG_UART_TX_RING_BYTES 2048U
 
-static uint8_t g_tx_storage[DEBUG_UART_TX_RING_BYTES];
+static uint8_t g_tx_storage[DEBUG_UART_TX_RING_BYTES]
+    __attribute__((section(".bss.DTCM.ZeroInit")));
 static fixed_byte_ring_t g_tx_ring;
 static volatile uint32_t g_drop_count;
 static bool g_initialized;

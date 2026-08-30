@@ -1,0 +1,8 @@
+{
+  "label": "project_adaptation_board_response_v1",
+  "mode": "stratified_report_sample",
+  "model": "ptq_int8",
+  "samples": 64000,
+  "max_abs_error_vs_fp32": 0.05508042499423027,
+  "mean_abs_error_vs_fp32": 0.0029172920621931553
+}

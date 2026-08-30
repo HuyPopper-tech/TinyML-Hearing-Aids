@@ -1,6 +1,6 @@
 /**
  * @file audio_transport.h
- * @brief Production 16 kHz M55M1 DMIC-to-TLV320DAC3100 transport driver.
+ * @brief Production 16 kHz M55M1 DMIC transport with optional DAC/I2S output.
  * @author Bui Minh Huy
  * @date 2026-07-30
  */
@@ -15,7 +15,8 @@ extern "C" {
 #endif
 
 #define AUDIO_TRANSPORT_SAMPLE_RATE_HZ       16000UL
-#define AUDIO_TRANSPORT_SAMPLES_PER_BLOCK    256U
+#define AUDIO_TRANSPORT_SAMPLES_PER_BLOCK    64U
+#define AUDIO_TRANSPORT_MICROPHONE_DSP_GAIN_DB 30
 #define AUDIO_TRANSPORT_SAFE_MAX_GAIN_DB     (-3)
 
 typedef enum {
@@ -82,7 +83,7 @@ typedef void (*audio_transport_progress_callback_t)(
     void *context);
 
 /**
- * @brief Bind the production board/codec transport.
+ * @brief Bind the production board and optional codec transport.
  * @param report Optional init result destination.
  * @param progress_callback Optional synchronous foreground observer.
  * @param progress_context Caller-owned observer context retained only during init.
@@ -97,7 +98,7 @@ bool audio_transport_init(
     void *progress_context);
 
 /**
- * @brief Start DMIC capture and DAC DMA.
+ * @brief Start DMIC capture and, when enabled, DAC DMA.
  * @return OK when the active lifecycle starts; otherwise BUSY or ERROR.
  *
  * Foreground-only. The transport must be initialized first.
@@ -105,7 +106,7 @@ bool audio_transport_init(
 audio_transport_status_t audio_transport_start(void);
 
 /**
- * @brief Quiesce capture before playback and terminate DMA ownership.
+ * @brief Quiesce capture and optional playback before terminating DMA ownership.
  * @return None.
  *
  * Foreground-only and idempotent. A new lifecycle requires initialization.

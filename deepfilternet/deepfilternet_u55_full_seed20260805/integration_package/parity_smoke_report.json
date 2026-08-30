@@ -1,0 +1,8 @@
+{
+  "gain_max_abs": 0.014451771974563599,
+  "coeff_max_abs": 0.01525893434882164,
+  "alpha_abs": 0.001126125454902649,
+  "audio_max_abs": 0.0052054524421691895,
+  "host_status": "fp32_vs_int8_reported",
+  "board_status": "board_mve_parity_pending"
+}

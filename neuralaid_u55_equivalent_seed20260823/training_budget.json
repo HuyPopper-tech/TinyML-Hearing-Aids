@@ -1,0 +1,23 @@
+{
+  "profile": "p100_8h_final",
+  "fp32": {
+    "phase": "fp32",
+    "completed_fp32_steps": 91,
+    "best_validation_loss": -0.7155210077762604,
+    "checkpoint": "/kaggle/working/neuralaid_u55_equivalent_seed20260823/checkpoints/fp32/ckpt-91",
+    "last_loss": -0.525860071182251,
+    "elapsed_seconds": 17177.970444234998,
+    "training_budget_status": "deadline_limited"
+  },
+  "qat": {
+    "phase": "qat",
+    "completed_qat_steps": 4,
+    "checkpoint": "/kaggle/working/neuralaid_u55_equivalent_seed20260823/checkpoints/qat/ckpt-4",
+    "last_loss": 0.29731279611587524,
+    "elapsed_seconds": 24455.566059005003,
+    "training_budget_status": "deadline_limited"
+  },
+  "training_budget_status": "deadline_limited",
+  "experimental_final_output": true,
+  "release_ready": false
+}

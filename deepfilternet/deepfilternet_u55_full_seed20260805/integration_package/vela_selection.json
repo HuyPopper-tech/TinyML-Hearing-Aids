@@ -1,0 +1,17 @@
+{
+  "selected": "Performance",
+  "variants": [
+    {
+      "optimise": "Size",
+      "path": "/kaggle/working/deepfilternet_u55_full_seed20260805/integration_package/vela_size/deepfilternet_u55_int8_vela.tflite",
+      "bytes": 1197968
+    },
+    {
+      "optimise": "Performance",
+      "path": "/kaggle/working/deepfilternet_u55_full_seed20260805/integration_package/vela_performance/deepfilternet_u55_int8_vela.tflite",
+      "bytes": 1197856
+    }
+  ],
+  "board_e2e_gate_us": 16000,
+  "board_measurement_required": true
+}

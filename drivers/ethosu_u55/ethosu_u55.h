@@ -7,11 +7,22 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct {
+    uint32_t npu_irq_count;
+    uint32_t inference_begin_count;
+    uint32_t inference_end_count;
+    uint64_t cycle_count;
+    uint32_t npu_active_cycles;
+    uint32_t npu_idle_cycles;
+    uint32_t mac_active_cycles;
+} ethosu_u55_diagnostics_t;
 
 /**
  * @brief Initialize the singleton Ethos-U driver after board binding.
@@ -21,6 +32,15 @@ extern "C" {
  * transferred to the caller.
  */
 bool ethosu_u55_init(void);
+
+/**
+ * @brief Snapshot runtime Ethos-U execution counters.
+ *
+ * A nonzero inference/IRQ count and NPU-active cycles prove that the Ethos-U
+ * custom operator issued work to the accelerator. Counters are cumulative
+ * from initialization and are sampled by foreground diagnostics only.
+ */
+void ethosu_u55_get_diagnostics(ethosu_u55_diagnostics_t *diagnostics);
 
 /**
  * @brief Return the free-running board timer used for inference profiling.
@@ -56,6 +76,24 @@ void ethosu_u55_fault_delay_ms(uint32_t milliseconds);
  * Foreground-only and wrap-safe for one counter period.
  */
 bool ethosu_u55_deadline_exceeded(uint32_t start_cycle, uint32_t milliseconds);
+
+/**
+ * @brief Clean a data-cache range before the Ethos-U55 reads it.
+ * @param address Start address, or NULL to clean the complete data cache.
+ * @param bytes Number of bytes in the range.
+ *
+ * Foreground-only. The range is expanded to whole cache lines by the driver.
+ */
+void ethosu_flush_dcache(uint32_t *address, size_t bytes);
+
+/**
+ * @brief Invalidate a data-cache range after the Ethos-U55 writes it.
+ * @param address Start address, or NULL to invalidate the complete data cache.
+ * @param bytes Number of bytes in the range.
+ *
+ * Foreground-only. The range is expanded to whole cache lines by the driver.
+ */
+void ethosu_invalidate_dcache(uint32_t *address, size_t bytes);
 
 #ifdef __cplusplus
 }

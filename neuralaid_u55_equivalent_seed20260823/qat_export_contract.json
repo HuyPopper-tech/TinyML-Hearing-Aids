@@ -1,0 +1,6 @@
+{
+  "qat_mode": "u55_full_int8",
+  "qat_export_enabled": true,
+  "activation": "per_site_moving_observer_asymmetric_lsq",
+  "weights": "per_channel_symmetric_ste"
+}

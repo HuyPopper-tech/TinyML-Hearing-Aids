@@ -1,0 +1,8 @@
+{
+  "phase": "qat",
+  "completed_qat_steps": 4,
+  "checkpoint": "/kaggle/working/neuralaid_u55_equivalent_seed20260823/checkpoints/qat/ckpt-4",
+  "last_loss": 0.29731279611587524,
+  "elapsed_seconds": 24455.566059005003,
+  "training_budget_status": "deadline_limited"
+}

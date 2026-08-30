@@ -1,0 +1,30 @@
+{
+  "minimum_frames": 100,
+  "scenarios": {
+    "silence": {
+      "header": "golden_silence.h",
+      "frames": 100,
+      "sha256": "b4d59d27ada445ed68e04af7d773b744ea2bf9d8f7598947227bbb019ba1829a"
+    },
+    "impulse": {
+      "header": "golden_impulse.h",
+      "frames": 100,
+      "sha256": "87505d72b84d5e429eae0651fb583718da857ddca2a04f24628e50b056b925f7"
+    },
+    "sine_440": {
+      "header": "golden_sine_440.h",
+      "frames": 100,
+      "sha256": "bc8343e211b397e45a9634a1d1765d3435dcae0bc1fe8f031f27a17bf785e457"
+    },
+    "sine_3000": {
+      "header": "golden_sine_3000.h",
+      "frames": 100,
+      "sha256": "a46ac02e8b15b33bb036cad62252f586a5f7c9e148442957fafe61675bf98f22"
+    },
+    "noise": {
+      "header": "golden_noise.h",
+      "frames": 100,
+      "sha256": "d83c8eb1b0ed624d447c104cdbb0b74c8b14d77ca08e82a0b807a8f297aa41d9"
+    }
+  }
+}

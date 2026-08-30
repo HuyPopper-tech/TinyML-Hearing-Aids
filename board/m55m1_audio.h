@@ -17,6 +17,7 @@ extern "C" {
 #endif
 
 #define M55M1_AUDIO_SAFE_MAX_GAIN_DB  (-3)
+#define M55M1_SPEECH_BOOSTING_DMIC_GAIN_DB 30
 
 typedef enum {
     M55M1_AUDIO_PROFILE_16KHZ = 0,

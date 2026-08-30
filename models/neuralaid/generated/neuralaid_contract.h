@@ -1,0 +1,20 @@
+/**
+ * @file neuralaid_contract.h
+ * @brief Immutable NeuralAid U55 DSP deployment contract.
+ * @author NeuralAid export
+ * @date 2026-08-23
+ */
+#pragma once
+
+#define NEURALAID_SAMPLE_RATE 16000
+#define NEURALAID_CHUNK_SAMPLES 96
+#define NEURALAID_LOOKBACK_SAMPLES 96
+#define NEURALAID_LOOKAHEAD_SAMPLES 64
+#define NEURALAID_FFT_LENGTH 256
+#define NEURALAID_FFT_BINS 129
+#define NEURALAID_LSTM_BLOCKS 6
+#define NEURALAID_MODEL_DIM 32
+#define NEURALAID_HIDDEN_SIZE 32
+#define NEURALAID_FREQ_COMPRESSION 4
+#define NEURALAID_PREEMPHASIS 0.97f
+#define NEURALAID_PREEMPHASIS_Q15 31785

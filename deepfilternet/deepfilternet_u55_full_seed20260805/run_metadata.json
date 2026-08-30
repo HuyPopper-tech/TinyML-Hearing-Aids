@@ -1,0 +1,10 @@
+{
+  "model": "deepfilternet_u55",
+  "profile": "full",
+  "dataset_root": "/kaggle/input/datasets/minhhuybi/speech-enhancement-v1/speech_enhancement_v1",
+  "counts": {
+    "train": 17500,
+    "val": 3750,
+    "test": 3750
+  }
+}

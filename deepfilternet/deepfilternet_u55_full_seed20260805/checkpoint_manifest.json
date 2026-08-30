@@ -1,0 +1,7 @@
+{
+  "model": "deepfilternet_u55",
+  "variant": "faithful",
+  "fp32": "/kaggle/working/deepfilternet_u55_full_seed20260805/checkpoint_fp32/ckpt-18",
+  "qat": "/kaggle/working/deepfilternet_u55_full_seed20260805/checkpoint_qat/ckpt-2",
+  "qat_ranges": "qat_ranges.json"
+}

@@ -1,0 +1,84 @@
+{
+  "track": "u55_equivalent",
+  "run_profile": "p100_8h_final",
+  "training_mode": "project_adaptation",
+  "sample_rate": 16000,
+  "train_crop_seconds": 4.0,
+  "experiment_id": "neuralaid_u55_equivalent_seed20260823",
+  "paper_steps_per_epoch": 2500,
+  "batch_size": 8,
+  "samples_per_paper_epoch": 20000,
+  "train_chunks": 667,
+  "fp32_session_epochs": 3,
+  "fp32_steps_per_session_epoch": 300,
+  "qat_session_epochs": 3,
+  "qat_steps_per_session_epoch": 100,
+  "lr_schedule_kind": "budget_normalized",
+  "warmup_steps": 90,
+  "temporal_parallelism": "disabled",
+  "batch_parallelism": "independent_utterances_only",
+  "temporal_lstm_vectorized": true,
+  "gpu_runtime": {
+    "required": true,
+    "available": true,
+    "device_target": "/GPU:0",
+    "physical_name": "/physical_device:GPU:0",
+    "logical_devices": [
+      "/device:GPU:0"
+    ],
+    "device_name": "Tesla T4",
+    "compute_capability": [
+      7,
+      5
+    ],
+    "tensorflow": "2.20.0",
+    "cuda_build": "12.5.1",
+    "memory_policy": "growth_requested",
+    "mixed_precision": "disabled",
+    "xla": "disabled"
+  },
+  "training_budget": {
+    "paper_steps_per_epoch": 2500,
+    "batch": 8,
+    "fp32_session_epochs": 3,
+    "fp32_steps_per_session_epoch": 300,
+    "qat_session_epochs": 3,
+    "qat_steps_per_session_epoch": 100,
+    "fp32_max_steps": 900,
+    "qat_max_steps": 300,
+    "lr_schedule_kind": "budget_normalized",
+    "warmup_steps": 90,
+    "session_limit_seconds": 28800,
+    "fp32_deadline_seconds": 17100,
+    "qat_deadline_seconds": 24000,
+    "finalization_reserve_seconds": 4800,
+    "evaluation_max_items": 128,
+    "final_in_session": true
+  },
+  "dataset_provenance": {
+    "dataset": "speech_enhancement_board_response_v1",
+    "sample_rate": 16000,
+    "channels": 1,
+    "sample_format": "PCM16 little-endian",
+    "samples_per_clip": 64000,
+    "splits": {
+      "train": 17500,
+      "val": 3750,
+      "test": 3750
+    },
+    "pair_manifest_fields": [
+      "mixture_id",
+      "mixture_path",
+      "clean_path",
+      "target_snr_db",
+      "background_profile",
+      "board_response_effective_snr_db"
+    ],
+    "ir_sha256": "4686a5945797bc27baf1db7c038a6df3ad949308d1d5ebccfd092d1b63161cf3",
+    "transform_mode": "causal convolution of clean and residual noise with shared gain",
+    "source_type": "board_response_custom",
+    "paper_base_recipe": false,
+    "reproduction_label": "custom_dataset_architecture_reproduction",
+    "clip_seconds": 4.0
+  }
+}

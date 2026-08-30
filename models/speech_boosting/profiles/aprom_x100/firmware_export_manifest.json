@@ -1,0 +1,13 @@
+{
+  "memory_profile": "aprom_x100",
+  "vela_version": "5.1.0",
+  "raw_int8_sha256": "8e2aab1316d2c1096bf0ae3351c0a01f905617fdbb713a93fbdd3fb8d8672eab",
+  "vela_sha256": "8da5655b5b72d8d575e7e392b59e0ee4a139c11d478a033e0a1c721985754ff4",
+  "vela_cpu_operators": 0,
+  "vela_ethosu_operators": 197,
+  "stream_inputs": 21,
+  "stream_outputs": 21,
+  "state_tensors": 20,
+  "state_bytes": 5632,
+  "model_memory_region": "aprom"
+}

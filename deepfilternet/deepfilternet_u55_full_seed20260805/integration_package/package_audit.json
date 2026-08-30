@@ -1,0 +1,10 @@
+{
+  "required_files": 13,
+  "missing": [],
+  "vela_cpu_operators": 0,
+  "flash_estimate_bytes": 1265696,
+  "flash_release_budget_bytes": 1887436,
+  "flash_passed": true,
+  "quality_scope": "smoke_128_not_release_gate",
+  "passed": true
+}
