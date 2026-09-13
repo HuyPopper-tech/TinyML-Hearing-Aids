@@ -67,7 +67,7 @@ if errorlevel 1 if exist "C:\ST\STM32CubeCLT_1.20.0\Ninja\bin\ninja.exe" set "PA
 if /i "%ACTION%"=="clean" if exist "%BUILD_PATH%" rmdir /s /q "%BUILD_PATH%"
 if /i "%ACTION%"=="only" goto :build
 
-cmake -S "%PROJ_ROOT%" -B "%BUILD_PATH%" -G Ninja -DCMAKE_TOOLCHAIN_FILE="%TC%" -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -Wno-dev
+cmake -S "%PROJ_ROOT%" -B "%BUILD_PATH%" -G Ninja -DCMAKE_TOOLCHAIN_FILE="%TC%" -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DM55M1_MODEL_PACKAGE_DIR= -DM55M1_ENABLE_TFLM=OFF -DM55M1_ENABLE_DAC_I2S_OUTPUT=ON -Wno-dev
 if errorlevel 1 goto :failed
 
 REM Point clangd at the most recently configured profile.

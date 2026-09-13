@@ -1,10 +1,5 @@
 # Latest Session Work
 
-DeepFilterNet U55 integration is implemented through the host/MVE source stage.
-Current entry point is `docs/session-deepfilternet-u55-handoff.md`.
+Completed the model-neutral cleanup baseline on 2026-09-13.
 
-Verified: generator check; focused DFN tests; 108 passing full-suite tests;
-three DSP-mode configurations; whitespace check. Known baseline error:
-`.codex/AGENTS.md` is absent. External blocker: Arm Compiler license
-`lm.arm.com/400`. Hardware gates and final arena sizing remain pending; never
-replace null board values with estimates.
+Verified: external archive SHA-256 gate; explicit legacy target deletion; stateless PCM16 passthrough vectors; model-free CMake package policy; retained-source audit; repository hygiene/style gates; full host suite (`58/58`); Debug/Release configure; Debug/Release build/link (`826/826`, exit `0` each); and `git diff --check`. Generated build output was removed after evidence capture. No board flashing is requested for cleanup.

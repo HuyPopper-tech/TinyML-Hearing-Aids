@@ -235,6 +235,13 @@ tests. Do not add a generic `hal_uart_*()` wrapper around `UART_*()`.
 - Add hardware abstraction only when it is a genuine project interface. Use
   `hal_` or `platform_` prefixes only for such deliberate abstractions, not as
   aliases for existing Nuvoton StdDriver APIs.
+- Public headers document units, ownership, and frame-boundary behavior when
+  those details are not obvious from the type. Shared DMA buffers document
+  producer, consumer, synchronization, cache direction, range/alignment, and
+  required barriers.
+- Remove commented-out code and stale model-specific diagnostics from retained
+  sources. Exclude generated output, archives, build directories, and vendor
+  code from style normalization.
 
 ## Build, Debug, and Validation
 

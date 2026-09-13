@@ -8,7 +8,6 @@
 #include <stddef.h>
 
 #include "board/m55m1_audio.h"
-#include "board/m55m1_stack_monitor.h"
 #include "board/m55m1_timebase.h"
 #include "NuMicro.h"
 
@@ -77,7 +76,7 @@ static uint32_t m55m1_audio_profile_sample_rate_hz(
 static uint16_t m55m1_audio_profile_samples_per_block(
     m55m1_audio_profile_t profile) {
     if (profile == M55M1_AUDIO_PROFILE_16KHZ) {
-        return 64U;
+        return 16U;
     }
     if (profile == M55M1_AUDIO_PROFILE_32KHZ) {
         return 320U;
@@ -169,9 +168,6 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
     uint32_t required_mclk_hz;
 #endif
 
-#if M55M1_DEEPFILTERNET_DIAGNOSTICS
-    m55m1_stack_monitor_init();
-#endif
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
     required_mclk_hz = m55m1_audio_profile_mclk_hz(profile);
     if ((binding == NULL) || (playback_irq_callback == NULL) ||
@@ -404,7 +400,7 @@ bool m55m1_audio_dmic_start(m55m1_audio_profile_t profile) {
 
     DMIC_Open(DMIC0);
     DMIC_SetFIFOWidth(DMIC0, DMIC_FIFOWIDTH_16);
-    DMIC_SetDSPGainVolume(DMIC0, DMIC_CTL_CHEN2_Msk, M55M1_SPEECH_BOOSTING_DMIC_GAIN_DB);
+    DMIC_SetDSPGainVolume(DMIC0, DMIC_CTL_CHEN2_Msk, M55M1_DMIC_GAIN_DB);
     /*
      * MP34DT05 requires a 1.2..3.25 MHz PDM clock in normal operation. Both
      * profiles retain 2.048 MHz: 16 kHz needs OSR=128, while 32 kHz needs
@@ -510,7 +506,7 @@ bool m55m1_audio_dmic_take_block_timed(
     g_dmic_state.block_ready = false;
     __set_PRIMASK(primask);
 
-    /* This 10 ms profile block completes copying before LPPDMA returns to the alternate slot. */
+    /* The completed descriptor is copied before LPPDMA returns to this slot. */
     for (index = 0U; index < sample_count; ++index) {
         destination[index] = g_dmic_buffers[completed_slot][index];
     }

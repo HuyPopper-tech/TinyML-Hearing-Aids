@@ -8,7 +8,9 @@
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/armclang.cmake"
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/armclang.cmake",
+        "M55M1_MODEL_PACKAGE_DIR": "",
+        "M55M1_ENABLE_TFLM": "OFF"
       }
     },
     {
@@ -18,7 +20,9 @@
       "binaryDir": "${sourceDir}/build-debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/armclang.cmake"
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/armclang.cmake",
+        "M55M1_MODEL_PACKAGE_DIR": "",
+        "M55M1_ENABLE_TFLM": "OFF"
       }
     }
   ],

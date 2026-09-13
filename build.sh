@@ -67,7 +67,11 @@ fi
 if [ "$ACTION" != "only" ]; then
     cmake -S "${PROJ_ROOT}" -B "${BUILD_PATH}" -G Ninja \
         -DCMAKE_TOOLCHAIN_FILE="${TC}" \
-        -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" -Wno-dev
+        -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+        -DM55M1_MODEL_PACKAGE_DIR= \
+        -DM55M1_ENABLE_TFLM=OFF \
+        -DM55M1_ENABLE_DAC_I2S_OUTPUT=ON \
+        -Wno-dev
 
     # Point clangd at the most recently configured profile.
     if [ -f "${BUILD_PATH}/compile_commands.json" ]; then

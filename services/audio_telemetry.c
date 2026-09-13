@@ -1,6 +1,6 @@
 /**
  * @file audio_telemetry.c
- * @brief One-hertz bounded DeepFilterNet performance and acoustic telemetry.
+ * @brief One-hertz bounded audio performance and acoustic telemetry.
  * @author Bui Minh Huy
  * @date 2026-07-29
  */

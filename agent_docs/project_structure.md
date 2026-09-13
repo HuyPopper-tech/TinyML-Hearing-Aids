@@ -1,14 +1,13 @@
 # Project Structure
 
-- `app/`: boot composition and isolated board diagnostics.
-- `services/audio_pipeline/`: foreground capture/enhance/submit orchestration.
-- `services/deepfilternet/`: 512/256 DSP enhancer and model inference adapter.
-- `drivers/`: audio transport, DAC, Ethos-U and bounded UART TX.
-- `board/`: M55M1 pins, clocks, DMA, IRQ priority and stack monitor.
-- `models/deepfilternet/`: audited package, generated contracts and board gate.
-- `tools/generate_deepfilternet_assets.py`: deterministic artifact generator.
-- `tests/`: host math, contract, telemetry, transport and architecture gates.
-- `libs/`: unchanged vendored BSP/CMSIS/TFLM foundation.
+- `app/`: boot composition and isolated hardware diagnostics.
+- `services/audio_pipeline/`: foreground capture, passthrough, and optional submit orchestration.
+- `services/enhancement_passthrough/`: stateless validated PCM16 copy service.
+- `drivers/`: audio transport, DAC, and bounded UART support.
+- `board/`: M55M1 pins, clocks, DMA, IRQ priorities, and recovery-sensitive bindings.
+- `models/deepfir/`: documentation-only future package slot.
+- `models/wave_unet/`: documentation-only future package slot.
+- `tests/`: host vectors, repository hygiene, CMake policy, transport, and architecture gates.
+- `libs/`: unchanged vendored BSP and CMSIS foundation.
 
-Legacy `services/erb_gru/` and `models/erb_gru/` are provenance only and are
-absent from the production build graph.
+Model sources enter only through an explicitly supplied package containing `integration_manifest.json` and `m55m1_model_package.cmake`.

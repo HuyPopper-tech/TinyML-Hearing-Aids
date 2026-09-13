@@ -1,4 +1,6 @@
 # Build output
+/build*/
+/out/
 build/
 build-debug/
 out/
@@ -8,6 +10,10 @@ CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 compile_commands.json
+/compile_commands.json
+
+# Reproducible scratch and candidate handoffs
+/tmp/
 
 # IDE
 .vscode/
@@ -15,6 +21,7 @@ compile_commands.json
 
 build_codex/
 __pycache__/
+**/__pycache__/
 *.py[cod]
 .worktrees/
 .superpowers/sdd/

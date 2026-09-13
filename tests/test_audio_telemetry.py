@@ -187,7 +187,6 @@ class AudioTelemetryTests(unittest.TestCase):
                     "-Wall",
                     "-Wextra",
                     "-Werror",
-                    "-DM55M1_DEEPFILTERNET_DIAGNOSTICS=1",
                     "-I",
                     str(ROOT),
                     str(source),

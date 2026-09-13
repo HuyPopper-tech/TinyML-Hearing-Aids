@@ -146,7 +146,7 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
         ):
             self.assertIn(required, transport)
         for required in (
-            "deepfilternet_audio_enhancer_process(g_dmic_block, g_enhanced_block)",
+            "enhancement_passthrough_process(",
             "audio_transport_submit_tagged(",
         ):
             self.assertIn(required, pipeline)

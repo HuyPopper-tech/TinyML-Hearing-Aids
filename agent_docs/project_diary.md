@@ -1,12 +1,8 @@
 # Project Diary
 
-## 2026-08-06 — DeepFilterNet replaces ERB-GRU production path
+## 2026-09-13 - Model-neutral reboot
 
-- Chose one-model firmware; no runtime model switch or 160/256 FIFO.
-- Inference adapter owns all neural state; enhancer owns STFT/WOLA and DF
-  spectrum history.
-- Scalar KissFFT remains oracle; production mode uses CMSIS-DSP MVEF. PARITY
-  compares scalar and MVE postprocess from the same spectrum/tensors.
-- Full diagnostics compile out by default and never format while capture waits.
-- Board results remain explicit nulls until measured. Arm Compiler license and
-  physical-board availability are external acceptance blockers.
+- Chose a PCM16 passthrough baseline with no active neural model, CPU fallback, placeholder binary, or automatic model discovery.
+- Archived the dirty worktree outside the repository and verified every snapshot by SHA-256 before deleting legacy build output, model packages, services, generators, tests, and runtime backends.
+- Kept the dependency direction `app -> services -> drivers -> board -> libs`; vendor libraries and board recovery configuration remain untouched.
+- Future DeepFIR and Wave-U-Net packages require explicit package manifests plus host, Vela, board parity, realtime, soak, and capture-to-DAC evidence.
