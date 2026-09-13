@@ -1,7 +1,0 @@
-{
-  "fp32_cached_step_s": 1.8012938182254494,
-  "qat_cached_step_s": 8.282442648231118,
-  "qat_to_fp32_limit": 3.0,
-  "qat_to_fp32_ratio": 4.598052002638078,
-  "passed": false
-}

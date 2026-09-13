@@ -1,5 +1,0 @@
-{
-  "fake_quantizers": 183,
-  "max_saturation_ratio": 0.14814814814814814,
-  "export_qat_enabled": false
-}

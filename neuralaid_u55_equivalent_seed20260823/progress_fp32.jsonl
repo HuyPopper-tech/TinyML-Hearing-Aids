@@ -1,1 +1,0 @@
-{"phase": "fp32", "global_step": 91, "session_epoch": 1, "step_in_session_epoch": 91, "loss": -0.525860071182251, "learning_rate": 0.0010000000474974513, "seconds_per_step": 189.20307064686816, "remaining_seconds": 0.0, "target_steps": 900}\n
