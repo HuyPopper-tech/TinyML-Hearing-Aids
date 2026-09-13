@@ -57,7 +57,11 @@ class DebugConfigurationTests(unittest.TestCase):
         self.assertNotIn('set(CMAKE_C_ARCHIVE_CREATE', toolchain)
 
     def test_cortex_debug_attach_is_flash_safe_and_launch_uses_the_same_override(self):
-        launch = json.loads((REPO_ROOT / ".vscode" / "launch.json").read_text(encoding="utf-8"))
+        launch_path = REPO_ROOT / ".vscode" / "launch.json"
+        if not launch_path.is_file():
+            self.skipTest("machine-specific VS Code launch configuration is not tracked")
+
+        launch = json.loads(launch_path.read_text(encoding="utf-8"))
         configs = {item["name"]: item for item in launch["configurations"]}
         attach = configs["M55M1: Attach (WCH-Link)"]
         launch_verified = configs["M55M1: Launch (WCH-Link, verified)"]

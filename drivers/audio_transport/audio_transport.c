@@ -8,14 +8,12 @@
 #include <stddef.h>
 
 #include "board/m55m1_audio.h"
+#include "board/m55m1_stack_monitor.h"
 #include "board/m55m1_timebase.h"
 #ifndef M55M1_ENABLE_DAC_I2S_OUTPUT
 #define M55M1_ENABLE_DAC_I2S_OUTPUT 0
 #endif
 
-#if M55M1_DEEPFILTERNET_DIAGNOSTICS
-#include "board/m55m1_stack_monitor.h"
-#endif
 #include "drivers/audio_transport/audio_transport.h"
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
 #include "drivers/tlv320dac3100/tlv320dac3100.h"
@@ -256,7 +254,6 @@ uint32_t audio_transport_cycles_to_us(uint32_t cycles) {
     return m55m1_timebase_cycles_to_us(cycles);
 }
 
-#if M55M1_DEEPFILTERNET_DIAGNOSTICS
 uint32_t audio_transport_stack_configured_bytes(void) {
     return m55m1_stack_configured_bytes();
 }
@@ -268,4 +265,3 @@ uint32_t audio_transport_stack_high_water_bytes(void) {
 uint32_t audio_transport_stack_headroom_bytes(void) {
     return m55m1_stack_headroom_bytes();
 }
-#endif
