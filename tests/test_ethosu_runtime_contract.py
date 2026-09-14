@@ -82,6 +82,8 @@ class EthosURuntimeContractTests(unittest.TestCase):
         self.assertNotIn("ethosu_reserve_driver", source)
         self.assertNotIn("ethosu_invoke_v3", source)
         self.assertIn("tfliteevaltensorbytelength", source)
+        self.assertIn("size_max / sizeof(uint64_t)", source)
+        self.assertIn("size_max / sizeof(size_t)", source)
         self.assertNotIn("{`n        .custom_operator_payload =", source)
 
     def test_cmake_runtime_is_opt_in_and_tflm_requires_it(self):

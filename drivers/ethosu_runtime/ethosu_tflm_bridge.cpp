@@ -48,12 +48,13 @@ TfLiteStatus Prepare(TfLiteContext *context, TfLiteNode *node)
 
     OpData *data = static_cast<OpData *>(node->user_data);
     const int num_base_addr = node->inputs->size + node->outputs->size;
+    const size_t base_count = static_cast<size_t>(num_base_addr);
+    TF_LITE_ENSURE(context, base_count <= SIZE_MAX / sizeof(uint64_t));
+    TF_LITE_ENSURE(context, base_count <= SIZE_MAX / sizeof(size_t));
     TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
-        context, static_cast<size_t>(num_base_addr) * sizeof(uint64_t),
-        &data->base_addr_idx));
+        context, base_count * sizeof(uint64_t), &data->base_addr_idx));
     TF_LITE_ENSURE_STATUS(context->RequestScratchBufferInArena(
-        context, static_cast<size_t>(num_base_addr) * sizeof(size_t),
-        &data->base_addr_size_idx));
+        context, base_count * sizeof(size_t), &data->base_addr_size_idx));
 
     MicroContext *micro_context = GetMicroContext(context);
     TfLiteTensor *tensor = micro_context->AllocateTempInputTensor(node, 0);
