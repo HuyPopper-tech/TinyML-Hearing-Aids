@@ -16,6 +16,8 @@ set(M55M1_HEAP_SIZE "" CACHE STRING "Heap size override, e.g. 0x1000")
 option(M55M1_ENABLE_DSP "Build and link CMSIS-DSP" ON)
 option(M55M1_ENABLE_NN "Build and link CMSIS-NN (requires DSP)" ON)
 option(M55M1_ENABLE_RTOS2 "Build and link CMSIS-RTOS2/RTX" OFF)
+option(M55M1_ENABLE_ETHOSU_RUNTIME "Build the model-neutral Ethos-U runtime" OFF)
+option(M55M1_BUILD_ETHOSU_SMOKE "Build the standalone Ethos-U board smoke image" OFF)
 option(M55M1_ENABLE_TFLM "Build and link TensorFlow Lite Micro with Ethos-U" OFF)
 option(M55M1_ENABLE_DCACHE "Enable M55M1 data cache maintenance" ON)
 option(M55M1_ENABLE_DAC_I2S_OUTPUT "Initialize TLV320DAC3100, I2S0, and playback DMA" ON)
@@ -61,6 +63,16 @@ set_source_files_properties(
 
 file(GLOB_RECURSE M55M1_STDDRIVER_SOURCES CONFIGURE_DEPENDS
     "${PROJ_ROOT}/libs/StdDriver/src/*.c")
+file(GLOB M55M1_ETHOSU_SOURCES CONFIGURE_DEPENDS
+    "${PROJ_ROOT}/libs/StdDriver/src/npu/*.c")
+set(M55M1_ETHOSU_CORE_SOURCES)
+list(APPEND M55M1_ETHOSU_CORE_SOURCES
+    "${PROJ_ROOT}/libs/StdDriver/src/npu/ethosu_driver.c"
+    "${PROJ_ROOT}/libs/StdDriver/src/npu/ethosu_device_u55_u65.c")
+list(REMOVE_ITEM M55M1_STDDRIVER_SOURCES ${M55M1_ETHOSU_SOURCES})
+if(M55M1_ENABLE_ETHOSU_RUNTIME)
+    list(APPEND M55M1_STDDRIVER_SOURCES ${M55M1_ETHOSU_CORE_SOURCES})
+endif()
 set(M55M1_UTCPD_SOURCE "${PROJ_ROOT}/libs/StdDriver/src/utcpd.c")
 if(NOT EXISTS "${PROJ_ROOT}/libs/StdDriver/inc/utcpdlib.h")
     list(REMOVE_ITEM M55M1_STDDRIVER_SOURCES ${M55M1_UTCPD_SOURCE})
@@ -96,6 +108,9 @@ if(M55M1_ENABLE_NN)
 endif()
 
 if(M55M1_ENABLE_TFLM)
+    if(NOT M55M1_ENABLE_ETHOSU_RUNTIME)
+        message(FATAL_ERROR "M55M1_ENABLE_TFLM=ON requires M55M1_ENABLE_ETHOSU_RUNTIME=ON")
+    endif()
     if(NOT M55M1_ENABLE_NN)
         message(FATAL_ERROR "M55M1_ENABLE_TFLM=ON requires M55M1_ENABLE_NN=ON")
     endif()
@@ -117,6 +132,17 @@ if(M55M1_ENABLE_RTOS2)
     target_include_directories(CMSISRTOS2 PUBLIC
         ${RTOS2_ROOT}/Include ${RTX_ROOT}/Include ${RTX_ROOT}/Config ${RTX_ROOT}/Source
         ${M55M1_INC_DIRS})
+endif()
+
+set(M55M1_RUNTIME_SOURCES)
+if(M55M1_ENABLE_ETHOSU_RUNTIME)
+    list(APPEND M55M1_RUNTIME_SOURCES
+        ${PROJ_ROOT}/board/m55m1_ethosu_board.c
+        ${PROJ_ROOT}/drivers/ethosu_runtime/ethosu_runtime.c)
+endif()
+if(M55M1_ENABLE_TFLM)
+    list(APPEND M55M1_RUNTIME_SOURCES
+        ${PROJ_ROOT}/drivers/ethosu_runtime/ethosu_tflm_bridge.cpp)
 endif()
 
 set(M55M1_APP_SOURCES
@@ -142,6 +168,7 @@ set(ELF_NAME M55M1_GestureAI.axf)
 add_executable(${ELF_NAME}
     ${M55M1_DEVICE_SOURCES}
     ${M55M1_STDDRIVER_SOURCES}
+    ${M55M1_RUNTIME_SOURCES}
     ${M55M1_APP_SOURCES})
 
 target_compile_definitions(${ELF_NAME} PRIVATE
@@ -154,6 +181,15 @@ set_target_properties(${ELF_NAME} PROPERTIES SUFFIX "")
 target_include_directories(${ELF_NAME} PRIVATE
     ${M55M1_INC_DIRS}
     ${M55M1_MODEL_INCLUDE_DIRS})
+
+if(M55M1_ENABLE_TFLM)
+    target_include_directories(${ELF_NAME} PRIVATE
+        ${TFLM_RUNTIME_ROOT}
+        ${TFLM_THIRD_PARTY_ROOT}/flatbuffers/include
+        ${TFLM_THIRD_PARTY_ROOT}/gemmlowp
+        ${TFLM_THIRD_PARTY_ROOT}/kissfft
+        ${TFLM_THIRD_PARTY_ROOT}/ruy)
+endif()
 
 if(M55M1_ENABLE_TFLM)
     target_link_libraries(${ELF_NAME} PRIVATE TensorFlowLiteMicro)
@@ -182,4 +218,46 @@ add_bin_generation_command(
     TARGET ${ELF_NAME}
     OUTPUT_BIN "${CMAKE_BINARY_DIR}/${ELF_NAME}.bin")
 
-message(STATUS "M55M1_GestureAI: model package=${M55M1_MODEL_PACKAGE_STATUS}, DAC/I2S output=${M55M1_ENABLE_DAC_I2S_OUTPUT}, TensorFlow Lite Micro=${M55M1_ENABLE_TFLM}")
+if(M55M1_BUILD_ETHOSU_SMOKE)
+    if(NOT M55M1_ENABLE_ETHOSU_RUNTIME)
+        message(FATAL_ERROR "M55M1_BUILD_ETHOSU_SMOKE=ON requires M55M1_ENABLE_ETHOSU_RUNTIME=ON")
+    endif()
+    if(NOT "${M55M1_MODEL_PACKAGE_DIR}" STREQUAL "")
+        message(FATAL_ERROR "M55M1_BUILD_ETHOSU_SMOKE cannot include a model package")
+    endif()
+
+    set(M55M1_ETHOSU_SMOKE_ELF_NAME M55M1_EthosUSmoke.axf)
+    add_executable(${M55M1_ETHOSU_SMOKE_ELF_NAME}
+        ${M55M1_DEVICE_SOURCES}
+        ${M55M1_STDDRIVER_SOURCES}
+        ${PROJ_ROOT}/board/m55m1_timebase.c
+        ${PROJ_ROOT}/board/m55m1_ethosu_board.c
+        ${PROJ_ROOT}/board/m55m1_debug_uart.c
+        ${PROJ_ROOT}/common/fixed_byte_ring.c
+        ${PROJ_ROOT}/drivers/debug_uart_tx/debug_uart_tx.c
+        ${PROJ_ROOT}/drivers/ethosu_runtime/ethosu_runtime.c
+        ${PROJ_ROOT}/app/test_ethosu_runtime_smoke_main.c)
+    target_compile_definitions(${M55M1_ETHOSU_SMOKE_ELF_NAME} PRIVATE
+        ${M55M1_DEFS}
+        M55M1_ENABLE_DAC_I2S_OUTPUT=0
+        M55M1_STACK_SIZE_BYTES=${M55M1_STACK_SIZE})
+    set_target_properties(${M55M1_ETHOSU_SMOKE_ELF_NAME} PROPERTIES SUFFIX "")
+    target_include_directories(${M55M1_ETHOSU_SMOKE_ELF_NAME} PRIVATE
+        ${M55M1_INC_DIRS})
+    if(M55M1_STACK_SIZE)
+        target_link_options(${M55M1_ETHOSU_SMOKE_ELF_NAME} PRIVATE
+            "--predefine=\"-DSTACK_SIZE=${M55M1_STACK_SIZE}\"")
+    endif()
+    if(M55M1_HEAP_SIZE)
+        target_link_options(${M55M1_ETHOSU_SMOKE_ELF_NAME} PRIVATE
+            "--predefine=\"-DHEAP_SIZE=${M55M1_HEAP_SIZE}\"")
+    endif()
+    add_linker_script(${M55M1_ETHOSU_SMOKE_ELF_NAME}
+        "${PROJ_ROOT}/cmake/m55m1_audio.scf")
+    add_target_map_file(${M55M1_ETHOSU_SMOKE_ELF_NAME}
+        "${CMAKE_BINARY_DIR}/${M55M1_ETHOSU_SMOKE_ELF_NAME}.map")
+    add_bin_generation_command(
+        TARGET ${M55M1_ETHOSU_SMOKE_ELF_NAME}
+        OUTPUT_BIN "${CMAKE_BINARY_DIR}/${M55M1_ETHOSU_SMOKE_ELF_NAME}.bin")
+endif()
+message(STATUS "M55M1_GestureAI: model package=${M55M1_MODEL_PACKAGE_STATUS}, Ethos-U runtime=${M55M1_ENABLE_ETHOSU_RUNTIME}, DAC/I2S output=${M55M1_ENABLE_DAC_I2S_OUTPUT}, TensorFlow Lite Micro=${M55M1_ENABLE_TFLM}")

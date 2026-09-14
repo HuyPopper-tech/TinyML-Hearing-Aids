@@ -68,6 +68,22 @@ function(m55m1_model_package_path_allowed path label)
     set(${label} "${M55M1_RESOLVED_PATH}" PARENT_SCOPE)
 endfunction()
 
+function(m55m1_model_package_source_allowed path)
+    get_filename_component(M55M1_SOURCE_NAME "${path}" NAME)
+    if(M55M1_SOURCE_NAME STREQUAL "ethosu_driver.c" OR
+       M55M1_SOURCE_NAME STREQUAL "ethosu_device_u55_u65.c")
+        message(FATAL_ERROR
+            "Model package cannot provide duplicate Ethos-U core source: ${path}")
+    endif()
+    file(READ "${path}" M55M1_SOURCE_CONTENT)
+    string(FIND "${M55M1_SOURCE_CONTENT}" "NPU_IRQHandler"
+        M55M1_IRQ_SYMBOL_INDEX)
+    if(NOT M55M1_IRQ_SYMBOL_INDEX EQUAL -1)
+        message(FATAL_ERROR
+            "Model package cannot define duplicate NPU_IRQHandler: ${path}")
+    endif()
+endfunction()
+
 foreach(M55M1_MODEL_SOURCE IN LISTS M55M1_MODEL_SOURCE_LIST)
     if(IS_ABSOLUTE "${M55M1_MODEL_SOURCE}")
         set(M55M1_SOURCE_PATH "${M55M1_MODEL_SOURCE}")
@@ -78,6 +94,7 @@ foreach(M55M1_MODEL_SOURCE IN LISTS M55M1_MODEL_SOURCE_LIST)
     if(NOT EXISTS "${M55M1_SOURCE_PATH}" OR IS_DIRECTORY "${M55M1_SOURCE_PATH}")
         message(FATAL_ERROR "Model package source is missing: ${M55M1_SOURCE_PATH}")
     endif()
+    m55m1_model_package_source_allowed("${M55M1_SOURCE_PATH}")
     list(APPEND M55M1_MODEL_SOURCES "${M55M1_SOURCE_PATH}")
 endforeach()
 
