@@ -1,9 +1,11 @@
 # Core Technology
 
-- Cortex-M55 at 220 MHz, CMSIS-DSP MVEF, bare-metal foreground loop.
-- Ethos-U55 through TFLM `AddEthosU()` and a Vela custom-op model.
-- 16 kHz, frame 512, hop 256, periodic sqrt-Hann, 257-bin real FFT.
-- 32 ERB log-magnitude features plus 144 complex bins.
-- 257 gain outputs, complex DF 5x144 and alpha, then IFFT/50% WOLA.
-- Per-tensor INT8 scale/zero-point contract with transactional recurrent state.
-- UART1 atomic 100-frame telemetry and board-owned stack high-water painting.
+- Cortex-M55 at 220 MHz with CMSIS-DSP MVEF and a bare-metal foreground loop.
+- 16 kHz mono PCM16 audio with static DMA buffers, queueing, optional I2S/DAC,
+  and stateless passthrough as the active firmware baseline.
+- Ethos-U55 runtime foundation through the unchanged Nuvoton BSP core, enabled
+  only by `M55M1_ENABLE_ETHOSU_RUNTIME=ON`; no model or command stream is active.
+- TFLM is disabled by default and can enter only through the project-owned
+  `ethosu` bridge plus an explicit validated model package.
+- Future model packages must align Vela memory maps, cache policy, tensor bases,
+  board IRQ behavior, realtime timing, soak, and capture-to-DAC evidence.

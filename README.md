@@ -17,6 +17,22 @@ Realtime work remains static after initialization. ISRs only acknowledge DMA, mo
 
 The documentation-only future slots are `models/deepfir/` and `models/wave_unet/`. They contain no binaries or generated runtime sources.
 
+## Ethos-U55 runtime foundation
+
+The model-neutral Ethos-U55 runtime is opt-in with
+`M55M1_ENABLE_ETHOSU_RUNTIME=OFF`; TFLM additionally requires that option to be
+`ON`. It owns the M55M1 board clock/reset/IRQ binding, one static BSP driver,
+single-flight lifecycle, cache hooks, health statistics, and the TFLM `ethos-u`
+bridge. `M55M1_BUILD_ETHOSU_SMOKE=ON` creates a separate model-free board smoke
+image.
+
+The retained BSP driver is version `0.16.0` under
+`libs/StdDriver/src/npu/` and remains unchanged. See
+[docs/ETHOSU_RUNTIME_FOUNDATION.md](docs/ETHOSU_RUNTIME_FOUNDATION.md) for its
+SHA-256 provenance and API contract. No valid command stream, model parity,
+board execution, realtime/soak, capture-to-DAC, or deployment approval is
+claimed by this foundation.
+
 ## Build
 
 Requirements: CMake 3.20+ and Ninja. Arm Compiler for Embedded is required for the device build; a missing license is an external blocker.
