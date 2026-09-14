@@ -25,6 +25,8 @@ bool m55m1_ethosu_board_init(void)
     CLK_EnableModuleClock(FMC0_MODULE);
     CLK_EnableModuleClock(NPU0_MODULE);
     SYS_ResetModule(SYS_NPURST);
+    NVIC_DisableIRQ(NPU_IRQn);
+    NVIC_ClearPendingIRQ(NPU_IRQn);
     SYS_LockReg();
     m55m1_timebase_init();
     g_board_ready = true;
