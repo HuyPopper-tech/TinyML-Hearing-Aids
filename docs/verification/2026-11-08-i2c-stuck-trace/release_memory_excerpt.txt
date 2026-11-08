@@ -1,0 +1,4 @@
+    Execution Region ARM_LIB_STACK (Exec base: 0x2001e000, Load base: 0x001959c0, Size: 0x00002000, Max: 0x00002000, ABSOLUTE)
+    Execution Region RW_RAM (Exec base: 0x201c0000, Load base: 0x001959a0, Size: 0x00013070, Max: 0xffffffff, ABSOLUTE)
+    Total RO  Size (Code + RO Data)               612744 ( 598.38kB)
+    Total RW  Size (RW Data + ZI Data)             88496 (  86.42kB)

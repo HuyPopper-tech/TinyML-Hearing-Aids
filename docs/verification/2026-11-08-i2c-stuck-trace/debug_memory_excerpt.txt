@@ -1,0 +1,8 @@
+Stack Usage for trace_i2c_recovery 0x698 bytes.
+    g_i2c_recovery_trace                     0x201d3050   Data         284  m55m1_audio.o(.bss.g_i2c_recovery_trace)
+    [Anonymous Symbol]                       0x201d3050   Section        0  m55m1_audio.o(.bss.g_i2c_recovery_trace)
+    Execution Region ARM_LIB_STACK (Exec base: 0x2001e000, Load base: 0x0019ae20, Size: 0x00002000, Max: 0x00002000, ABSOLUTE)
+    Execution Region RW_RAM (Exec base: 0x201c0000, Load base: 0x0019ade0, Size: 0x00013278, Max: 0xffffffff, ABSOLUTE)
+    0x201d3050        -       0x0000011c   Zero   RW         5135    .bss.g_i2c_recovery_trace  m55m1_audio.o
+    Total RO  Size (Code + RO Data)               634296 ( 619.43kB)
+    Total RW  Size (RW Data + ZI Data)             91064 (  88.93kB)

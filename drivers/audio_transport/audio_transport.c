@@ -84,6 +84,9 @@ bool audio_transport_init(audio_transport_init_report_t *report,
         NULL, (progress_callback != NULL) ? audio_transport_board_progress : NULL,
         (progress_callback != NULL) ? &progress : NULL);
     report->board_status = (int)board_status;
+#if M55M1_RUNTIME_TELEMETRY
+    report->i2c_trace = m55m1_audio_get_i2c_trace();
+#endif
     if (board_status != M55M1_AUDIO_BOARD_INIT_OK) {
         return false;
     }

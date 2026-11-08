@@ -1,0 +1,30 @@
+command: rtk proxy python -X utf8 -m unittest discover -s tests -p test_tlv320dac3100_driver.py -v
+exit_code: 0
+[rtk] /!\ No hook installed — run `rtk init -g` for automatic token savings
+test_audio_transport_carries_timestamped_blocks_without_isr_logging (test_tlv320dac3100_driver.TLV320DAC3100DriverTests.test_audio_transport_carries_timestamped_blocks_without_isr_logging) ... ok
+test_board_and_normal_passthrough_select_one_matching_profile (test_tlv320dac3100_driver.TLV320DAC3100DriverTests.test_board_and_normal_passthrough_select_one_matching_profile)
+I2S and DMIC must use the same profile; a mixed rate audibly changes pitch. ... ok
+test_board_and_product_use_confirmed_custom_pins (test_tlv320dac3100_driver.TLV320DAC3100DriverTests.test_board_and_product_use_confirmed_custom_pins) ... ok
+test_board_reports_clock_boundaries_and_rejects_clock_timeouts (test_tlv320dac3100_driver.TLV320DAC3100DriverTests.test_board_reports_clock_boundaries_and_rejects_clock_timeouts) ... ok
+test_board_reports_post_apll_boundaries_before_i2c_recovery (test_tlv320dac3100_driver.TLV320DAC3100DriverTests.test_board_reports_post_apll_boundaries_before_i2c_recovery)
+A boot stop after APLL lock must identify the next hardware boundary. ... ok
+test_board_separates_220mhz_core_from_exact_audio_pll (test_tlv320dac3100_driver.TLV320DAC3100DriverTests.test_board_separates_220mhz_core_from_exact_audio_pll) ... ok
+test_board_switches_sclk_to_hirc_before_reprogramming_apll0 (test_tlv320dac3100_driver.TLV320DAC3100DriverTests.test_board_switches_sclk_to_hirc_before_reprogramming_apll0)
+The audio PLL must never be disabled while it might clock the CPU. ... ok
+test_cmake_and_driver_documentation_are_integrated (test_tlv320dac3100_driver.TLV320DAC3100DriverTests.test_cmake_and_driver_documentation_are_integrated) ... ok
+test_codec_i2c_write_uses_a_bounded_driver_owned_transaction (test_tlv320dac3100_driver.TLV320DAC3100DriverTests.test_codec_i2c_write_uses_a_bounded_driver_owned_transaction)
+A missing I2C SI flag must not block the foreground diagnostic indefinitely. ... ok
+test_dac_and_dmic_notes_are_separate_and_capture_debug_history (test_tlv320dac3100_driver.TLV320DAC3100DriverTests.test_dac_and_dmic_notes_are_separate_and_capture_debug_history)
+Future hearing-aid work needs concise hardware facts, not lost UART logs. ... ok
+test_driver_declares_validated_16k_and_32k_ten_ms_profiles (test_tlv320dac3100_driver.TLV320DAC3100DriverTests.test_driver_declares_validated_16k_and_32k_ten_ms_profiles)
+TinyML transport must select a complete profile before any DMA starts. ... ok
+test_driver_uses_direct_mclk_headphone_route_and_pdma_ping_pong (test_tlv320dac3100_driver.TLV320DAC3100DriverTests.test_driver_uses_direct_mclk_headphone_route_and_pdma_ping_pong) ... ok
+test_production_capture_stop_quiesces_dmic_dma_and_irq_state (test_tlv320dac3100_driver.TLV320DAC3100DriverTests.test_production_capture_stop_quiesces_dmic_dma_and_irq_state) ... ok
+test_public_driver_api_and_realtime_profile_are_declared (test_tlv320dac3100_driver.TLV320DAC3100DriverTests.test_public_driver_api_and_realtime_profile_are_declared) ... ok
+test_resetless_codec_startup_waits_for_ack_and_preserves_i2c_failure_context (test_tlv320dac3100_driver.TLV320DAC3100DriverTests.test_resetless_codec_startup_waits_for_ack_and_preserves_i2c_failure_context)
+A breakout without GPIO reset needs bounded power-up/ACK recovery. ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.025s
+
+OK

@@ -1,0 +1,81 @@
+{
+  "timestamp": "2026-11-08T16:26:28.287984+07:00",
+  "base_commit": "a615810dcd02bf3cac913f36b7fda77ff33e98b9",
+  "raw_evidence": "diagnostics\\i2c_stuck_trace_20261108_162019",
+  "host_tests": {
+    "status": "PASS",
+    "count": 123
+  },
+  "images": {
+    "Debug": {
+      "path": "build-debug\\M55M1_GestureAI.bin",
+      "bytes": 634400,
+      "sha256": "3704fe5ab26ffed171174837ab2833c7464cad5d09a344545141a2205ad24b82",
+      "markers": {
+        "I2C_RECOVERY": true,
+        "I2C_GPIO": true,
+        "I2C_REG": true,
+        "I2C_TIMEBASE": true,
+        "I2C_EDGE": true,
+        "I2C_NOTE": true
+      },
+      "prior_sha256": "2dc4affd4566add4a0deb92d39c5e3c0ef3ebe58de98510a0204aaffa568d486",
+      "same_as_prior_image": false,
+      "trace_symbol_present": true,
+      "rw_ram_bytes": 78456,
+      "configured_stack_bytes": 8192,
+      "products": {
+        "M55M1_GestureAI.axf.map": "39482bddec888c6fb55a8e8cba21e08edc19732dc2d487dda3a39e8271d61570",
+        "M55M1_GestureAI.axf": "7b4dcbcdfb58a89fa2fcbef7d2462a531a0568e9b4d0e917819a283b0b3ad7b0"
+      },
+      "trace_bytes": 284,
+      "trace_formatter_stack_frame_bytes": 1688
+    },
+    "Release": {
+      "path": "build\\M55M1_GestureAI.bin",
+      "bytes": 612800,
+      "sha256": "e2f535d2e0b2b7a407941fd5a3ecb4c6575f41f6e5cecb1a3276ce3f3922a34f",
+      "markers": {
+        "I2C_RECOVERY": false,
+        "I2C_GPIO": false,
+        "I2C_REG": false,
+        "I2C_TIMEBASE": false,
+        "I2C_EDGE": false,
+        "I2C_NOTE": false
+      },
+      "prior_sha256": "e2f535d2e0b2b7a407941fd5a3ecb4c6575f41f6e5cecb1a3276ce3f3922a34f",
+      "same_as_prior_image": true,
+      "trace_symbol_present": false,
+      "rw_ram_bytes": 77936,
+      "configured_stack_bytes": 8192,
+      "products": {
+        "M55M1_GestureAI.axf.map": "974e4ca054b5d93c1a2e5be5616982225732928c9420547655258128a7271442",
+        "M55M1_GestureAI.axf": "cf4b035625a184538ae4ef451c8358441760ec736f3a7a294e933142b86cfb72"
+      }
+    }
+  },
+  "board_execution": "NOT_RUN",
+  "physical_root_cause": "UNPROVEN",
+  "deployment_approved": false,
+  "flashed": false,
+  "verification_notes": [
+    "Initial new native tests failed with missing trace helper/API before implementation.",
+    "First full red run: missing service trace logging and missing C++ header guard; corrected.",
+    "Second red run: fixture used 220 core cycles/us while its mock timebase used 1; fixture corrected to 10 cycles for 10 us, expected duration unchanged.",
+    "Sandbox Temp access failed; existing isolated GCC runner used with elevated tool approval.",
+    "Sandbox build made no progress and was interrupted; successful build receipts are separate.",
+    "One attempted parallel invocation of verifier hit its shared compiler-copy file lock; final tests and builds ran sequentially.",
+    "clang-format 18.1.8 installed only under ignored diagnostics; no global dependency changes.",
+    "No device replay, waveform, reset, power, audio or runtime timing measurements performed."
+  ],
+  "source_sha256": {
+    "common/i2c_recovery_trace.h": "2b13c8de3a0b47ac33e66dc8eac4c800b15c64116782a7da0490d33ed9bf5bc6",
+    "board/m55m1_audio.c": "ba3fad12ad5d8a85e5d86905113be9992292b2fe2e9180c945baa4f969e9681e",
+    "board/m55m1_audio.h": "6d8886bb4ec0103c592c2ac70a7911d651e86e8ed76e723e4349f87a6939b597",
+    "drivers/audio_transport/audio_transport.c": "41045f8100ab3100d86aac3cc725b8c571186ae28af711af03f3e4863c28abb4",
+    "drivers/audio_transport/audio_transport.h": "30dd07bc9ac200a438127e5f441c1b4f4505dca8510bf202946d09c6d61a2d65",
+    "services/audio_pipeline/audio_pipeline.c": "ff15e3422c5a7ee8808bf023e53436c5dc9c790dd38fefdc0cb6c7307d5903b2",
+    "tests/test_i2c_recovery_trace.py": "14afe30ae03d64112a6003371aefeb25259e5a4fda8f86edda3d67b923b2377c",
+    "tests/test_deepfir_audio_runtime_debug.py": "b39267e0ae614c8deecbd3273a8a83190f20aaaeb507c40b24796596870e2e98"
+  }
+}

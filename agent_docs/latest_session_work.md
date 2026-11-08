@@ -1,5 +1,26 @@
 # Latest Session Work
 
+## I2C_STUCK recovery trace — 2026-11-08
+
+Approved design implemented: fixed284B Debug board snapshot of reset flags, GPIO
+configuration, I2C0 state/timebase and up to22 phase samples. Init failure preserves
+the trace through transport; service logs after recovery while audio is stopped.
+No changes to PA4/PA5, nine recovery pulses, nominal5us delay, STOP or DMA/clocks.
+Trace documents sampled logic and sticky flags rather than claiming waveforms/reset.
+
+Verified123/123 tests (including actual C recovery and UART failure logging),
+formatting and both Arm6.24 builds. Debug image634400B SHA
+3704fe5ab26ffed171174837ab2833c7464cad5d09a344545141a2205ad24b82.
+Release BIN/AXF are identical to the previous revision and exclude trace storage/logs.
+Evidence: docs/verification/2026-11-08-i2c-stuck-trace/; reproduction/decoder:
+docs/i2c_stuck_trace.md. Debug RW_RAM78456B; formatter's static stack frame1688B,
+with8192B configured stack; actual high-water has not been measured.
+
+No flash or device manipulation. Next: user captures complete I2C groups from the
+failing OpenOCD workflow and comparable power cycles, then correct the demonstrated
+cause and repeat both workflows. Physical root cause/permanent fix NOT_RUN; runtime
+deadline/underrun remains open. No deployment approval change. No subagents used.
+
 ## Product source cleanup and style — 2026-11-08
 
 Removed four obsolete diagnostic applications, their standalone CMake roots and

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "rtk",
+    "proxy",
+    "cmd",
+    "/c",
+    "build.bat",
+    "debug",
+    "config"
+  ],
+  "exit_code": 0
+}

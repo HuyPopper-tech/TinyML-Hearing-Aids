@@ -145,6 +145,13 @@ class DeepfirAudioRuntimeDebugTests(unittest.TestCase):
             static char all_logs[16384];
             static uint32_t blocking_flushes;
             static char last_log[1024];
+            static const i2c_recovery_trace_t trace = {
+                .attempted = true, .reset_flags = 0x20U, .event_count = 2U,
+                .pulses = 9U, .first_scl_low_event = I2C_RECOVERY_TRACE_NO_EVENT,
+                .events = {{.phase = I2C_RECOVERY_RELEASE, .scl = 1U},
+                           {.phase = I2C_RECOVERY_STOP_SDA_RELEASE, .pulse = 9U,
+                            .cycle = 10U, .scl = 1U}}, // Mock timebase uses one cycle/us.
+            };
 
             bool audio_transport_init(audio_transport_init_report_t *report,
                                       audio_transport_progress_callback_t callback,
@@ -154,7 +161,11 @@ class DeepfirAudioRuntimeDebugTests(unittest.TestCase):
                     callback(AUDIO_TRANSPORT_BOARD_STAGE_ENTER, context);
                     callback(AUDIO_TRANSPORT_BOARD_STAGE_HXT_WAIT, context);
                 }
-                if (fail_init) { report->board_status = -7; return false; }
+                if (fail_init) {
+                    report->board_status = 5;
+                    report->i2c_trace = &trace;
+                    return false;
+                }
                 report->clocks_valid = true;
                 return true;
             }
@@ -236,7 +247,7 @@ class DeepfirAudioRuntimeDebugTests(unittest.TestCase):
             bool debug_uart_tx_try_enqueue(const char *message, size_t length)
             {
                 if (length >= sizeof(last_log)) return false;
-                if (strstr(message, "[AUDIO_FAULT]") && audio_running) {
+                if ((strstr(message, "[AUDIO_FAULT]") || strstr(message, "[I2C_")) && audio_running) {
                     fprintf(stderr, "must stop DMA before formatting fault output"); exit(98);
                 }
                 memcpy(last_log, message, length);
@@ -264,7 +275,13 @@ class DeepfirAudioRuntimeDebugTests(unittest.TestCase):
                     if (started || !strstr(all_logs, expected) || !blocking_flushes) {
                         fprintf(stderr, "%s", all_logs); return 20;
                     }
-                    if (fail_init && !strstr(all_logs, "board_status=-7")) return 21;
+                    if (fail_init && (!strstr(all_logs, "board_status=5") ||
+                        !strstr(all_logs, "[I2C_RECOVERY] result=SDA_LOW") ||
+                        !strstr(all_logs, "rststs=00000020") ||
+                        !strstr(all_logs, "[I2C_EDGE] index=1 phase=stop.sda_release pulse=9") ||
+                        !strstr(all_logs, "elapsed_us=10 sda=0 scl=1"))) {
+                        fprintf(stderr, "%s", all_logs); return 21;
+                    }
                     return 0;
                 }
                 if (!audio_pipeline_init()) return 1;

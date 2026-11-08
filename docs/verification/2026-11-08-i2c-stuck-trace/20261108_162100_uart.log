@@ -1,0 +1,8 @@
+[rtk] /!\ No hook installed — run `rtk init -g` for automatic token savings
+test_debug_reports_faults_without_blocking_live_audio (test_deepfir_audio_runtime_debug.DeepfirAudioRuntimeDebugTests.test_debug_reports_faults_without_blocking_live_audio) ... ok
+test_native_tensor_diagnostics_preserve_exact_binding_and_report_qparams (test_deepfir_audio_runtime_debug.DeepfirAudioRuntimeDebugTests.test_native_tensor_diagnostics_preserve_exact_binding_and_report_qparams) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 1.620s
+
+OK

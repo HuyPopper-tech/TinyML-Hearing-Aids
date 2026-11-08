@@ -10,6 +10,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#if M55M1_RUNTIME_TELEMETRY
+#include "common/i2c_recovery_trace.h"
+#endif
 #include "NuMicro.h"
 
 #ifdef __cplusplus
@@ -111,6 +114,13 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
  * Foreground-only. The caller owns the destination storage.
  */
 bool m55m1_audio_get_clock_snapshot(m55m1_audio_clock_snapshot_t *snapshot);
+
+#if M55M1_RUNTIME_TELEMETRY
+/** @brief Borrow the last recovery trace, or NULL when recovery was not attempted.
+ * Foreground-only after board init; board owns storage until the next init.
+ */
+const i2c_recovery_trace_t *m55m1_audio_get_i2c_trace(void);
+#endif
 
 /**
  * @brief Start double-buffered DMIC DMA.

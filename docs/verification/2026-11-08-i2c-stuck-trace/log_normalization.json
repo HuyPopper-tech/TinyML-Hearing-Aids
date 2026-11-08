@@ -1,0 +1,62 @@
+{
+  "20261108_162100_recovery.log": {
+    "input_sha256": "643134d2214940814d260f81613da17144bcea58d1d6ae553a2eed4b2e2432a3",
+    "input_path": "diagnostics\\i2c_stuck_trace_20261108_162019\\20261108_162100_recovery.log",
+    "normalization": "LF and trailing whitespace removal in curated copy only"
+  },
+  "20261108_162100_uart.log": {
+    "input_sha256": "dee5ff181f7e12ac20d4be6eb635484919e3b8465961f62d0047449eff3f8c77",
+    "input_path": "diagnostics\\i2c_stuck_trace_20261108_162019\\20261108_162100_uart.log",
+    "normalization": "LF and trailing whitespace removal in curated copy only"
+  },
+  "20261108_162216_regression.log": {
+    "input_sha256": "bff11f5f025852a75d9e11697e4d0daf627e749ae4540696372b8f7eb06093a1",
+    "input_path": "diagnostics\\i2c_stuck_trace_20261108_162019\\20261108_162216_regression.log",
+    "normalization": "LF and trailing whitespace removal in curated copy only"
+  },
+  "20261108_162317_debug_build.log": {
+    "input_sha256": "52cb197702eb7aacff0895967f018174c75ee54f5e48f633120be06b9375ae9a",
+    "input_path": "diagnostics\\i2c_stuck_trace_20261108_162019\\20261108_162317_debug_build.log",
+    "normalization": "LF and trailing whitespace removal in curated copy only"
+  },
+  "20261108_162317_debug_config.log": {
+    "input_sha256": "e934280f4dfcf94e80080111cafa9ee732e89047713b7a9b40b5fc8910949bc9",
+    "input_path": "diagnostics\\i2c_stuck_trace_20261108_162019\\20261108_162317_debug_config.log",
+    "normalization": "LF and trailing whitespace removal in curated copy only"
+  },
+  "20261108_162317_release_build.log": {
+    "input_sha256": "e1d3eca5709945307f3b0e6fbbb384ecb035c80416cc0fa418d9909a4df4d78c",
+    "input_path": "diagnostics\\i2c_stuck_trace_20261108_162019\\20261108_162317_release_build.log",
+    "normalization": "LF and trailing whitespace removal in curated copy only"
+  },
+  "20261108_162317_release_config.log": {
+    "input_sha256": "227040db681be19e7291a8864b361cf2e5ca71d49e5433da167335b9a3fd9826",
+    "input_path": "diagnostics\\i2c_stuck_trace_20261108_162019\\20261108_162317_release_config.log",
+    "normalization": "LF and trailing whitespace removal in curated copy only"
+  },
+  "debug_editor_profile_restore.log": {
+    "input_sha256": "a7fc70a39a9e16d98ffc3b76f3d4242de44b6336ebf960ea31308df833adda66",
+    "input_path": "docs\\verification\\2026-11-08-i2c-stuck-trace\\debug_editor_profile_restore.log",
+    "normalization": "LF and trailing whitespace removal in curated copy only"
+  },
+  "final_diff_check.log": {
+    "input_sha256": "3c9d94995cee71f8227d5e70e10e0b863e3b0839178f7fceb896f803870203db",
+    "input_path": "docs\\verification\\2026-11-08-i2c-stuck-trace\\final_diff_check.log",
+    "normalization": "LF and trailing whitespace removal in curated copy only"
+  },
+  "format_check.log": {
+    "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "input_path": "diagnostics\\i2c_stuck_trace_20261108_162019\\format_check.log",
+    "normalization": "LF and trailing whitespace removal in curated copy only"
+  },
+  "red_20261108_161625_regression.log": {
+    "input_sha256": "3049d09e9e84b9be4ecde86a440f40567c957f7a654b1b8bf931aff7f7fd3f60",
+    "input_path": "diagnostics\\continuous_low_power_20261108_122920\\20261108_161625_regression.log",
+    "normalization": "LF and trailing whitespace removal in curated copy only"
+  },
+  "red_20261108_161812_regression.log": {
+    "input_sha256": "ec5cb896d716833ab36201fea80ec8d0b526cf341b4c20d293cc81aa9f64268a",
+    "input_path": "diagnostics\\continuous_low_power_20261108_122920\\20261108_161812_regression.log",
+    "normalization": "LF and trailing whitespace removal in curated copy only"
+  }
+}

@@ -10,6 +10,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#if M55M1_RUNTIME_TELEMETRY
+#include "common/i2c_recovery_trace.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -55,6 +59,10 @@ typedef struct {
     int board_status;
     int codec_status;
     bool clocks_valid;
+#if M55M1_RUNTIME_TELEMETRY
+    /** Board-owned, read-only until next init; NULL if recovery was not attempted. */
+    const i2c_recovery_trace_t *i2c_trace;
+#endif
 } audio_transport_init_report_t;
 
 typedef struct {

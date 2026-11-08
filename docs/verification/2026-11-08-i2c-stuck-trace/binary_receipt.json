@@ -1,0 +1,48 @@
+{
+  "Debug": {
+    "path": "build-debug\\M55M1_GestureAI.bin",
+    "bytes": 634400,
+    "sha256": "3704fe5ab26ffed171174837ab2833c7464cad5d09a344545141a2205ad24b82",
+    "markers": {
+      "I2C_RECOVERY": true,
+      "I2C_GPIO": true,
+      "I2C_REG": true,
+      "I2C_TIMEBASE": true,
+      "I2C_EDGE": true,
+      "I2C_NOTE": true
+    },
+    "prior_sha256": "2dc4affd4566add4a0deb92d39c5e3c0ef3ebe58de98510a0204aaffa568d486",
+    "same_as_prior_image": false,
+    "trace_symbol_present": true,
+    "rw_ram_bytes": 78456,
+    "configured_stack_bytes": 8192,
+    "products": {
+      "M55M1_GestureAI.axf.map": "39482bddec888c6fb55a8e8cba21e08edc19732dc2d487dda3a39e8271d61570",
+      "M55M1_GestureAI.axf": "7b4dcbcdfb58a89fa2fcbef7d2462a531a0568e9b4d0e917819a283b0b3ad7b0"
+    },
+    "trace_bytes": 284,
+    "trace_formatter_stack_frame_bytes": 1688
+  },
+  "Release": {
+    "path": "build\\M55M1_GestureAI.bin",
+    "bytes": 612800,
+    "sha256": "e2f535d2e0b2b7a407941fd5a3ecb4c6575f41f6e5cecb1a3276ce3f3922a34f",
+    "markers": {
+      "I2C_RECOVERY": false,
+      "I2C_GPIO": false,
+      "I2C_REG": false,
+      "I2C_TIMEBASE": false,
+      "I2C_EDGE": false,
+      "I2C_NOTE": false
+    },
+    "prior_sha256": "e2f535d2e0b2b7a407941fd5a3ecb4c6575f41f6e5cecb1a3276ce3f3922a34f",
+    "same_as_prior_image": true,
+    "trace_symbol_present": false,
+    "rw_ram_bytes": 77936,
+    "configured_stack_bytes": 8192,
+    "products": {
+      "M55M1_GestureAI.axf.map": "974e4ca054b5d93c1a2e5be5616982225732928c9420547655258128a7271442",
+      "M55M1_GestureAI.axf": "cf4b035625a184538ae4ef451c8358441760ec736f3a7a294e933142b86cfb72"
+    }
+  }
+}

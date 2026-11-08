@@ -1,0 +1,34 @@
+{
+  "armclang": {
+    "command": [
+      "C:\\Program Files\\ArmCompilerforEmbedded6.24\\bin\\armclang.exe",
+      "--version"
+    ],
+    "exit_code": 0,
+    "output": "Product: Keil MDK Nuvoton Edition - Full Cortex-M\nComponent: Arm Compiler for Embedded 6.24\nTool: armclang [5f371800]\n\nTarget: unspecified-arm-none-none\n"
+  },
+  "gcc": {
+    "command": [
+      "C:\\msys64\\mingw64\\bin\\gcc.exe",
+      "--version"
+    ],
+    "exit_code": 0,
+    "output": "gcc.exe (Rev6, Built by MSYS2 project) 13.2.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
+  },
+  "python": {
+    "command": [
+      "python",
+      "--version"
+    ],
+    "exit_code": 0,
+    "output": "Python 3.12.10\n"
+  },
+  "clang_format": {
+    "command": [
+      "diagnostics/i2c_stuck_trace_20261108_162019/style_tools/clang_format/data/bin/clang-format.exe",
+      "--version"
+    ],
+    "exit_code": 0,
+    "output": "clang-format version 18.1.8\n"
+  }
+}

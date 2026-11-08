@@ -1,0 +1,8 @@
+[rtk] /!\ No hook installed — run `rtk init -g` for automatic token savings
+test_native_recovery_records_actual_lines_without_changing_policy (test_i2c_recovery_trace.I2cRecoveryTraceTests.test_native_recovery_records_actual_lines_without_changing_policy) ... ok
+test_trace_is_cleared_before_init_failure_and_propagated_before_return (test_i2c_recovery_trace.I2cRecoveryTraceTests.test_trace_is_cleared_before_init_failure_and_propagated_before_return) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.284s
+
+OK

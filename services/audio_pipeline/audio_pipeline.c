@@ -93,10 +93,93 @@ static void trace_board_progress(audio_transport_board_stage_t stage, void *cont
     }
 }
 
+/** @brief Render the completed board snapshot; never called between recovery edges. */
+static void trace_i2c_recovery(const i2c_recovery_trace_t *trace) {
+    if (trace == NULL || !trace->attempted) {
+        return;
+    }
+    static const char *const phases[] = {
+        "release",      "clock.low",        "clock.high",
+        "stop.sda_low", "stop.scl_release", "stop.sda_release",
+    };
+    const uint8_t count = trace->event_count <= I2C_RECOVERY_TRACE_CAPACITY
+                              ? trace->event_count
+                              : I2C_RECOVERY_TRACE_CAPACITY;
+    const i2c_recovery_event_t *last = count != 0U ? &trace->events[count - 1U] : NULL;
+    const char *result = trace->released ? "BUS_FREE" : "NO_FINAL_SAMPLE";
+    if (!trace->released && last != NULL) {
+        result = !last->sda && !last->scl ? "BOTH_LOW"
+                 : !last->scl             ? "SCL_LOW"
+                 : !last->sda             ? "SDA_LOW"
+                                          : "READBACK_CHANGED";
+    }
+    char messages[6][256];
+    const int lengths[] = {
+        snprintf(messages[0], sizeof(messages[0]),
+                 "[I2C_RECOVERY] result=%s released=%u rststs=%08lx pulses=%u events=%u "
+                 "first_scl_low_event=%u\r\n",
+                 result, trace->released ? 1U : 0U, (unsigned long)trace->reset_flags,
+                 trace->pulses, count, trace->first_scl_low_event),
+        snprintf(messages[1], sizeof(messages[1]),
+                 "[I2C_GPIO] stage=before mfp=%08lx mode=%08lx dout=%08lx pin=%08lx "
+                 "dinoff=%08lx pusel=%08lx smten=%08lx\r\n",
+                 (unsigned long)trace->before.mfp, (unsigned long)trace->before.mode,
+                 (unsigned long)trace->before.dout, (unsigned long)trace->before.pin,
+                 (unsigned long)trace->before.dinoff, (unsigned long)trace->before.pusel,
+                 (unsigned long)trace->before.smten),
+        snprintf(messages[2], sizeof(messages[2]),
+                 "[I2C_GPIO] stage=after mfp=%08lx mode=%08lx dout=%08lx pin=%08lx "
+                 "dinoff=%08lx pusel=%08lx smten=%08lx\r\n",
+                 (unsigned long)trace->after.mfp, (unsigned long)trace->after.mode,
+                 (unsigned long)trace->after.dout, (unsigned long)trace->after.pin,
+                 (unsigned long)trace->after.dinoff, (unsigned long)trace->after.pusel,
+                 (unsigned long)trace->after.smten),
+        snprintf(messages[3], sizeof(messages[3]),
+                 "[I2C_REG] ctl0=%08lx status0=%08lx clkdiv=%08lx gpio_clk=%08lx i2c_clk=%08lx\r\n",
+                 (unsigned long)trace->i2c_control, (unsigned long)trace->i2c_status,
+                 (unsigned long)trace->i2c_divider, (unsigned long)trace->gpio_clock,
+                 (unsigned long)trace->i2c_clock),
+        snprintf(messages[4], sizeof(messages[4]),
+                 "[I2C_TIMEBASE] source_before=%08lx source_after=%08lx "
+                 "load_before=%08lx load_after=%08lx core_hz=%lu\r\n",
+                 (unsigned long)trace->systick_source_before,
+                 (unsigned long)trace->systick_source_after,
+                 (unsigned long)trace->systick_load_before,
+                 (unsigned long)trace->systick_load_after, (unsigned long)trace->core_hz),
+        snprintf(messages[5], sizeof(messages[5]),
+                 "[I2C_NOTE] pins=PA4:SDA,PA5:SCL rststs_sticky=1 "
+                 "samples_not_waveform=1 nominal_delay_us=5\r\n"),
+    };
+    // UART drains only after the bus sequence, with DMA/audio still stopped.
+    for (unsigned index = 0U; index < sizeof(lengths) / sizeof(lengths[0]); ++index) {
+        if (lengths[index] > 0 && (size_t)lengths[index] < sizeof(messages[index])) {
+            (void)debug_uart_tx_try_enqueue(messages[index], (size_t)lengths[index]);
+            debug_uart_tx_flush_blocking();
+        }
+    }
+    for (uint8_t index = 0U; index < count; ++index) {
+        const i2c_recovery_event_t *event = &trace->events[index];
+        const char *phase =
+            event->phase < sizeof(phases) / sizeof(phases[0]) ? phases[event->phase] : "unknown";
+        const uint32_t elapsed =
+            audio_transport_cycles_elapsed(trace->events[0].cycle, event->cycle);
+        const int length = snprintf(
+            messages[0], sizeof(messages[0]),
+            "[I2C_EDGE] index=%u phase=%s pulse=%u cycle=%lu elapsed_us=%lu sda=%u scl=%u\r\n",
+            index, phase, event->pulse, (unsigned long)event->cycle,
+            (unsigned long)audio_transport_cycles_to_us(elapsed), event->sda, event->scl);
+        if (length > 0 && (size_t)length < sizeof(messages[0])) {
+            (void)debug_uart_tx_try_enqueue(messages[0], (size_t)length);
+            debug_uart_tx_flush_blocking();
+        }
+    }
+}
+
 static void trace_transport_report(const audio_transport_init_report_t *report) {
     if (!g_boot_trace) {
         return;
     }
+    trace_i2c_recovery(report->i2c_trace);
     char message[256];
     const int length =
         snprintf(message, sizeof(message),

@@ -62,6 +62,9 @@ static NVT_NONCACHEABLE LPDSCT_T g_dmic_descriptors[2] __ALIGNED(4);
 static m55m1_audio_dmic_state_t g_dmic_state;
 static m55m1_audio_clock_snapshot_t g_clock_snapshot;
 static bool g_clock_snapshot_valid;
+#if M55M1_RUNTIME_TELEMETRY
+static i2c_recovery_trace_t g_i2c_recovery_trace;
+#endif
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
 static m55m1_audio_playback_irq_callback_t g_playback_irq_callback;
 static void *g_playback_irq_context;
@@ -97,6 +100,65 @@ static uint16_t m55m1_audio_profile_samples_per_block(m55m1_audio_profile_t prof
     return 0U;
 }
 
+#if M55M1_RUNTIME_TELEMETRY
+#if M55M1_ENABLE_DAC_I2S_OUTPUT
+static i2c_recovery_gpio_t m55m1_audio_trace_i2c_gpio(void) {
+    return (i2c_recovery_gpio_t){.mfp = SYS->GPA_MFP1,
+                                 .mode = PA->MODE,
+                                 .dout = PA->DOUT,
+                                 .pin = PA->PIN,
+                                 .dinoff = PA->DINOFF,
+                                 .pusel = PA->PUSEL,
+                                 .smten = PA->SMTEN};
+}
+
+static void m55m1_audio_trace_i2c_begin(void) {
+    g_i2c_recovery_trace.attempted = true;
+    g_i2c_recovery_trace.first_scl_low_event = I2C_RECOVERY_TRACE_NO_EVENT;
+    g_i2c_recovery_trace.before = m55m1_audio_trace_i2c_gpio();
+    g_i2c_recovery_trace.i2c_control = I2C0->CTL0;
+    g_i2c_recovery_trace.i2c_status = I2C0->STATUS0;
+    g_i2c_recovery_trace.i2c_divider = I2C0->CLKDIV;
+    g_i2c_recovery_trace.gpio_clock = CLK->GPIOCTL;
+    g_i2c_recovery_trace.i2c_clock = CLK->I2CCTL;
+    g_i2c_recovery_trace.core_hz = SystemCoreClock;
+    g_i2c_recovery_trace.systick_load_before = SysTick->LOAD;
+    g_i2c_recovery_trace.systick_source_before = CLK->STSEL;
+}
+
+static void m55m1_audio_trace_i2c_event(i2c_recovery_phase_t phase, uint8_t pulse) {
+    if (g_i2c_recovery_trace.event_count >= I2C_RECOVERY_TRACE_CAPACITY) {
+        return;
+    }
+    const uint32_t cycle = m55m1_timebase_cycles_now();
+    const uint32_t pin = PA->PIN;
+    const uint8_t index = g_i2c_recovery_trace.event_count++;
+    g_i2c_recovery_trace.events[index] = (i2c_recovery_event_t){.cycle = cycle,
+                                                                .phase = (uint8_t)phase,
+                                                                .pulse = pulse,
+                                                                .sda = (pin & BIT4) != 0U,
+                                                                .scl = (pin & BIT5) != 0U};
+    // Only clock-low deliberately drives SCL low; other low readings need investigation.
+    if (phase != I2C_RECOVERY_CLOCK_LOW && (pin & BIT5) == 0U &&
+        g_i2c_recovery_trace.first_scl_low_event == I2C_RECOVERY_TRACE_NO_EVENT) {
+        g_i2c_recovery_trace.first_scl_low_event = index;
+    }
+}
+
+static void m55m1_audio_trace_i2c_end(uint8_t pulses, bool released) {
+    g_i2c_recovery_trace.pulses = pulses;
+    g_i2c_recovery_trace.released = released;
+    g_i2c_recovery_trace.after = m55m1_audio_trace_i2c_gpio();
+    g_i2c_recovery_trace.systick_load_after = SysTick->LOAD;
+    g_i2c_recovery_trace.systick_source_after = CLK->STSEL;
+}
+#endif
+
+const i2c_recovery_trace_t *m55m1_audio_get_i2c_trace(void) {
+    return g_i2c_recovery_trace.attempted ? &g_i2c_recovery_trace : NULL;
+}
+#endif
+
 /**
  * @brief Release a slave that retained SDA low across an MCU-only reset.
  * @return True only when both I2C bus lines are released after recovery.
@@ -110,6 +172,9 @@ static uint16_t m55m1_audio_profile_samples_per_block(m55m1_audio_profile_t prof
 static bool m55m1_audio_recover_i2c_bus(void) {
     uint32_t pulse;
 
+#if M55M1_RUNTIME_TELEMETRY
+    m55m1_audio_trace_i2c_begin();
+#endif
     SET_GPIO_PA4();
     SET_GPIO_PA5();
     GPIO_SetMode(PA, BIT4 | BIT5, GPIO_MODE_OPEN_DRAIN);
@@ -117,23 +182,46 @@ static bool m55m1_audio_recover_i2c_bus(void) {
     M55M1_AUDIO_I2C_SCL = 1U;
     m55m1_timebase_delay_us(M55M1_AUDIO_I2C_RECOVERY_DELAY_US);
 
+#if M55M1_RUNTIME_TELEMETRY
+    m55m1_audio_trace_i2c_event(I2C_RECOVERY_RELEASE, 0U);
+#endif
+
     for (pulse = 0U; (pulse < M55M1_AUDIO_I2C_RECOVERY_PULSES) && (M55M1_AUDIO_I2C_SDA == 0U);
          ++pulse) {
         M55M1_AUDIO_I2C_SCL = 0U;
         m55m1_timebase_delay_us(M55M1_AUDIO_I2C_RECOVERY_DELAY_US);
+#if M55M1_RUNTIME_TELEMETRY
+        m55m1_audio_trace_i2c_event(I2C_RECOVERY_CLOCK_LOW, (uint8_t)(pulse + 1U));
+#endif
         M55M1_AUDIO_I2C_SCL = 1U;
         m55m1_timebase_delay_us(M55M1_AUDIO_I2C_RECOVERY_DELAY_US);
+#if M55M1_RUNTIME_TELEMETRY
+        m55m1_audio_trace_i2c_event(I2C_RECOVERY_CLOCK_HIGH, (uint8_t)(pulse + 1U));
+#endif
     }
 
     /* A STOP releases SDA while SCL is high, resetting compliant slave bus state. */
     M55M1_AUDIO_I2C_SDA = 0U;
     m55m1_timebase_delay_us(M55M1_AUDIO_I2C_RECOVERY_DELAY_US);
+#if M55M1_RUNTIME_TELEMETRY
+    m55m1_audio_trace_i2c_event(I2C_RECOVERY_STOP_SDA_LOW, (uint8_t)pulse);
+#endif
     M55M1_AUDIO_I2C_SCL = 1U;
     m55m1_timebase_delay_us(M55M1_AUDIO_I2C_RECOVERY_DELAY_US);
+#if M55M1_RUNTIME_TELEMETRY
+    m55m1_audio_trace_i2c_event(I2C_RECOVERY_STOP_SCL_RELEASE, (uint8_t)pulse);
+#endif
     M55M1_AUDIO_I2C_SDA = 1U;
     m55m1_timebase_delay_us(M55M1_AUDIO_I2C_RECOVERY_DELAY_US);
+#if M55M1_RUNTIME_TELEMETRY
+    m55m1_audio_trace_i2c_event(I2C_RECOVERY_STOP_SDA_RELEASE, (uint8_t)pulse);
+#endif
 
-    return (M55M1_AUDIO_I2C_SDA != 0U) && (M55M1_AUDIO_I2C_SCL != 0U);
+    const bool released = (M55M1_AUDIO_I2C_SDA != 0U) && (M55M1_AUDIO_I2C_SCL != 0U);
+#if M55M1_RUNTIME_TELEMETRY
+    m55m1_audio_trace_i2c_end((uint8_t)pulse, released);
+#endif
+    return released;
 }
 #endif
 
@@ -175,6 +263,10 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
     uint32_t required_mclk_hz;
 #endif
 
+#if M55M1_RUNTIME_TELEMETRY
+    // Preserve sticky flags as evidence; invalidate the previous attempt even on argument failure.
+    g_i2c_recovery_trace = (i2c_recovery_trace_t){.reset_flags = SYS->RSTSTS};
+#endif
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
     required_mclk_hz = m55m1_audio_profile_mclk_hz(profile);
     if ((binding == NULL) || (playback_irq_callback == NULL) || (required_mclk_hz == 0UL)) {

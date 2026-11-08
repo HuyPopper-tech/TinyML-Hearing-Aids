@@ -1,0 +1,42 @@
+[
+  {
+    "name": "20261108_162100_recovery",
+    "command": [
+      "rtk",
+      "proxy",
+      "C:\\Users\\proha\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "-X",
+      "utf8",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test_i2c_recovery_trace.py",
+      "-v"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 0.47362709045410156
+  },
+  {
+    "name": "20261108_162100_uart",
+    "command": [
+      "rtk",
+      "proxy",
+      "C:\\Users\\proha\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "-X",
+      "utf8",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test_deepfir_audio_runtime_debug.py",
+      "-v"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 1.810046672821045
+  }
+]

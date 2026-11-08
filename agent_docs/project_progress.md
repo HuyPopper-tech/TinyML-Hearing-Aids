@@ -1,5 +1,27 @@
 # Project Progress
 
+## I2C_STUCK recovery trace — 2026-11-08
+
+Implemented the approved firmware-only trace for intermittent board_status=5 on
+custom PA4 SDA/PA5 SCL. Board retains raw reset/GPIO/I2C/timebase observations and
+up to22 recovery samples; transport exposes a read-only borrowed pointer even on
+init failure; service prints only after recovery, before audio starts. Each init
+invalidates the prior trace. Nine-pulse/5us/STOP policy and pin/clock/DMA assignments
+remain unchanged. Historical NuMaker wiring is explicitly separated in driver docs.
+
+Verified123/123 host tests, native six-case C recovery and failed-init UART tests,
+clang-format18.1.8 and Debug/Release configure/build/link exit0 with Arm6.24.
+Debug BIN634400B SHA3704fe5ab26ffed171174837ab2833c7464cad5d09a344545141a2205ad24b82;
+trace284B, RW_RAM78456B, formatter stack frame1688B (static map, not high-water).
+Release BIN612800B SHAe2f535d2e0b2b7a407941fd5a3ecb4c6575f41f6e5cecb1a3276ce3f3922a34f
+and AXF remain identical to the prior verified revision; trace/log additions absent.
+Evidence: docs/verification/2026-11-08-i2c-stuck-trace/.
+
+No flash/device operation. Physical cause and permanent-fix acceptance remain
+NOT_RUN pending user Debug traces from repeated OpenOCD and power-cycle workflows.
+Probe has no physical nRESET; software reset requests do not prove reset occurred.
+Guide: docs/i2c_stuck_trace.md. Deadline/underrun investigation remains separate.
+
 ## Product source cleanup and style — 2026-11-08
 
 Removed four obsolete diagnostic applications, their standalone CMake roots and
