@@ -1,0 +1,17 @@
+[
+  {
+    "name": "20261108_154216_regression",
+    "command": [
+      "rtk",
+      "python",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-v"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 24.023102521896362
+  }
+]

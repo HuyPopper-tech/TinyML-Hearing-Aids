@@ -30,6 +30,45 @@ Install the Cortex-Debug extension and Arm GNU GDB. Set the VS Code user setting
 current machine uses the existing STM32CubeCLT toolchain; machine paths stay ignored.
 Arm Compiler 6 remains the firmware compiler.
 
+## Debug initialization and first-hop logs
+
+Debug enables UART2 TX PC5 / RX PC4 at 115200-8N1. Open the terminal before reset,
+then Continue if the debugger is stopped at `main`. Release keeps UART disabled.
+
+`[MODEL_MEMORY] status=ALLOCATED` confirms AllocateTensors succeeded. Initialization
+continues with the following checkpoints; the list is an expected sequence, not a
+recorded board run:
+
+- `[INIT] stage=transport`: board clock/pin progress and codec initialization.
+  `[INIT_TRANSPORT]` records board/codec status and actual clock snapshot values.
+- `model.sram`, `ethosu.init`, `resolver.ethosu`, `model.schema`, `tensors.allocate`.
+- `tensor.binding`: `[INIT_TENSOR]` prints expected and actual direction, semantic,
+  port/index, INT16 flag, rank/shape, bytes, zero point and exact float scale bits.
+  `tensor.input` / `tensor.output` reports OK/FAIL with the runtime port in `code`.
+- `adapter.qparams`, `fft.init`, separate `mve.feature` and `mve.fir` self-tests.
+  A required MVE failure also emits `mve.required FAIL`; no scalar fallback is added.
+- `state.reset BEGIN`, then `inference OK` and `pipeline OK` after reset completes.
+- `transport_start BEGIN`, then `stream RUNNING` only when start returns success.
+
+Each initialization step emits BEGIN/OK/FAIL where applicable. A final BEGIN without
+its result identifies the next operation to inspect, but does not distinguish a
+CPU fault, debugger halt, wait or lost UART output by itself. Failure returns retain
+the existing safe-stop behavior and emit an explicit stage before main stops.
+
+After stream start, `[AUDIO_STAGE] stage=capture` marks the first completed input.
+`[HOP_STAGE]` follows frontend/FFT, Invoke, state feedback, taps, FIR and PCM of the
+first PCM call only. Boot FFT self-tests and compiled replay do not emit these hop
+markers. No blocking UART drain occurs after DMA starts or on automatic recovery.
+`[AUDIO_FAULT]` reports the first admitted message per fault category, including
+sequence/deadline/submit/model/transport/restart failures and health counters.
+Periodic `[AUDIO] frame=...` still requires 1000 processed hops; repeated recovery
+can prevent that count from being reached, so its absence is not proof of a hang.
+
+Cold-boot checkpoints are drained before proceeding so a later initialization
+failure cannot hide behind queued output. These boot waits add startup time.
+First-hop UART formatting/interrupt work also adds Debug overhead; this build is
+for diagnosis, not evidence of the Release 1 ms deadline or measured power.
+
 ## VS Code operations
 
 | Run and Debug profile | Behavior |

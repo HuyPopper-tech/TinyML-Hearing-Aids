@@ -1,0 +1,58 @@
+[
+  {
+    "name": "20261108_154330_debug_config",
+    "command": [
+      "rtk",
+      "proxy",
+      "cmd",
+      "/c",
+      "build.bat",
+      "debug",
+      "config"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 2.769824266433716
+  },
+  {
+    "name": "20261108_154330_debug_build",
+    "command": [
+      "rtk",
+      "proxy",
+      "cmd",
+      "/c",
+      "build.bat",
+      "debug",
+      "build"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 8.128343343734741
+  },
+  {
+    "name": "20261108_154330_release_config",
+    "command": [
+      "rtk",
+      "proxy",
+      "cmd",
+      "/c",
+      "build.bat",
+      "release",
+      "config"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 2.6418280601501465
+  },
+  {
+    "name": "20261108_154330_release_build",
+    "command": [
+      "rtk",
+      "proxy",
+      "cmd",
+      "/c",
+      "build.bat",
+      "release",
+      "build"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 7.116605997085571
+  }
+]

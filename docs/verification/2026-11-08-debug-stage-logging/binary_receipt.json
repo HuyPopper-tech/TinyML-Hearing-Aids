@@ -1,0 +1,36 @@
+{
+  "Debug": {
+    "path": "build-debug\\M55M1_GestureAI.bin",
+    "bytes": 631680,
+    "sha256": "2dc4affd4566add4a0deb92d39c5e3c0ef3ebe58de98510a0204aaffa568d486",
+    "diagnostic_markers": {
+      "[INIT]": true,
+      "[INIT_TRANSPORT]": true,
+      "[INIT_TENSOR]": true,
+      "[HOP_STAGE]": true,
+      "[AUDIO_STAGE]": true,
+      "[AUDIO_FAULT]": true
+    },
+    "products": {
+      "M55M1_GestureAI.axf": "d903bddacd8289754c7bfde9b121100525451d13adfe806cfa646aaa89cc881c",
+      "M55M1_GestureAI.axf.map": "b43b5df631099c24c9b17d7e8c1a658ea73f663925b7eb4dde1b5348e4c0f8fc"
+    }
+  },
+  "Release": {
+    "path": "build\\M55M1_GestureAI.bin",
+    "bytes": 612800,
+    "sha256": "e2f535d2e0b2b7a407941fd5a3ecb4c6575f41f6e5cecb1a3276ce3f3922a34f",
+    "diagnostic_markers": {
+      "[INIT]": false,
+      "[INIT_TRANSPORT]": false,
+      "[INIT_TENSOR]": false,
+      "[HOP_STAGE]": false,
+      "[AUDIO_STAGE]": false,
+      "[AUDIO_FAULT]": false
+    },
+    "products": {
+      "M55M1_GestureAI.axf": "cf4b035625a184538ae4ef451c8358441760ec736f3a7a294e933142b86cfb72",
+      "M55M1_GestureAI.axf.map": "974e4ca054b5d93c1a2e5be5616982225732928c9420547655258128a7271442"
+    }
+  }
+}

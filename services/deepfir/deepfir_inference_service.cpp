@@ -58,6 +58,69 @@ static bool g_processing;
 static bool g_feature_mve_ready;
 static bool g_fir_mve_ready;
 static uint32_t g_mve_self_test_us;
+#if M55M1_RUNTIME_TELEMETRY
+static bool g_first_hop_trace = true;
+
+// Only cold initialization drains UART. Runtime breadcrumbs never wait for TX.
+void trace_init(const char *stage, const char *status, int code) {
+    if (g_initialized) {
+        return;
+    }
+    char message[160];
+    const int length = std::snprintf(message, sizeof(message),
+                                     "[INIT] stage=%s status=%s code=%d\r\n", stage, status, code);
+    if (length > 0 && static_cast<size_t>(length) < sizeof(message)) {
+        (void)debug_uart_tx_try_enqueue(message, static_cast<size_t>(length));
+        debug_uart_tx_flush_blocking();
+    }
+}
+
+void trace_hop(const char *stage, int status) {
+#if M55M1_DEEPFIR_COMPILED_REPLAY
+    (void)stage;
+    (void)status;
+#else
+    // The FFT also runs during boot self-tests; only the first PCM call owns these markers.
+    if (!g_initialized || !g_processing || !g_first_hop_trace) {
+        return;
+    }
+    char message[96];
+    const int length =
+        std::snprintf(message, sizeof(message), "[HOP_STAGE] stage=%s code=%d\r\n", stage, status);
+    if (length > 0 && static_cast<size_t>(length) < sizeof(message)) {
+        (void)debug_uart_tx_try_enqueue(message, static_cast<size_t>(length));
+    }
+#endif
+}
+
+void trace_tensor(bool input, unsigned semantic, const char *kind,
+                  const deepfir_tensor_descriptor_t *descriptor) {
+    if (descriptor == nullptr || g_initialized) {
+        return;
+    }
+    uint32_t scale_bits = 0U;
+    std::memcpy(&scale_bits, &descriptor->scale, sizeof(scale_bits));
+    char message[384];
+    const int length = std::snprintf(
+        message, sizeof(message),
+        "[INIT_TENSOR] direction=%s semantic=%u kind=%s port=%u index=%d "
+        "int16=%u rank=%u shape=%d,%d,%d,%d bytes=%lu scale_bits=%08lx zp=%ld name=%s\r\n",
+        input ? "input" : "output", semantic, kind, descriptor->port, descriptor->tensor_index,
+        descriptor->int16_type ? 1U : 0U, descriptor->rank, descriptor->shape[0],
+        descriptor->shape[1], descriptor->shape[2], descriptor->shape[3],
+        static_cast<unsigned long>(descriptor->bytes), static_cast<unsigned long>(scale_bits),
+        static_cast<long>(descriptor->zero_point), descriptor->name ? descriptor->name : "(null)");
+    if (length > 0 && static_cast<size_t>(length) < sizeof(message)) {
+        (void)debug_uart_tx_try_enqueue(message, static_cast<size_t>(length));
+        debug_uart_tx_flush_blocking();
+    }
+}
+#define DEEPFIR_TRACE_INIT(stage, status, code) trace_init(stage, status, code)
+#define DEEPFIR_TRACE_HOP(stage, status) trace_hop(stage, status)
+#else
+#define DEEPFIR_TRACE_INIT(stage, status, code) ((void)0)
+#define DEEPFIR_TRACE_HOP(stage, status) ((void)0)
+#endif
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
 static uint32_t g_feature_start_cycle;
 static uint32_t g_feature_fft_end_cycle;
@@ -87,12 +150,17 @@ TfLiteTensor *find_tensor(bool input, unsigned semantic) {
     const auto &indices = input ? g_interpreter->inputs() : g_interpreter->outputs();
     const size_t count = input ? g_interpreter->inputs_size() : g_interpreter->outputs_size();
     if (expected == nullptr || expected->port >= count) {
+        DEEPFIR_TRACE_INIT("tensor.port", "FAIL", static_cast<int>(semantic));
         return nullptr;
     }
+#if M55M1_RUNTIME_TELEMETRY
+    trace_tensor(input, semantic, "expected", expected);
+#endif
     TfLiteTensor *tensor =
         input ? g_interpreter->input(expected->port) : g_interpreter->output(expected->port);
     if (!tensor || !tensor->dims || tensor->dims->size < 0 || tensor->dims->size > 4 ||
         !tensor->data.i16 || !in_sram(tensor->data.i16, tensor->bytes)) {
+        DEEPFIR_TRACE_INIT("tensor.storage_or_rank", "FAIL", static_cast<int>(expected->port));
         return nullptr;
     }
     deepfir_tensor_descriptor_t actual = {};
@@ -107,7 +175,13 @@ TfLiteTensor *find_tensor(bool input, unsigned semantic) {
     for (unsigned i = 0; i < actual.rank; ++i) {
         actual.shape[i] = tensor->dims->data[i];
     }
-    return deepfir_tensor_validate(input, semantic, &actual) ? tensor : nullptr;
+#if M55M1_RUNTIME_TELEMETRY
+    trace_tensor(input, semantic, "actual", &actual);
+#endif
+    const bool valid = deepfir_tensor_validate(input, semantic, &actual);
+    DEEPFIR_TRACE_INIT(input ? "tensor.input" : "tensor.output", valid ? "OK" : "FAIL",
+                       static_cast<int>(expected->port));
+    return valid ? tensor : nullptr;
 }
 
 uint32_t elapsed_us(uint32_t start, uint32_t end) {
@@ -119,21 +193,30 @@ void adapter_probe_mark(uint32_t stage, void *context) {
     (void)context;
     if (stage < DEEPFIR_PROBE_STAGE_COUNT) {
         g_adapter_stage_cycles[stage] = audio_transport_cycles_now();
+#if M55M1_RUNTIME_TELEMETRY
+        static const char *const stages[] = {
+            "inputs_ready", "outputs_ready", "feedback_done", "taps_done", "fir_done",
+        };
+        DEEPFIR_TRACE_HOP(stages[stage], 0);
+#endif
     }
 }
 
 int timed_fft_callback(float *buffer, uint32_t length, uint8_t inverse, void *context) {
+    DEEPFIR_TRACE_HOP("fft.begin", 0);
     const uint32_t start = audio_transport_cycles_now();
     g_last_timing.pre_fft_us = elapsed_us(g_feature_start_cycle, start);
     const int status = deepfir_cmsis_fft_callback(buffer, length, inverse, context);
     g_feature_fft_end_cycle = audio_transport_cycles_now();
     g_last_timing.fft_us = elapsed_us(start, g_feature_fft_end_cycle);
     g_feature_fft_called = true;
+    DEEPFIR_TRACE_HOP("fft.end", status);
     return status;
 }
 #endif
 
 int feature_callback(const int16_t *pcm16, uint32_t sample_count, int16_t *feature, void *context) {
+    DEEPFIR_TRACE_HOP("frontend.begin", 0);
     const uint32_t start = audio_transport_cycles_now();
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     g_feature_start_cycle = start;
@@ -145,6 +228,7 @@ int feature_callback(const int16_t *pcm16, uint32_t sample_count, int16_t *featu
     const int status = deepfir_feature_pcm16(pcm16, sample_count, feature, context);
     const uint32_t end = audio_transport_cycles_now();
     g_last_timing.feature_us = elapsed_us(start, end);
+    DEEPFIR_TRACE_HOP("frontend.end", status);
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     if (g_feature_fft_called) {
         g_last_timing.post_fft_us = elapsed_us(g_feature_fft_end_cycle, end);
@@ -164,10 +248,12 @@ int infer_callback(const deepfir_tensor_map_t *inputs, uint32_t input_count,
         std::memcpy(g_inputs[index]->data.i16, inputs[index].data,
                     inputs[index].elements * sizeof(int16_t));
     }
+    DEEPFIR_TRACE_HOP("invoke.begin", 0);
     const uint32_t start = audio_transport_cycles_now();
     const TfLiteStatus status = g_interpreter->Invoke();
     const uint32_t end = audio_transport_cycles_now();
     g_last_timing.invoke_us = elapsed_us(start, end);
+    DEEPFIR_TRACE_HOP("invoke.end", static_cast<int>(status));
 
     ethosu_runtime_stats_t runtime_stats = {};
     if (ethosu_runtime_get_stats(&runtime_stats) == ETHOSU_RUNTIME_OK) {
@@ -261,40 +347,56 @@ extern "C" bool deepfir_inference_init(void) {
     }
     const unsigned char *model_data = deepfir_model_package_data();
     const size_t model_size = deepfir_model_package_size();
+    DEEPFIR_TRACE_INIT("model.sram", "BEGIN", 0);
     if (!in_sram(model_data, model_size) || model_size == 0U) {
+        DEEPFIR_TRACE_INIT("model.sram", "FAIL", -1);
         return false;
     }
+    DEEPFIR_TRACE_INIT("model.sram", "OK", 0);
 
     ethosu_runtime_config_t runtime_config = {};
     runtime_config.immutable_memory = model_data;
     runtime_config.immutable_memory_size = model_size;
     runtime_config.secure_enable = true;
     runtime_config.privilege_enable = true;
-    if (ethosu_runtime_init(&runtime_config) != ETHOSU_RUNTIME_OK) {
+    DEEPFIR_TRACE_INIT("ethosu.init", "BEGIN", 0);
+    const ethosu_runtime_status_t runtime_status = ethosu_runtime_init(&runtime_config);
+    if (runtime_status != ETHOSU_RUNTIME_OK) {
+        DEEPFIR_TRACE_INIT("ethosu.init", "FAIL", static_cast<int>(runtime_status));
         return false;
     }
+    DEEPFIR_TRACE_INIT("ethosu.init", "OK", 0);
 
     g_model = tflite::GetModel(model_data);
     if (g_resolver == nullptr) {
         g_resolver = new (g_resolver_storage) tflite::MicroMutableOpResolver<1>();
-        if (g_resolver->AddEthosU() != kTfLiteOk) {
+        DEEPFIR_TRACE_INIT("resolver.ethosu", "BEGIN", 0);
+        const TfLiteStatus resolver_status = g_resolver->AddEthosU();
+        if (resolver_status != kTfLiteOk) {
+            DEEPFIR_TRACE_INIT("resolver.ethosu", "FAIL", static_cast<int>(resolver_status));
             g_resolver = nullptr;
             (void)ethosu_runtime_deinit();
             return false;
         }
+        DEEPFIR_TRACE_INIT("resolver.ethosu", "OK", 0);
     }
+    DEEPFIR_TRACE_INIT("model.schema", "BEGIN", 0);
     if (g_model == nullptr || g_model->version() != TFLITE_SCHEMA_VERSION ||
         g_model->subgraphs() == nullptr || g_model->subgraphs()->size() != 1U ||
         g_model->subgraphs()->Get(0)->inputs() == nullptr ||
         g_model->subgraphs()->Get(0)->outputs() == nullptr ||
         g_model->subgraphs()->Get(0)->inputs()->size() != 3U ||
         g_model->subgraphs()->Get(0)->outputs()->size() != 4U) {
+        DEEPFIR_TRACE_INIT("model.schema", "FAIL", -1);
         (void)ethosu_runtime_deinit();
         return false;
     }
+    DEEPFIR_TRACE_INIT("model.schema", "OK", 0);
     g_interpreter = new (g_interpreter_storage) tflite::MicroInterpreter(
         g_model, *g_resolver, g_tensor_arena, sizeof(g_tensor_arena), nullptr, nullptr, false);
-    if (g_interpreter->AllocateTensors() != kTfLiteOk) {
+    DEEPFIR_TRACE_INIT("tensors.allocate", "BEGIN", 0);
+    const TfLiteStatus allocation_status = g_interpreter->AllocateTensors();
+    if (allocation_status != kTfLiteOk) {
 #if M55M1_RUNTIME_TELEMETRY
         char message[128];
         const int length =
@@ -305,11 +407,13 @@ extern "C" bool deepfir_inference_init(void) {
             (void)debug_uart_tx_try_enqueue(message, static_cast<size_t>(length));
         }
 #endif
+        DEEPFIR_TRACE_INIT("tensors.allocate", "FAIL", static_cast<int>(allocation_status));
         (void)ethosu_runtime_deinit();
         g_interpreter = nullptr;
         return false;
     }
     if (!in_sram(g_tensor_arena, sizeof(g_tensor_arena))) {
+        DEEPFIR_TRACE_INIT("arena.sram", "FAIL", -1);
         (void)ethosu_runtime_deinit();
         g_interpreter = nullptr;
         return false;
@@ -333,6 +437,8 @@ extern "C" bool deepfir_inference_init(void) {
         }
     }
 #endif
+    DEEPFIR_TRACE_INIT("tensors.allocate", "OK", 0);
+    DEEPFIR_TRACE_INIT("tensor.binding", "BEGIN", 0);
     for (uint32_t index = 0U; index < DEEPFIR_MODEL_INPUT_COUNT; ++index) {
         g_inputs[index] = find_tensor(true, index);
         if (g_inputs[index] == nullptr) {
@@ -349,13 +455,26 @@ extern "C" bool deepfir_inference_init(void) {
             return false;
         }
     }
+    DEEPFIR_TRACE_INIT("tensor.binding", "OK", 0);
     std::memset(&g_adapter, 0, sizeof(g_adapter));
-    if (deepfir_model_init_qparams(&g_adapter) != 0 ||
-        deepfir_cmsis_fft_init(&g_fft_context) != 0) {
+    DEEPFIR_TRACE_INIT("adapter.qparams", "BEGIN", 0);
+    const int qparams_status = deepfir_model_init_qparams(&g_adapter);
+    if (qparams_status != 0) {
+        DEEPFIR_TRACE_INIT("adapter.qparams", "FAIL", qparams_status);
         (void)ethosu_runtime_deinit();
         g_interpreter = nullptr;
         return false;
     }
+    DEEPFIR_TRACE_INIT("adapter.qparams", "OK", 0);
+    DEEPFIR_TRACE_INIT("fft.init", "BEGIN", 0);
+    const int fft_status = deepfir_cmsis_fft_init(&g_fft_context);
+    if (fft_status != 0) {
+        DEEPFIR_TRACE_INIT("fft.init", "FAIL", fft_status);
+        (void)ethosu_runtime_deinit();
+        g_interpreter = nullptr;
+        return false;
+    }
+    DEEPFIR_TRACE_INIT("fft.init", "OK", 0);
     g_feature_state.scale = deepfir_input_scale[0];
     g_feature_state.zero_point = deepfir_input_zero[0];
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
@@ -377,10 +496,17 @@ extern "C" bool deepfir_inference_init(void) {
     g_feature_mve_ready = deepfir_feature_mve_ready();
 #if M55M1_DEEPFIR_MVE_SELF_TEST
     {
-        const uint32_t self_test_start = audio_transport_cycles_now();
+        DEEPFIR_TRACE_INIT("mve.feature", "BEGIN", 0);
+        const uint32_t feature_start = audio_transport_cycles_now();
         g_feature_mve_ready = deepfir_feature_prepare_mve(&g_feature_state);
+        const uint32_t feature_us = elapsed_us(feature_start, audio_transport_cycles_now());
+        DEEPFIR_TRACE_INIT("mve.feature", g_feature_mve_ready ? "OK" : "FAIL",
+                           g_feature_mve_ready ? 0 : -1);
+        DEEPFIR_TRACE_INIT("mve.fir", "BEGIN", 0);
+        const uint32_t fir_start = audio_transport_cycles_now();
         g_fir_mve_ready = deepfir_dsp_prepare_mve();
-        g_mve_self_test_us = elapsed_us(self_test_start, audio_transport_cycles_now());
+        g_mve_self_test_us = feature_us + elapsed_us(fir_start, audio_transport_cycles_now());
+        DEEPFIR_TRACE_INIT("mve.fir", g_fir_mve_ready ? "OK" : "FAIL", g_fir_mve_ready ? 0 : -1);
     }
 #else
     g_fir_mve_ready = deepfir_dsp_mve_ready();
@@ -388,11 +514,13 @@ extern "C" bool deepfir_inference_init(void) {
 #endif
 #if M55M1_DEEPFIR_MVE
     if (!g_feature_mve_ready || !g_fir_mve_ready) {
+        DEEPFIR_TRACE_INIT("mve.required", "FAIL", -1);
         (void)ethosu_runtime_deinit();
         g_interpreter = nullptr;
         return false;
     }
 #endif
+    DEEPFIR_TRACE_INIT("state.reset", "BEGIN", 0);
     g_initialized = true;
     deepfir_inference_reset();
     return true;
@@ -426,6 +554,10 @@ extern "C" bool deepfir_inference_process(const int16_t *input, int16_t *output,
         deepfir_model_adapter_process_pcm16(&g_adapter, input, sample_count, output_float);
     g_last_timing.total_us = elapsed_us(start, audio_transport_cycles_now());
     if (status != 0) {
+        DEEPFIR_TRACE_HOP("adapter.fail", status);
+#if M55M1_RUNTIME_TELEMETRY
+        g_first_hop_trace = false;
+#endif
         g_faulted = true;
         g_processing = false;
         return false;
@@ -433,6 +565,10 @@ extern "C" bool deepfir_inference_process(const int16_t *input, int16_t *output,
     int16_t rendered[DEEPFIR_DSP_HOP];
     for (uint32_t index = 0U; index < sample_count; ++index) {
         if (!std::isfinite(output_float[index])) {
+            DEEPFIR_TRACE_HOP("pcm.nonfinite", static_cast<int>(index));
+#if M55M1_RUNTIME_TELEMETRY
+            g_first_hop_trace = false;
+#endif
             g_faulted = true;
             g_processing = false;
             return false;
@@ -440,6 +576,10 @@ extern "C" bool deepfir_inference_process(const int16_t *input, int16_t *output,
         rendered[index] = deepfir_pcm16_from_float(output_float[index]);
     }
     std::memcpy(output, rendered, sizeof(rendered));
+    DEEPFIR_TRACE_HOP("pcm.done", 0);
+#if M55M1_RUNTIME_TELEMETRY
+    g_first_hop_trace = false;
+#endif
     g_last_timing.total_us = elapsed_us(start, audio_transport_cycles_now());
     const uint32_t accounted = g_last_timing.feature_us + g_last_timing.invoke_us;
     g_last_timing.dsp_us =

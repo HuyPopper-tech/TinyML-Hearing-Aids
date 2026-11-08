@@ -102,3 +102,9 @@ runtime opt-in is enabled. TFLM is additionally opt-in and uses the project
 bridge. The standalone smoke image has no audio/model source.
 
 Verified: host runtime mock contract and full host suite (`66/66`); runtime/CMake static contracts; model package duplicate-core/IRQ guard; model-free Debug/Release configure and build/link; runtime-enabled Debug/Release configure and build/link; Armclang C++11 bridge compilation; model-free link-map audit with no Ethos-U runtime/core objects. No board was flashed or executed; no model package or valid command stream was introduced. `git diff --check` passed.
+
+## 2026-11-08 — Debug init and first-hop stage diagnostics
+
+- Added foreground Debug checkpoints and exact expected/actual tensor metadata in the inference service; audio pipeline logs board progress, transport report, init/start failures and the first capture. Runtime first-hop markers and fault reports never block on UART; repeated fault categories are suppressed.
+- Native C/C++ checks and full host regression passed 121/121, no skips. Debug/Release configure/build/link passed with Arm Compiler 6.24. Debug BIN 631680 B, Release BIN 612800 B; all six new trace marker strings are absent from Release. Evidence: `docs/verification/2026-11-08-debug-stage-logging/`.
+- User supplied the earlier UART allocation line (arena_used=6976/65536, expected compiled hash); this is user-reported allocation evidence only. The subsequent board failure remains unidentified until the new Debug log is captured. No flash, board timing/power/audio measurement or compiled parity run was performed by the agent.

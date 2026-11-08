@@ -104,3 +104,9 @@ Route Light; no workers/explorer, no commit/reset/clean, no retraining/PTQ/Vela.
 - BSP provenance: retained Nuvoton/Arm Ethos-U driver version 0.16.0; source/header SHA-256 values are recorded in `docs/ETHOSU_RUNTIME_FOUNDATION.md`.
 - Verification: temporary-mock host runtime contract and full host suite (`66/66`) pass; model-free Debug/Release configure and build/link pass; runtime-enabled Debug/Release configure and build/link pass; TFLM bridge compiles with Armclang C++11; model-free link-map audit finds no Ethos-U runtime/core objects; `git diff --check` passes.
 - Remaining boundary: no valid command stream, model numerical parity, physical board smoke, realtime/soak, capture-to-DAC, or deployment approval. Board execution remains `BLOCKED_BOARD_ACCESS` until hardware is available.
+
+## 2026-11-08 — Debug init and first-hop stage diagnostics
+
+- Added foreground Debug checkpoints and exact expected/actual tensor metadata in the inference service; audio pipeline logs board progress, transport report, init/start failures and the first capture. Runtime first-hop markers and fault reports never block on UART; repeated fault categories are suppressed.
+- Native C/C++ checks and full host regression passed 121/121, no skips. Debug/Release configure/build/link passed with Arm Compiler 6.24. Debug BIN 631680 B, Release BIN 612800 B; all six new trace marker strings are absent from Release. Evidence: `docs/verification/2026-11-08-debug-stage-logging/`.
+- User supplied the earlier UART allocation line (arena_used=6976/65536, expected compiled hash); this is user-reported allocation evidence only. The subsequent board failure remains unidentified until the new Debug log is captured. No flash, board timing/power/audio measurement or compiled parity run was performed by the agent.

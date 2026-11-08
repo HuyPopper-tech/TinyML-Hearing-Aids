@@ -47,6 +47,120 @@ static bool g_running;
 static uint32_t g_expected_sequence;
 static audio_pipeline_stats_t g_stats;
 
+#if M55M1_RUNTIME_TELEMETRY
+// Foreground-only: boot drains end before DMA starts; recovery never drains UART.
+static bool g_boot_trace = true;
+static bool g_first_capture_trace = true;
+static uint32_t g_reported_faults;
+
+static void trace_init(const char *stage, const char *status, int code) {
+    if (!g_boot_trace) {
+        return;
+    }
+    char message[160];
+    const int length = snprintf(message, sizeof(message), "[INIT] stage=%s status=%s code=%d\r\n",
+                                stage, status, code);
+    if (length > 0 && (size_t)length < sizeof(message)) {
+        (void)debug_uart_tx_try_enqueue(message, (size_t)length);
+        if (!g_running) {
+            debug_uart_tx_flush_blocking();
+        }
+    }
+}
+
+static void trace_board_progress(audio_transport_board_stage_t stage, void *context) {
+    (void)context;
+    static const char *const stages[] = {
+        "board.enter",
+        "board.hirc_ready",
+        "board.hxt_wait",
+        "board.hxt_ready",
+        "board.apll1_wait",
+        "board.apll1_ready",
+        "board.apll0_wait",
+        "board.apll0_ready",
+        "board.sclk_ready",
+        "board.module_clocks_ready",
+        "board.audio_pins_ready",
+        "board.i2c_recovery_ready",
+        "board.i2c_pins_ready",
+        "board.i2c_reset_ready",
+        "board.timebase_ready",
+        "board.peripherals_ready",
+    };
+    if ((unsigned)stage < sizeof(stages) / sizeof(stages[0])) {
+        trace_init(stages[stage], "REACHED", 0);
+    }
+}
+
+static void trace_transport_report(const audio_transport_init_report_t *report) {
+    if (!g_boot_trace) {
+        return;
+    }
+    char message[256];
+    const int length =
+        snprintf(message, sizeof(message),
+                 "[INIT_TRANSPORT] board_status=%d codec_status=%d clocks_valid=%lu "
+                 "core_hz=%lu apll0_hz=%lu apll1_hz=%lu i2s_src_hz=%lu mclk_hz=%lu\r\n",
+                 report->board_status, report->codec_status, (unsigned long)report->clocks_valid,
+                 (unsigned long)report->core_hz, (unsigned long)report->apll0_hz,
+                 (unsigned long)report->apll1_hz, (unsigned long)report->i2s_src_hz,
+                 (unsigned long)report->mclk_hz);
+    if (length > 0 && (size_t)length < sizeof(message)) {
+        (void)debug_uart_tx_try_enqueue(message, (size_t)length);
+        debug_uart_tx_flush_blocking();
+    }
+}
+#define AUDIO_PIPELINE_TRACE_INIT(stage, status, code) trace_init(stage, status, code)
+#else
+#define AUDIO_PIPELINE_TRACE_INIT(stage, status, code) ((void)0)
+#endif
+
+typedef enum {
+    AUDIO_PIPELINE_FAULT_TRANSPORT,
+    AUDIO_PIPELINE_FAULT_SEQUENCE,
+    AUDIO_PIPELINE_FAULT_INFERENCE,
+    AUDIO_PIPELINE_FAULT_PROCESS_DEADLINE,
+    AUDIO_PIPELINE_FAULT_SUBMIT,
+    AUDIO_PIPELINE_FAULT_PUBLISH_DEADLINE,
+    AUDIO_PIPELINE_FAULT_RESTART,
+} audio_pipeline_fault_t;
+
+static void trace_fault(audio_pipeline_fault_t fault, uint32_t detail) {
+#if M55M1_RUNTIME_TELEMETRY
+    const uint32_t bit = 1UL << (unsigned)fault;
+    if ((g_reported_faults & bit) != 0U) {
+        return;
+    }
+    static const char *const stages[] = {
+        "transport", "sequence",         "inference", "process_deadline",
+        "submit",    "publish_deadline", "restart",
+    };
+    audio_transport_health_t health;
+    audio_transport_get_health(&health);
+    char message[320];
+    const int length =
+        snprintf(message, sizeof(message),
+                 "[AUDIO_FAULT] stage=%s detail=%lu seq=%lu expected=%lu "
+                 "deadline=%lu model=%lu restarts=%lu restart_failures=%lu "
+                 "dmic_overrun=%lu dmic_dma=%lu dac_underrun=%lu dac_dma=%lu\r\n",
+                 stages[fault], (unsigned long)detail, (unsigned long)g_stats.last_sequence,
+                 (unsigned long)g_expected_sequence, (unsigned long)g_stats.deadline_misses,
+                 (unsigned long)g_stats.model_faults, (unsigned long)g_stats.restarts,
+                 (unsigned long)g_stats.restart_failures, (unsigned long)health.dmic_overrun_blocks,
+                 (unsigned long)health.dmic_dma_errors, (unsigned long)health.dac_underrun_blocks,
+                 (unsigned long)health.dac_dma_errors);
+    // Log a fault category once, retrying admission if the UART ring was full.
+    if (length > 0 && (size_t)length < sizeof(message) &&
+        debug_uart_tx_try_enqueue(message, (size_t)length)) {
+        g_reported_faults |= bit;
+    }
+#else
+    (void)fault;
+    (void)detail;
+#endif
+}
+
 void audio_pipeline_get_stats(audio_pipeline_stats_t *stats) {
     if (stats != NULL) {
         *stats = g_stats;
@@ -61,13 +175,16 @@ static bool transport_faulted(void) {
 }
 
 /* Foreground only: stop DMA before resetting any shared model/audio history. */
-static void restart_stream(void) {
+static void restart_stream(audio_pipeline_fault_t fault, uint32_t detail) {
     audio_pipeline_stop_safe();
+    // Quiesce both DMA owners before spending any time formatting diagnostics.
+    trace_fault(fault, detail);
     memset(&g_audio_working_set, 0, sizeof(g_audio_working_set));
     if (audio_pipeline_init() && audio_pipeline_start()) {
         ++g_stats.restarts;
     } else {
         ++g_stats.restart_failures;
+        trace_fault(AUDIO_PIPELINE_FAULT_RESTART, 0U);
     }
 }
 
@@ -457,16 +574,32 @@ bool audio_pipeline_init(void) {
     if (g_initialized) {
         return true;
     }
-    if (!audio_transport_init(&transport_report, NULL, NULL) || !transport_report.clocks_valid) {
-        return false;
-    }
 #if M55M1_RUNTIME_TELEMETRY
-    // Enable the UART before model setup so allocation failures are visible.
+    // UART uses its own HIRC source, so board clock boundaries remain observable.
     debug_uart_tx_init();
 #endif
-    if (!deepfir_inference_init()) {
+    AUDIO_PIPELINE_TRACE_INIT("transport", "BEGIN", 0);
+    const bool transport_ok = audio_transport_init(&transport_report,
+#if M55M1_RUNTIME_TELEMETRY
+                                                   g_boot_trace ? trace_board_progress : NULL,
+#else
+                                                   NULL,
+#endif
+                                                   NULL);
+#if M55M1_RUNTIME_TELEMETRY
+    trace_transport_report(&transport_report);
+#endif
+    if (!transport_ok || !transport_report.clocks_valid) {
+        AUDIO_PIPELINE_TRACE_INIT("transport", "FAIL", -1);
         return false;
     }
+    AUDIO_PIPELINE_TRACE_INIT("transport", "OK", 0);
+    AUDIO_PIPELINE_TRACE_INIT("inference", "BEGIN", 0);
+    if (!deepfir_inference_init()) {
+        AUDIO_PIPELINE_TRACE_INIT("inference", "FAIL", -1);
+        return false;
+    }
+    AUDIO_PIPELINE_TRACE_INIT("inference", "OK", 0);
 #if M55M1_AUDIO_UART_PCM_CAPTURE
     debug_uart_tx_init();
     g_capture_sample_count = 0U;
@@ -484,6 +617,7 @@ bool audio_pipeline_init(void) {
     g_debug_stats = (audio_pipeline_debug_stats_t){0};
 #endif
     g_initialized = true;
+    AUDIO_PIPELINE_TRACE_INIT("pipeline", "OK", 0);
     return true;
 }
 
@@ -494,12 +628,19 @@ bool audio_pipeline_start(void) {
     deepfir_inference_reset();
     memset(&g_audio_working_set, 0, sizeof(g_audio_working_set));
     g_expected_sequence = 1U;
-    if (audio_transport_start() != AUDIO_TRANSPORT_STATUS_OK) {
+    AUDIO_PIPELINE_TRACE_INIT("transport_start", "BEGIN", 0);
+    const audio_transport_status_t start_status = audio_transport_start();
+    if (start_status != AUDIO_TRANSPORT_STATUS_OK) {
         audio_transport_stop_safe();
         g_initialized = false;
+        AUDIO_PIPELINE_TRACE_INIT("transport_start", "FAIL", (int)start_status);
         return false;
     }
     g_running = true;
+    AUDIO_PIPELINE_TRACE_INIT("stream", "RUNNING", 0);
+#if M55M1_RUNTIME_TELEMETRY
+    g_boot_trace = false;
+#endif
 #if M55M1_AUDIO_UART_PCM_CAPTURE
     if (!debug_uart_tx_try_enqueue("READY\r\n", 7U)) {
         audio_pipeline_stop_safe();
@@ -523,7 +664,7 @@ void audio_pipeline_poll(void) {
     }
     if (transport_faulted()) {
         ++g_stats.transport_faults;
-        restart_stream();
+        restart_stream(AUDIO_PIPELINE_FAULT_TRANSPORT, 0U);
         return;
     }
 #if M55M1_AUDIO_UART_PCM_CAPTURE
@@ -538,9 +679,21 @@ void audio_pipeline_poll(void) {
     if (!audio_transport_take_capture(g_audio_working_set.capture, &timing)) {
         return;
     }
+#if M55M1_RUNTIME_TELEMETRY
+    if (g_first_capture_trace) {
+        char message[96];
+        const int length = snprintf(
+            message, sizeof(message), "[AUDIO_STAGE] stage=capture seq=%lu completed_cycle=%lu\r\n",
+            (unsigned long)timing.sequence, (unsigned long)timing.completed_cycle);
+        if (length > 0 && (size_t)length < sizeof(message)) {
+            (void)debug_uart_tx_try_enqueue(message, (size_t)length);
+        }
+        g_first_capture_trace = false;
+    }
+#endif
     if (timing.sequence != g_expected_sequence) {
         ++g_stats.sequence_faults;
-        restart_stream();
+        restart_stream(AUDIO_PIPELINE_FAULT_SEQUENCE, timing.sequence);
         return;
     }
     g_stats.last_sequence = timing.sequence;
@@ -574,19 +727,21 @@ void audio_pipeline_poll(void) {
         }
 #endif
         ++g_stats.model_faults;
-        restart_stream();
+        restart_stream(AUDIO_PIPELINE_FAULT_INFERENCE, 0U);
         return;
     }
     g_stats.process_end_cycle = audio_transport_cycles_now();
     if (audio_transport_cycles_to_us(audio_transport_cycles_elapsed(
             timing.completed_cycle, g_stats.process_end_cycle)) >= 1000U) {
         ++g_stats.deadline_misses;
-        restart_stream();
+        restart_stream(AUDIO_PIPELINE_FAULT_PROCESS_DEADLINE,
+                       audio_transport_cycles_to_us(audio_transport_cycles_elapsed(
+                           timing.completed_cycle, g_stats.process_end_cycle)));
         return;
     }
     if (transport_faulted()) {
         ++g_stats.transport_faults;
-        restart_stream();
+        restart_stream(AUDIO_PIPELINE_FAULT_TRANSPORT, 0U);
         return;
     }
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
@@ -609,7 +764,7 @@ void audio_pipeline_poll(void) {
 #endif
     if (submit_status != AUDIO_TRANSPORT_STATUS_OK) {
         ++g_stats.transport_faults;
-        restart_stream();
+        restart_stream(AUDIO_PIPELINE_FAULT_SUBMIT, (uint32_t)submit_status);
         return;
     }
 #if M55M1_AUDIO_UART_PCM_CAPTURE
@@ -630,7 +785,7 @@ void audio_pipeline_poll(void) {
     }
     if (elapsed_us >= 1000U) {
         ++g_stats.deadline_misses;
-        restart_stream();
+        restart_stream(AUDIO_PIPELINE_FAULT_PUBLISH_DEADLINE, elapsed_us);
         return;
     }
     ++g_expected_sequence;

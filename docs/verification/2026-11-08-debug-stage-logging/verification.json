@@ -1,0 +1,67 @@
+{
+  "timestamp": "2026-11-08T15:48:01.156121+07:00",
+  "parent_commit": "4852f14fc8fffbfe4d681faccd1d4bb4753ec38a",
+  "source_sha256": {
+    "services/audio_pipeline/audio_pipeline.c": "313a4a125da4d2da502d2dce8b8cd3cc6c9f545fc5728b3b9de030ce084dbcea",
+    "services/deepfir/deepfir_inference_service.cpp": "35b942480b8b5d5d58be1fd1ffb74cfd31ef4f30f0c989f6f54e88565f1a95c4",
+    "tests/test_deepfir_audio_runtime_debug.py": "345b861c1063891e869aa92646762855fc0ddce7e5dae836948958287fb8651b"
+  },
+  "tools": [
+    {
+      "command": [
+        "rtk",
+        "--version"
+      ],
+      "exit_code": 0,
+      "output": "rtk 0.49.0\n"
+    },
+    {
+      "command": [
+        "python",
+        "--version"
+      ],
+      "exit_code": 0,
+      "output": "Python 3.12.10\n"
+    },
+    {
+      "command": [
+        "C:/Program Files/ArmCompilerforEmbedded6.24/bin/armclang.exe",
+        "--version"
+      ],
+      "exit_code": 0,
+      "output": "Product: Keil MDK Nuvoton Edition - Full Cortex-M\nComponent: Arm Compiler for Embedded 6.24\nTool: armclang [5f371800]\n\nTarget: unspecified-arm-none-none\n"
+    },
+    {
+      "command": [
+        "tmp/style_tools/clang_format/data/bin/clang-format.exe",
+        "--version"
+      ],
+      "exit_code": 0,
+      "output": "clang-format version 18.1.8\n"
+    }
+  ],
+  "acceptance": {
+    "host_numeric_regression": "PASS: 121/121, no skips",
+    "debug_release_configure_build_link": "PASS: all four commands exit 0",
+    "format_and_diff_check": "PASS",
+    "release_diagnostics_removed": "PASS: six trace marker strings absent from Release BIN",
+    "board_init_stage_fault_identification": "NOT_RUN: no flash or debugger session by agent",
+    "compiled_parity": "NOT_RUN: not evidence from these logging changes",
+    "deadline_power_physical_audio": "NOT_RUN: no new board measurements"
+  },
+  "user_reported_previous_uart": {
+    "status": "ALLOCATED",
+    "model_bytes": 516848,
+    "arena_used": 6976,
+    "arena_capacity": 65536,
+    "arena_free": 58560,
+    "model_address": "20100000",
+    "compiled_sha256": "69c1c3d2f2491df24a66c2190f266091bf8c192fcbce6724ee430d5cf28b1c27",
+    "provenance": "UART line supplied by user in chat; not captured or independently reproduced by agent"
+  },
+  "deployment_approved": false,
+  "flash_performed": false,
+  "source_hash_scope": "Working-tree file bytes compiled/tested before Git text normalization",
+  "final_tests_receipt": "20261108_154554_tests_receipt.json",
+  "final_build_receipt": "20261108_154645_build_receipt.json"
+}
