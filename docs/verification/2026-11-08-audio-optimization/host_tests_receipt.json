@@ -1,0 +1,17 @@
+[
+  {
+    "command": [
+      "rtk",
+      "python",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-v"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 27.45911478996277,
+    "log": "20261108_182702_tests.log"
+  }
+]

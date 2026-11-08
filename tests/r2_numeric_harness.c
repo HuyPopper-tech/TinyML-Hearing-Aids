@@ -67,7 +67,7 @@ void test_reset(void) {
     deepfir_model_adapter_reset(&adapter);
     adapter.fft = fft;
     adapter.infer_mapped = infer;
-    adapter.feature = deepfir_feature_pcm16;
+    adapter.feature = deepfir_feature_float;
     adapter.feature_context = &frontend;
     frontend.scale = deepfir_input_scale[0];
     frontend.fft = fft;

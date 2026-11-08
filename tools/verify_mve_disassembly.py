@@ -11,17 +11,15 @@ from pathlib import Path
 
 VECTOR_REGISTER = re.compile(r"\bq[0-7]\b", re.IGNORECASE)
 REQUIRED_KERNELS = (
-    "deepfir_feature_pcm16", "deepfir_dsp_process_mve", "arm_cfft_f32",
+    "deepfir_feature_float", "deepfir_dsp_process_mve", "arm_cfft_f32",
     "arm_vlog_f32", "arm_vexp_f32", "arm_q15_to_float",
 )
 
 REQUIRED_MAP_REFERENCES = (
-    "deepfir_features.o(.text.deepfir_feature_pcm16) refers to arm_q15_to_float.o",
-    "deepfir_features.o(.text.deepfir_feature_pcm16) refers to arm_vlog_f32.o",
-    "deepfir_features.o(.text.deepfir_feature_pcm16) refers to arm_vexp_f32.o",
-    "deepfir_features.o(.text.deepfir_feature_pcm16) refers to arm_scale_f32.o",
+    "deepfir_features.o(.text.deepfir_feature_float) refers to arm_vlog_f32.o",
+    "deepfir_features.o(.text.deepfir_feature_float) refers to arm_vexp_f32.o",
+    "deepfir_features.o(.text.deepfir_feature_float) refers to arm_scale_f32.o",
     "deepfir_dsp_process_mve",
-    "deepfir_model_adapter.o(.text.deepfir_model_adapter_process_hop) refers to arm_q15_to_float.o",
     "deepfir_model_adapter.o(.text.deepfir_model_adapter_process_pcm16) refers to arm_q15_to_float.o",
 )
 

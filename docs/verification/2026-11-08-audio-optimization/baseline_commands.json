@@ -1,0 +1,73 @@
+[
+  {
+    "command": [
+      "rtk",
+      "python",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-v"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 26.972827911376953,
+    "log": "20261108_180223_baseline_tests.log"
+  },
+  {
+    "command": [
+      "rtk",
+      "proxy",
+      "cmd",
+      "/c",
+      "build.bat",
+      "debug",
+      "config"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 3.1914126873016357,
+    "log": "20261108_180223_debug_config.log"
+  },
+  {
+    "command": [
+      "rtk",
+      "proxy",
+      "cmd",
+      "/c",
+      "build.bat",
+      "debug",
+      "build"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 4.305196285247803,
+    "log": "20261108_180223_debug_build.log"
+  },
+  {
+    "command": [
+      "rtk",
+      "proxy",
+      "cmd",
+      "/c",
+      "build.bat",
+      "release",
+      "config"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 3.8886959552764893,
+    "log": "20261108_180223_release_config.log"
+  },
+  {
+    "command": [
+      "rtk",
+      "proxy",
+      "cmd",
+      "/c",
+      "build.bat",
+      "release",
+      "build"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 4.178010940551758,
+    "log": "20261108_180223_release_build.log"
+  }
+]

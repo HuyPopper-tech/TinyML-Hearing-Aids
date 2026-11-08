@@ -1,0 +1,49 @@
+[
+  {
+    "command": [
+      "rtk",
+      "proxy",
+      "D:\\TinyML-Hearing-Aids\\diagnostics\\i2c_stuck_trace_20261108_162019\\style_tools\\clang_format\\data\\bin\\clang-format.exe",
+      "--dry-run",
+      "--Werror",
+      "services/audio_pipeline/audio_pipeline.c",
+      "services/deepfir/deepfir_dsp.c",
+      "services/deepfir/deepfir_dsp.h",
+      "services/deepfir/deepfir_features.c",
+      "services/deepfir/deepfir_inference_service.cpp",
+      "services/deepfir/deepfir_inference_service.h",
+      "services/deepfir/deepfir_model_adapter.c",
+      "services/deepfir/deepfir_model_adapter.h",
+      "services/deepfir/deepfir_reconstruction.c",
+      "tests/r2_numeric_harness.c",
+      "tests/r2_optimization_harness.c"
+    ],
+    "exit_code": 0,
+    "log": "format.log"
+  },
+  {
+    "command": [
+      "rtk",
+      "proxy",
+      "python",
+      "-X",
+      "utf8",
+      "tools/verify_mve_disassembly.py",
+      "build/M55M1_GestureAI.axf",
+      "--objdump",
+      "C:/ST/STM32CubeCLT_1.20.0/GNU-tools-for-STM32/bin/arm-none-eabi-objdump.EXE"
+    ],
+    "exit_code": 0,
+    "log": "mve.log"
+  },
+  {
+    "command": [
+      "rtk",
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "log": "diff_check.log"
+  }
+]

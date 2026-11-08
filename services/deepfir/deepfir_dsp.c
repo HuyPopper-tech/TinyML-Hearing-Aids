@@ -104,7 +104,7 @@ __attribute__((noinline)) static int deepfir_dsp_process_mve(deepfir_dsp_state_t
         extended[index] = state->history[DEEPFIR_DSP_TAPS - 2u - index];
     }
     memcpy(extended + DEEPFIR_DSP_TAPS - 1u, samples, DEEPFIR_DSP_HOP * sizeof(samples[0]));
-    memcpy(state->previous_taps, state->current_taps, sizeof(state->previous_taps));
+    // Reset and every completed hop leave previous_taps equal to current_taps.
     memcpy(state->current_taps, next_taps, sizeof(state->current_taps));
 
     for (uint32_t sample = 0u; sample < DEEPFIR_DSP_HOP; sample += 4u) {

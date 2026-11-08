@@ -1,5 +1,38 @@
 # Project Progress
 
+## Continuous audio/inference optimization — 2026-11-08
+
+Approved approach1 implemented inline, no agents: adapter normalizes PCM once and
+frontend writes current context directly; guarded reciprocal quantization and
+nonnegative magnitude-shift feedback preserve tested integer results. Removed
+redundant spectrum initialization/MVE tap copy; reconstruction uses installed
+CMSIS sin/cos with explicit radians/degrees and safe libm fallback. Existing
+complex FFT retained after real-FFT candidate failed the feature-code budget.
+Debug raw16-event latest-hop trace reports only with DMA stopped; PCM timing and
+60,000-hop fail-fast Release probe extend existing instrumentation. Ordinary
+recovery still full-resets/restarts; normal Release UART remains off.
+
+Verified127/127 host tests, including11,570,644 exact quantizer and15,400,960 exact
+feedback comparisons; both Arm6.24 builds, probe/replay links and final scoped MVE
+checks pass. Final Release RW_RAM77168B (-768), Debug77920B (-536); arena reserved
+65536B, uncached DMA320B and stack8192B unchanged. Final Debug BIN638112B
+SHAf0a6e7623900e34c5d8e19cc06ac1deaf386c8e0874b876cd0ebc744048f6477;
+Release BIN615392B SHA72ea67e693846caa642286c2a7e9e90ecfaf03f196b3542f9fc5867384e2acbf.
+Release BIN grows2592B; no claimed cycle/power saving from static code changes.
+
+Canonical gain/phase DSP replay with synthetic PCM covers26441 hops: max float
+output error2.9802322e-7,136 PCM samples differ by at most1 code. This is neither
+controller compiled parity nor physical quality evidence. Compiled execution
+BLOCKED without an authorized backend; raw Linux receipt not rerun. No flash,
+board init/actual arena/stack, full-hop deadline, acoustic latency or power run.
+Model/package/golden/libs/pins/clocks unchanged; deployment_approved remains false.
+Both ordinary build caches restored with opt-ins OFF; editor uses Debug.
+
+Guide: docs/audio_inference_optimization.md. Acceptance/commands/hashes/memory:
+docs/verification/2026-11-08-audio-optimization/. Next: authorized compiled replay,
+actual target memory/MVE checks, matched60s Release timing and physical audio/power.
+Intermittent board_status=5 root-cause evidence remains open independently.
+
 ## I2C_STUCK recovery trace — 2026-11-08
 
 Implemented the approved firmware-only trace for intermittent board_status=5 on

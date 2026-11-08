@@ -55,6 +55,7 @@ class R2NativeTests(unittest.TestCase):
         extra = []
         if cls.cmsis:
             sources += ['services/deepfir/deepfir_cmsis_fft_adapter.c',
+                'libs/CMSIS/DSP/Source/ControllerFunctions/arm_sin_cos_f32.c',
                 'libs/CMSIS/DSP/Source/TransformFunctions/arm_cfft_f32.c',
                 'libs/CMSIS/DSP/Source/TransformFunctions/arm_cfft_init_f32.c',
                 'libs/CMSIS/DSP/Source/TransformFunctions/arm_cfft_radix8_f32.c',

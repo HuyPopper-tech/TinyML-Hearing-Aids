@@ -24,10 +24,14 @@ class DeepfirAudioRuntimeDebugTests(unittest.TestCase):
         #include <cstring>
         #include <string>
         #include "services/deepfir/deepfir_tensor_binding.h"
-        static bool g_initialized, g_processing, g_first_hop_trace = true, accessible = true;
+        static bool g_initialized, g_processing, accessible = true;
+        static uint32_t cycle;
+        uint32_t audio_transport_cycles_now() { return ++cycle; }
         static std::string logs;
         static unsigned drains;
+        static bool accept_log = true;
         bool debug_uart_tx_try_enqueue(const char *message, size_t bytes) {
+            if (!accept_log) return false;
             logs.append(message, bytes); return true;
         }
         void debug_uart_tx_flush_blocking() { ++drains; }
@@ -97,16 +101,30 @@ class DeepfirAudioRuntimeDebugTests(unittest.TestCase):
             assert(logs.find("tensor.storage_or_rank") != std::string::npos);
             assert(find_tensor(true, 99) == nullptr);
             const unsigned before = drains;
-            logs.clear(); trace_hop("fft.begin", 0);
+            logs.clear(); trace_hop(DEEPFIR_HOP_FFT_BEGIN, 0);
             assert(logs.empty()); // MVE boot self-tests must not consume first-hop markers.
             g_initialized = true; g_processing = true;
-            trace_hop("invoke.begin", 0);
-            assert(logs.find("invoke.begin") != std::string::npos);
+            trace_hop(DEEPFIR_HOP_INVOKE_BEGIN, -2);
+            trace_report_hop();
+            assert(logs.empty()); // Never format/enqueue while the hop is active.
             assert(drains == before);
-            g_first_hop_trace = false; logs.clear(); trace_hop("invoke.begin", 0);
+            g_processing = false;
+            trace_report_hop();
+            assert(logs.find("stage=invoke.begin code=-2 cycle=1") != std::string::npos);
+            assert(drains > before); // Draining is permitted only at explicit stopped reporting.
+            logs.clear(); trace_report_hop();
+            trace_hop(DEEPFIR_HOP_INVOKE_BEGIN, 0);
             assert(logs.empty());
+            g_processing = true;
+            for (int i=0; i<20; ++i) trace_hop(DEEPFIR_HOP_ADAPTER_FAIL, i);
+            g_processing = false; accept_log = false;
+            trace_report_hop(); assert(logs.empty());
+            accept_log = true; trace_report_hop();
+            assert(logs.find("stage=adapter.fail code=19") != std::string::npos);
+            assert(logs.find("overflow=1") != std::string::npos);
+            logs.clear(); const unsigned after_report = drains;
             g_initialized = true; trace_init("tensor.binding", "BEGIN", 0);
-            assert(logs.empty() && drains == before);
+            assert(logs.empty() && drains == after_report);
             return 0;
         }
         '''
@@ -216,6 +234,9 @@ class DeepfirAudioRuntimeDebugTests(unittest.TestCase):
             }
             bool deepfir_inference_init(void) { return !fail_inference_init; }
             void deepfir_inference_reset(void) { ++resets; }
+            void deepfir_inference_report_trace(void) {
+                if (audio_running) { fprintf(stderr, "trace before DMA stop"); exit(98); }
+            }
             bool deepfir_inference_process(const int16_t *input, int16_t *output,
                                            uint32_t count)
             {
@@ -290,9 +311,10 @@ class DeepfirAudioRuntimeDebugTests(unittest.TestCase):
                 if (!audio_pipeline_start()) return 1;
                 const unsigned boot_flushes = blocking_flushes;
                 if (!boot_flushes) return 12;
-                // Consume first-hop markers before checking periodic telemetry.
+                // Capturing/processing a hop must not add formatted first-hop markers.
+                const unsigned boot_logs = logs;
                 audio_pipeline_poll();
-                if (!strstr(all_logs, "[AUDIO_STAGE] stage=capture seq=1")) return 13;
+                if (logs != boot_logs) return 13;
                 const unsigned initial_logs = logs;
                 for (uint32_t index = 0U; index < 999U; ++index) {
                     audio_pipeline_poll();

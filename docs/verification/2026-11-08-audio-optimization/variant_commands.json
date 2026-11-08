@@ -1,0 +1,82 @@
+[
+  {
+    "name": "release_probe_config",
+    "command": [
+      "rtk",
+      "proxy",
+      "cmake",
+      "--preset",
+      "m55m1-release",
+      "-DM55M1_AUDIO_RELEASE_PROBE=ON"
+    ],
+    "exit_code": 0,
+    "log": "20261108_183101_release_probe_config.log"
+  },
+  {
+    "name": "release_probe_build",
+    "command": [
+      "rtk",
+      "proxy",
+      "cmake",
+      "--build",
+      "--preset",
+      "m55m1-release"
+    ],
+    "exit_code": 0,
+    "log": "20261108_183101_release_probe_build.log"
+  },
+  {
+    "name": "compiled_replay_config",
+    "command": [
+      "rtk",
+      "proxy",
+      "cmake",
+      "--preset",
+      "m55m1-release",
+      "-DM55M1_DEEPFIR_COMPILED_REPLAY=ON"
+    ],
+    "exit_code": 0,
+    "log": "20261108_183101_compiled_replay_config.log"
+  },
+  {
+    "name": "compiled_replay_build",
+    "command": [
+      "rtk",
+      "proxy",
+      "cmake",
+      "--build",
+      "--preset",
+      "m55m1-release"
+    ],
+    "exit_code": 0,
+    "log": "20261108_183101_compiled_replay_build.log"
+  },
+  {
+    "name": "restore_release",
+    "command": [
+      "rtk",
+      "proxy",
+      "cmd",
+      "/c",
+      "build.bat",
+      "release",
+      "build"
+    ],
+    "exit_code": 0,
+    "log": "20261108_183101_restore_release.log"
+  },
+  {
+    "name": "restore_debug_editor",
+    "command": [
+      "rtk",
+      "proxy",
+      "cmd",
+      "/c",
+      "build.bat",
+      "debug",
+      "config"
+    ],
+    "exit_code": 0,
+    "log": "20261108_183101_restore_debug_editor.log"
+  }
+]

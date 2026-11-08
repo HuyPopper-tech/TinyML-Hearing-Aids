@@ -117,7 +117,6 @@ void deepfir_model_adapter_reset(deepfir_model_adapter_t *adapter) {
         adapter->next_h[index] = (int16_t)adapter->output_zero_points[2];
         adapter->next_c[index] = (int16_t)adapter->output_zero_points[3];
     }
-    memset(adapter->feature_buffer, 0, sizeof(adapter->feature_buffer));
     for (index = 0; index < DEEPFIR_MODEL_CONTEXT; ++index) {
         adapter->feature_context_buffer[index] = (int16_t)adapter->input_zero_points[0];
     }
@@ -134,7 +133,8 @@ int16_t deepfir_state_feedback(int16_t code, int64_t multiplier, unsigned shift,
     // Round the magnitude then restore the sign so negative ties also round away.
     const int64_t denominator = INT64_C(1) << shift;
     const int64_t value = ((int64_t)code - source_zero) * multiplier;
-    int64_t rounded = ((value < 0 ? -value : value) + denominator / 2) / denominator;
+    // The rounded magnitude is nonnegative; division by 2^shift is exactly a shift.
+    int64_t rounded = ((value < 0 ? -value : value) + denominator / 2) >> shift;
     if (value < 0) {
         rounded = -rounded;
     }
@@ -189,8 +189,10 @@ int deepfir_model_adapter_process_hop(deepfir_model_adapter_t *adapter, const in
             return -3;
         }
     }
-    memcpy(adapter->feature_context_buffer + DEEPFIR_MODEL_FEATURES, feature,
-           DEEPFIR_MODEL_FEATURES * sizeof(feature[0]));
+    int16_t *current_feature = adapter->feature_context_buffer + DEEPFIR_MODEL_FEATURES;
+    if (feature != current_feature) {
+        memcpy(current_feature, feature, DEEPFIR_MODEL_FEATURES * sizeof(feature[0]));
+    }
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     mark_probe(adapter, DEEPFIR_PROBE_BEFORE_INFER);
 #endif
@@ -254,18 +256,12 @@ int deepfir_model_adapter_process_pcm16(deepfir_model_adapter_t *adapter, const 
     if (!adapter || !pcm16 || !output || !adapter->feature || sample_count != DEEPFIR_DSP_HOP) {
         return -1;
     }
-    if (adapter->faulted) {
+    if (adapter->faulted || !adapter->qparams_ready || !adapter->infer_mapped || !adapter->fft) {
         return -2;
     }
     if ((uintptr_t)output < (uintptr_t)pcm16 + sample_count * sizeof(*pcm16) &&
         (uintptr_t)pcm16 < (uintptr_t)output + sample_count * sizeof(*output)) {
         return -1;
-    }
-    status =
-        adapter->feature(pcm16, sample_count, adapter->feature_buffer, adapter->feature_context);
-    if (status != 0) {
-        adapter->faulted = 1;
-        return status;
     }
     {
         float pcm[DEEPFIR_DSP_HOP];
@@ -276,7 +272,13 @@ int deepfir_model_adapter_process_pcm16(deepfir_model_adapter_t *adapter, const 
             pcm[index] = (float)pcm16[index] / 32768.0f;
         }
 #endif
-        return deepfir_model_adapter_process_hop(adapter, adapter->feature_buffer, pcm,
-                                                 sample_count, output);
+        int16_t *current_feature = adapter->feature_context_buffer + DEEPFIR_MODEL_FEATURES;
+        status = adapter->feature(pcm, sample_count, current_feature, adapter->feature_context);
+        if (status != 0) {
+            adapter->faulted = 1;
+            return status;
+        }
+        return deepfir_model_adapter_process_hop(adapter, current_feature, pcm, sample_count,
+                                                 output);
     }
 }

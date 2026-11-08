@@ -59,8 +59,6 @@ static bool g_feature_mve_ready;
 static bool g_fir_mve_ready;
 static uint32_t g_mve_self_test_us;
 #if M55M1_RUNTIME_TELEMETRY
-static bool g_first_hop_trace = true;
-
 // Only cold initialization drains UART. Runtime breadcrumbs never wait for TX.
 void trace_init(const char *stage, const char *status, int code) {
     if (g_initialized) {
@@ -75,22 +73,83 @@ void trace_init(const char *stage, const char *status, int code) {
     }
 }
 
-void trace_hop(const char *stage, int status) {
+enum deepfir_hop_stage_t {
+    DEEPFIR_HOP_FRONTEND_BEGIN,
+    DEEPFIR_HOP_FFT_BEGIN,
+    DEEPFIR_HOP_FFT_END,
+    DEEPFIR_HOP_FRONTEND_END,
+    DEEPFIR_HOP_INPUTS_READY,
+    DEEPFIR_HOP_OUTPUTS_READY,
+    DEEPFIR_HOP_FEEDBACK_DONE,
+    DEEPFIR_HOP_TAPS_DONE,
+    DEEPFIR_HOP_FIR_DONE,
+    DEEPFIR_HOP_INVOKE_BEGIN,
+    DEEPFIR_HOP_INVOKE_END,
+    DEEPFIR_HOP_ADAPTER_FAIL,
+    DEEPFIR_HOP_PCM_NONFINITE,
+    DEEPFIR_HOP_PCM_DONE,
+};
+
+struct deepfir_hop_event_t {
+    deepfir_hop_stage_t stage;
+    int status;
+    uint32_t cycle;
+};
+
+// Foreground owns one bounded trace of the latest hop, retained through stream reset.
+static deepfir_hop_event_t g_hop_events[16];
+static unsigned g_hop_event_count;
+static unsigned g_hop_reported_events;
+static bool g_hop_trace_overflow;
+
+void trace_hop(deepfir_hop_stage_t stage, int status) {
 #if M55M1_DEEPFIR_COMPILED_REPLAY
     (void)stage;
     (void)status;
 #else
-    // The FFT also runs during boot self-tests; only the first PCM call owns these markers.
-    if (!g_initialized || !g_processing || !g_first_hop_trace) {
+    // Boot self-tests do not own a live PCM hop and must not overwrite failure evidence.
+    if (!g_initialized || !g_processing) {
         return;
     }
-    char message[96];
-    const int length =
-        std::snprintf(message, sizeof(message), "[HOP_STAGE] stage=%s code=%d\r\n", stage, status);
-    if (length > 0 && static_cast<size_t>(length) < sizeof(message)) {
-        (void)debug_uart_tx_try_enqueue(message, static_cast<size_t>(length));
+    unsigned index = g_hop_event_count;
+    if (index < sizeof(g_hop_events) / sizeof(g_hop_events[0])) {
+        ++g_hop_event_count;
+    } else {
+        // Keep the last failure even if a future change adds too many stage marks.
+        index = g_hop_event_count - 1U;
+        g_hop_trace_overflow = true;
     }
+    g_hop_events[index] = {stage, status, audio_transport_cycles_now()};
 #endif
+}
+
+void trace_report_hop(void) {
+    if (g_processing) {
+        return;
+    }
+    static const char *const names[] = {
+        "frontend.begin", "fft.begin",     "fft.end",       "frontend.end", "inputs_ready",
+        "outputs_ready",  "feedback_done", "taps_done",     "fir_done",     "invoke.begin",
+        "invoke.end",     "adapter.fail",  "pcm.nonfinite", "pcm.done",
+    };
+    if (g_hop_reported_events < g_hop_event_count) {
+        // The caller has stopped DMA: drain here so a full ring cannot hide the failure.
+        debug_uart_tx_flush_blocking();
+    }
+    while (g_hop_reported_events < g_hop_event_count) {
+        const auto &event = g_hop_events[g_hop_reported_events];
+        char message[128];
+        const int length = std::snprintf(
+            message, sizeof(message), "[HOP_STAGE] stage=%s code=%d cycle=%lu overflow=%u\r\n",
+            names[event.stage], event.status, static_cast<unsigned long>(event.cycle),
+            g_hop_trace_overflow ? 1U : 0U);
+        if (length <= 0 || static_cast<size_t>(length) >= sizeof(message) ||
+            !debug_uart_tx_try_enqueue(message, static_cast<size_t>(length))) {
+            return;
+        }
+        ++g_hop_reported_events;
+        debug_uart_tx_flush_blocking();
+    }
 }
 
 void trace_tensor(bool input, unsigned semantic, const char *kind,
@@ -194,29 +253,26 @@ void adapter_probe_mark(uint32_t stage, void *context) {
     if (stage < DEEPFIR_PROBE_STAGE_COUNT) {
         g_adapter_stage_cycles[stage] = audio_transport_cycles_now();
 #if M55M1_RUNTIME_TELEMETRY
-        static const char *const stages[] = {
-            "inputs_ready", "outputs_ready", "feedback_done", "taps_done", "fir_done",
-        };
-        DEEPFIR_TRACE_HOP(stages[stage], 0);
+        DEEPFIR_TRACE_HOP(static_cast<deepfir_hop_stage_t>(DEEPFIR_HOP_INPUTS_READY + stage), 0);
 #endif
     }
 }
 
 int timed_fft_callback(float *buffer, uint32_t length, uint8_t inverse, void *context) {
-    DEEPFIR_TRACE_HOP("fft.begin", 0);
+    DEEPFIR_TRACE_HOP(DEEPFIR_HOP_FFT_BEGIN, 0);
     const uint32_t start = audio_transport_cycles_now();
     g_last_timing.pre_fft_us = elapsed_us(g_feature_start_cycle, start);
     const int status = deepfir_cmsis_fft_callback(buffer, length, inverse, context);
     g_feature_fft_end_cycle = audio_transport_cycles_now();
     g_last_timing.fft_us = elapsed_us(start, g_feature_fft_end_cycle);
     g_feature_fft_called = true;
-    DEEPFIR_TRACE_HOP("fft.end", status);
+    DEEPFIR_TRACE_HOP(DEEPFIR_HOP_FFT_END, status);
     return status;
 }
 #endif
 
-int feature_callback(const int16_t *pcm16, uint32_t sample_count, int16_t *feature, void *context) {
-    DEEPFIR_TRACE_HOP("frontend.begin", 0);
+int feature_callback(const float *pcm, uint32_t sample_count, int16_t *feature, void *context) {
+    DEEPFIR_TRACE_HOP(DEEPFIR_HOP_FRONTEND_BEGIN, 0);
     const uint32_t start = audio_transport_cycles_now();
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     g_feature_start_cycle = start;
@@ -225,10 +281,10 @@ int feature_callback(const int16_t *pcm16, uint32_t sample_count, int16_t *featu
     g_last_timing.fft_us = 0U;
     g_last_timing.post_fft_us = 0U;
 #endif
-    const int status = deepfir_feature_pcm16(pcm16, sample_count, feature, context);
+    const int status = deepfir_feature_float(pcm, sample_count, feature, context);
     const uint32_t end = audio_transport_cycles_now();
     g_last_timing.feature_us = elapsed_us(start, end);
-    DEEPFIR_TRACE_HOP("frontend.end", status);
+    DEEPFIR_TRACE_HOP(DEEPFIR_HOP_FRONTEND_END, status);
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     if (g_feature_fft_called) {
         g_last_timing.post_fft_us = elapsed_us(g_feature_fft_end_cycle, end);
@@ -248,12 +304,12 @@ int infer_callback(const deepfir_tensor_map_t *inputs, uint32_t input_count,
         std::memcpy(g_inputs[index]->data.i16, inputs[index].data,
                     inputs[index].elements * sizeof(int16_t));
     }
-    DEEPFIR_TRACE_HOP("invoke.begin", 0);
+    DEEPFIR_TRACE_HOP(DEEPFIR_HOP_INVOKE_BEGIN, 0);
     const uint32_t start = audio_transport_cycles_now();
     const TfLiteStatus status = g_interpreter->Invoke();
     const uint32_t end = audio_transport_cycles_now();
     g_last_timing.invoke_us = elapsed_us(start, end);
-    DEEPFIR_TRACE_HOP("invoke.end", static_cast<int>(status));
+    DEEPFIR_TRACE_HOP(DEEPFIR_HOP_INVOKE_END, static_cast<int>(status));
 
     ethosu_runtime_stats_t runtime_stats = {};
     if (ethosu_runtime_get_stats(&runtime_stats) == ETHOSU_RUNTIME_OK) {
@@ -548,27 +604,33 @@ extern "C" bool deepfir_inference_process(const int16_t *input, int16_t *output,
         return false;
     }
     g_processing = true;
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+    // A failed hop must not report stage durations left over from its predecessor.
+    g_last_timing = {};
+#endif
+#if M55M1_RUNTIME_TELEMETRY
+    g_hop_event_count = 0U;
+    g_hop_reported_events = 0U;
+    g_hop_trace_overflow = false;
+#endif
     float output_float[DEEPFIR_DSP_HOP];
     const uint32_t start = audio_transport_cycles_now();
     const int status =
         deepfir_model_adapter_process_pcm16(&g_adapter, input, sample_count, output_float);
     g_last_timing.total_us = elapsed_us(start, audio_transport_cycles_now());
     if (status != 0) {
-        DEEPFIR_TRACE_HOP("adapter.fail", status);
-#if M55M1_RUNTIME_TELEMETRY
-        g_first_hop_trace = false;
-#endif
+        DEEPFIR_TRACE_HOP(DEEPFIR_HOP_ADAPTER_FAIL, status);
         g_faulted = true;
         g_processing = false;
         return false;
     }
     int16_t rendered[DEEPFIR_DSP_HOP];
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+    const uint32_t pcm_start = audio_transport_cycles_now();
+#endif
     for (uint32_t index = 0U; index < sample_count; ++index) {
         if (!std::isfinite(output_float[index])) {
-            DEEPFIR_TRACE_HOP("pcm.nonfinite", static_cast<int>(index));
-#if M55M1_RUNTIME_TELEMETRY
-            g_first_hop_trace = false;
-#endif
+            DEEPFIR_TRACE_HOP(DEEPFIR_HOP_PCM_NONFINITE, static_cast<int>(index));
             g_faulted = true;
             g_processing = false;
             return false;
@@ -576,9 +638,9 @@ extern "C" bool deepfir_inference_process(const int16_t *input, int16_t *output,
         rendered[index] = deepfir_pcm16_from_float(output_float[index]);
     }
     std::memcpy(output, rendered, sizeof(rendered));
-    DEEPFIR_TRACE_HOP("pcm.done", 0);
-#if M55M1_RUNTIME_TELEMETRY
-    g_first_hop_trace = false;
+    DEEPFIR_TRACE_HOP(DEEPFIR_HOP_PCM_DONE, 0);
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+    g_last_timing.pcm_us = elapsed_us(pcm_start, audio_transport_cycles_now());
 #endif
     g_last_timing.total_us = elapsed_us(start, audio_transport_cycles_now());
     const uint32_t accounted = g_last_timing.feature_us + g_last_timing.invoke_us;
@@ -596,12 +658,19 @@ extern "C" bool deepfir_inference_process(const int16_t *input, int16_t *output,
     g_last_timing.fir_us = elapsed_us(g_adapter_stage_cycles[DEEPFIR_PROBE_AFTER_TAPS],
                                       g_adapter_stage_cycles[DEEPFIR_PROBE_AFTER_FIR]);
     const uint32_t probe_accounted = accounted + g_last_timing.bridge_us + g_last_timing.carry_us +
-                                     g_last_timing.taps_us + g_last_timing.fir_us;
+                                     g_last_timing.taps_us + g_last_timing.fir_us +
+                                     g_last_timing.pcm_us;
     g_last_timing.other_us =
         g_last_timing.total_us > probe_accounted ? g_last_timing.total_us - probe_accounted : 0U;
 #endif
     g_processing = false;
     return true;
+}
+
+extern "C" void deepfir_inference_report_trace(void) {
+#if M55M1_RUNTIME_TELEMETRY
+    trace_report_hop();
+#endif
 }
 
 extern "C" void deepfir_inference_get_last_timing(deepfir_inference_timing_t *timing) {

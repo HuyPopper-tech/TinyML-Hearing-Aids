@@ -1,0 +1,267 @@
+{
+  "20261108_180223_baseline": {
+    "build-debug": {
+      "regions": {
+        "ITCM": {
+          "address": "0x00000000",
+          "bytes": 436
+        },
+        "ER_ROM": {
+          "address": "0x00100000",
+          "bytes": 116296
+        },
+        "DTCM_VTOR": {
+          "address": "0x20000000",
+          "bytes": 712
+        },
+        "DTCM": {
+          "address": "0x200002c8",
+          "bytes": 2048
+        },
+        "ARM_LIB_STACK": {
+          "address": "0x2001e000",
+          "bytes": 8192
+        },
+        "U55_MODEL_RAM": {
+          "address": "0x20100000",
+          "bytes": 516852
+        },
+        "RW_NOINIT": {
+          "address": "0x201c0000",
+          "bytes": 0
+        },
+        "RW_RAM": {
+          "address": "0x201c0000",
+          "bytes": 78456
+        },
+        "ARM_LIB_HEAP": {
+          "address": "0x201d3278",
+          "bytes": 2048
+        },
+        "SRAM_NONCACHEABLE": {
+          "address": "0x20230000",
+          "bytes": 320
+        },
+        "SRAM_NONCACHEABLE_END": {
+          "address": "0x20250000",
+          "bytes": 0
+        },
+        "LPSRAM": {
+          "address": "0x20310000",
+          "bytes": 0
+        }
+      },
+      "symbols": [
+        "(anonymous namespace)::g_tensor_arena    0x201c00e0   Data       65536  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_114g_tensor_arenaE)",
+        "(anonymous namespace)::g_feature_state   0x201d00e8   Data        2072  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_115g_feature_stateE)",
+        "(anonymous namespace)::g_adapter         0x201d0a40   Data        6056  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_19g_adapterE)"
+      ],
+      "stack_main_estimate": [
+        "Maximum Stack Usage for main 0x19a8 bytes."
+      ],
+      "totals": [
+        "Total RO  Size (Code + RO Data)               634296 ( 619.43kB)",
+        "Total RW  Size (RW Data + ZI Data)             91064 (  88.93kB)",
+        "Total ROM Size (Code + RO Data + RW Data)     634348 ( 619.48kB)"
+      ],
+      "map_sha256": "39482bddec888c6fb55a8e8cba21e08edc19732dc2d487dda3a39e8271d61570"
+    },
+    "build": {
+      "regions": {
+        "ITCM": {
+          "address": "0x00000000",
+          "bytes": 320
+        },
+        "ER_ROM": {
+          "address": "0x00100000",
+          "bytes": 94860
+        },
+        "DTCM_VTOR": {
+          "address": "0x20000000",
+          "bytes": 712
+        },
+        "DTCM": {
+          "address": "0x200002c8",
+          "bytes": 0
+        },
+        "ARM_LIB_STACK": {
+          "address": "0x2001e000",
+          "bytes": 8192
+        },
+        "U55_MODEL_RAM": {
+          "address": "0x20100000",
+          "bytes": 516852
+        },
+        "RW_NOINIT": {
+          "address": "0x201c0000",
+          "bytes": 0
+        },
+        "RW_RAM": {
+          "address": "0x201c0000",
+          "bytes": 77936
+        },
+        "ARM_LIB_HEAP": {
+          "address": "0x201d3070",
+          "bytes": 2048
+        },
+        "SRAM_NONCACHEABLE": {
+          "address": "0x20230000",
+          "bytes": 320
+        },
+        "SRAM_NONCACHEABLE_END": {
+          "address": "0x20250000",
+          "bytes": 0
+        },
+        "LPSRAM": {
+          "address": "0x20310000",
+          "bytes": 0
+        }
+      },
+      "symbols": [
+        "(anonymous namespace)::g_tensor_arena    0x201c0220   Data       65536  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_114g_tensor_arenaE)",
+        "(anonymous namespace)::g_feature_state   0x201d0220   Data        2072  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_115g_feature_stateE)",
+        "(anonymous namespace)::g_adapter         0x201d0b38   Data        6048  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_19g_adapterE)"
+      ],
+      "stack_main_estimate": [],
+      "totals": [
+        "Total RO  Size (Code + RO Data)               612744 ( 598.38kB)",
+        "Total RW  Size (RW Data + ZI Data)             88496 (  86.42kB)",
+        "Total ROM Size (Code + RO Data + RW Data)     612776 ( 598.41kB)"
+      ],
+      "map_sha256": "974e4ca054b5d93c1a2e5be5616982225732928c9420547655258128a7271442"
+    }
+  },
+  "20261108_182911_build": {
+    "build-debug": {
+      "regions": {
+        "ITCM": {
+          "address": "0x00000000",
+          "bytes": 436
+        },
+        "ER_ROM": {
+          "address": "0x00100000",
+          "bytes": 120004
+        },
+        "DTCM_VTOR": {
+          "address": "0x20000000",
+          "bytes": 712
+        },
+        "DTCM": {
+          "address": "0x200002c8",
+          "bytes": 2048
+        },
+        "ARM_LIB_STACK": {
+          "address": "0x2001e000",
+          "bytes": 8192
+        },
+        "U55_MODEL_RAM": {
+          "address": "0x20100000",
+          "bytes": 516852
+        },
+        "RW_NOINIT": {
+          "address": "0x201c0000",
+          "bytes": 0
+        },
+        "RW_RAM": {
+          "address": "0x201c0000",
+          "bytes": 77920
+        },
+        "ARM_LIB_HEAP": {
+          "address": "0x201d3060",
+          "bytes": 2048
+        },
+        "SRAM_NONCACHEABLE": {
+          "address": "0x20230000",
+          "bytes": 320
+        },
+        "SRAM_NONCACHEABLE_END": {
+          "address": "0x20250000",
+          "bytes": 0
+        },
+        "LPSRAM": {
+          "address": "0x20310000",
+          "bytes": 0
+        }
+      },
+      "symbols": [
+        "(anonymous namespace)::g_hop_events      0x201c004c   Data         192  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_112g_hop_eventsE)",
+        "(anonymous namespace)::g_tensor_arena    0x201c01c0   Data       65536  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_114g_tensor_arenaE)",
+        "(anonymous namespace)::g_feature_state   0x201d01c8   Data        2072  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_115g_feature_stateE)",
+        "(anonymous namespace)::g_adapter         0x201d0b28   Data        5288  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_19g_adapterE)"
+      ],
+      "stack_main_estimate": [
+        "Maximum Stack Usage for main 0x19a0 bytes."
+      ],
+      "totals": [
+        "Total RO  Size (Code + RO Data)               638004 ( 623.05kB)",
+        "Total RW  Size (RW Data + ZI Data)             90528 (  88.41kB)",
+        "Total ROM Size (Code + RO Data + RW Data)     638052 ( 623.10kB)"
+      ],
+      "map_sha256": "e7b17ed06d628e9cd0e93967c8eb8124e747d97de46c7ef7d6df073cee3ccc6d"
+    },
+    "build": {
+      "regions": {
+        "ITCM": {
+          "address": "0x00000000",
+          "bytes": 320
+        },
+        "ER_ROM": {
+          "address": "0x00100000",
+          "bytes": 97472
+        },
+        "DTCM_VTOR": {
+          "address": "0x20000000",
+          "bytes": 712
+        },
+        "DTCM": {
+          "address": "0x200002c8",
+          "bytes": 0
+        },
+        "ARM_LIB_STACK": {
+          "address": "0x2001e000",
+          "bytes": 8192
+        },
+        "U55_MODEL_RAM": {
+          "address": "0x20100000",
+          "bytes": 516852
+        },
+        "RW_NOINIT": {
+          "address": "0x201c0000",
+          "bytes": 0
+        },
+        "RW_RAM": {
+          "address": "0x201c0000",
+          "bytes": 77168
+        },
+        "ARM_LIB_HEAP": {
+          "address": "0x201d2d70",
+          "bytes": 2048
+        },
+        "SRAM_NONCACHEABLE": {
+          "address": "0x20230000",
+          "bytes": 320
+        },
+        "SRAM_NONCACHEABLE_END": {
+          "address": "0x20250000",
+          "bytes": 0
+        },
+        "LPSRAM": {
+          "address": "0x20310000",
+          "bytes": 0
+        }
+      },
+      "symbols": [
+        "(anonymous namespace)::g_tensor_arena    0x201c0220   Data       65536  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_114g_tensor_arenaE)",
+        "(anonymous namespace)::g_feature_state   0x201d0220   Data        2072  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_115g_feature_stateE)",
+        "(anonymous namespace)::g_adapter         0x201d0b38   Data        5280  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_19g_adapterE)"
+      ],
+      "stack_main_estimate": [],
+      "totals": [
+        "Total RO  Size (Code + RO Data)               615356 ( 600.93kB)",
+        "Total RW  Size (RW Data + ZI Data)             87728 (  85.67kB)",
+        "Total ROM Size (Code + RO Data + RW Data)     615388 ( 600.96kB)"
+      ],
+      "map_sha256": "ec2bb810608a1a42a084bdba6551b1f073b82eeea204ea7a4256fb55bd45515f"
+    }
+  }
+}

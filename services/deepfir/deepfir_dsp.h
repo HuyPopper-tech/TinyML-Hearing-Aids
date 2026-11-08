@@ -47,6 +47,16 @@ void deepfir_feature_reset(deepfir_feature_state_t *state);
  */
 int deepfir_feature_pcm16(const int16_t *pcm, uint32_t count, int16_t *feature, void *context);
 /**
+ * @brief Extract features from an already normalized hop without a second PCM conversion.
+ * @param pcm Separate caller-owned 16-float input, PCM16 divided by 32768.
+ * @param count Must equal 16.
+ * @param feature Caller-owned 387-code destination in bin/channel order.
+ * @param context Sole foreground-owned deepfir_feature_state_t.
+ * @return Zero on success; -1 for invalid configuration, -2 for FFT/non-finite failure.
+ * @note Input is borrowed for this call only; a failed hop requires full stream reset.
+ */
+int deepfir_feature_float(const float *pcm, uint32_t count, int16_t *feature, void *context);
+/**
  * @brief Report whether this binary contains the vector frontend.
  * @return True for the compiled MVE floating-point path.
  */

@@ -42,8 +42,9 @@ typedef struct {
 typedef int (*deepfir_mapped_infer_callback)(const deepfir_tensor_map_t *inputs,
                                              uint32_t input_count, deepfir_tensor_map_t *outputs,
                                              uint32_t output_count, void *context);
-typedef int (*deepfir_feature_callback)(const int16_t *pcm16, uint32_t sample_count,
-                                        int16_t *feature, void *context);
+// Borrow normalized PCM for this call only; the same immutable hop feeds the FIR.
+typedef int (*deepfir_feature_callback)(const float *pcm, uint32_t sample_count, int16_t *feature,
+                                        void *context);
 
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
 typedef enum {
@@ -65,8 +66,7 @@ typedef struct {
     int16_t c[DEEPFIR_MODEL_STATE_UNITS];
     int16_t next_h[DEEPFIR_MODEL_STATE_UNITS];
     int16_t next_c[DEEPFIR_MODEL_STATE_UNITS];
-    int16_t feature_buffer[DEEPFIR_MODEL_FEATURES];
-    // Quantized previous/current frames; foreground-only, committed after successful invoke.
+    // Frontend writes current directly; previous commits only after successful invoke.
     int16_t feature_context_buffer[DEEPFIR_MODEL_CONTEXT];
     int64_t feedback_multiplier[2];
     unsigned feedback_shift[2];

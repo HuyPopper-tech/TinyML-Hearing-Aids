@@ -1,0 +1,273 @@
+{
+  "source_manifest_sha256": "caefa8239c579282a917c59292c41a2cff8fff1b76bf25ddc17bfb9baa12aeab",
+  "source_artifacts_verified": 47,
+  "destination_artifacts_verified": 19,
+  "compiled_array_bytes": 516848,
+  "compiled_array_sha256": "69c1c3d2f2491df24a66c2190f266091bf8c192fcbce6724ee430d5cf28b1c27",
+  "artifacts": {
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/DSP_CONTRACT.md": {
+      "bytes": 9569,
+      "sha256": "7b92a6ee80d4c4b0dc0d714dffe32d02a60085a9bb414afab5d4d55bb4ddc50d"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/M55M1.ini": {
+      "bytes": 421,
+      "sha256": "c547b0878db69d0dd3792001263c85066aaeb309c28c8d98a526ac5a42b4a86a"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/README.md": {
+      "bytes": 2134,
+      "sha256": "6b11e27f410baf25a174c872b1c91d59dbb339126f58a5daad4cb97f7d48f522"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/calibration_manifest.json": {
+      "bytes": 267740,
+      "sha256": "0d107ed4f1384a3396dc2efdef176a764f883322d49c77bfef9fee65e4d17f43"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/controller_16x8.tflite": {
+      "bytes": 555600,
+      "sha256": "9d11584db9ce1223eb26be1ab2b5f1493ff0c3c92ba3e2757a6063bd279d38ac"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/controller_16x8_vela.tflite": {
+      "bytes": 516848,
+      "sha256": "69c1c3d2f2491df24a66c2190f266091bf8c192fcbce6724ee430d5cf28b1c27"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/deepfir_contract.h": {
+      "bytes": 46,
+      "sha256": "e76a1baae47b8eccc4db08f8565154184de9b01d95f6d38d262bf355433822f6"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/deepfir_golden_smoke.h": {
+      "bytes": 18517,
+      "sha256": "b3e83a8305af30fc3fc903dc420373f52c7b2fd6c78e5a193cbc7fa0403e8c81"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/deepfir_model_data.cc": {
+      "bytes": 2616689,
+      "sha256": "5f812c694e03842e1b0946dabbdfa089d46c4d021b4ffef825500d92a6050231"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/deepfir_model_data.h": {
+      "bytes": 187,
+      "sha256": "7a3a17c56c73c9ea98b933b7ee0966d322b1f8e77712728e259b0a3d32bd7221"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/deepfir_platform.h": {
+      "bytes": 113,
+      "sha256": "416c226e365b41a2b6ad55ce19c0d60dba1f98bd364f9aed97aeb7e6f46da7d7"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/deepfir_r2_adapter.c": {
+      "bytes": 13776,
+      "sha256": "a382d9014f5228d8a2c32f4cd3b9648bd3a393f5eeedfaac398c03abc46c5ca0"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/deepfir_r2_adapter.h": {
+      "bytes": 1402,
+      "sha256": "8b24bee013bd50f699ee3e0f46fbd67c0f836f88a613475b0e8a52f2e055424a"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/deepfir_r2_cmsis_fft.c": {
+      "bytes": 196,
+      "sha256": "d55e7d41fb5c86e8c7c36d89158bd56832c4c80bdd4bc058e83b31726b35d11e"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/deepfir_r2_contract.h": {
+      "bytes": 1552,
+      "sha256": "97428b40e380cfb1b83565d1563dd6f29d2a005d8262087ac26a0b25fddbcbc5"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/deepfir_r2_state_coordinates.h": {
+      "bytes": 4614,
+      "sha256": "cd557d830aa232ce13292c0d5646038a6c9e426d42fc918ef9ed9c8b6c2f8359"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/deepfir_r2_tflm_bridge.cc": {
+      "bytes": 1450,
+      "sha256": "b1de8e8c516935acc56f36e3a31631bf73c905b56bb5e962c5feda4a8cab1148"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/deepfir_r2_tflm_bridge.h": {
+      "bytes": 235,
+      "sha256": "a2e5e58fff05438a3e4cdae5df35ea0cef34c35ba17029e939aa745bd0f748f6"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/deepfir_sources.cmake": {
+      "bytes": 376,
+      "sha256": "a15e382dbc6ba59ab199ea0787f175a9d681a3a40df0029353000884c3d50463"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/dsp_contract.json": {
+      "bytes": 2429,
+      "sha256": "d0bf112f21a38b107b6a8f95aa88d85ef6504091ac6095decf8279314eead18b"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/integer_dtype_audit.json": {
+      "bytes": 5549,
+      "sha256": "16c7fcbaefde96126118cb604f79f5855399c030ba16bec0ff8e12be9262f97d"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/integer_replay/176f4e875a6dd550.npz": {
+      "bytes": 19401666,
+      "sha256": "bacc94fa07bebe10f93ba0c0650bc0137c85c2452f6fff38858f3a97b724c3a9"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/integer_replay/c07ec5e74f1bd3dc.npz": {
+      "bytes": 25391423,
+      "sha256": "cdef45d5874b089bf09e215a1766be1cf21fd2a5566d3e271e0242f1c4083217"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/native_raw_replay_receipt.json": {
+      "bytes": 1616,
+      "sha256": "fed962f11b4c3d47dc6e7f26839b48d9b7ecbe1813782a14ae25be38357c722e"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/ptq_quality.json": {
+      "bytes": 570971,
+      "sha256": "7c34c1d73ba54d0e8cc4f2fbb31a218511b4f4d30cf2dc8e891ca43f49266c9b"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/ptq_selection_lock.json": {
+      "bytes": 107393,
+      "sha256": "b36efa56d9e9d8e8d8c23b8e5ea38d4364c4508ae7da575fe8ba18f2c5b2b0f7"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/state_coordinates.json": {
+      "bytes": 17975,
+      "sha256": "8402c987782e576b473e62e07bdf5a0841d7b1a4bbde62de5a5a2edb52dd181c"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/training_provenance/FINAL_QUALITY_REPORT.json": {
+      "bytes": 179430,
+      "sha256": "6244d9284698ecfd69710b3179997f920251d32b699e057f9bc00827e590a0b9"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/training_provenance/candidate_weights/e0189_raw.weights.h5": {
+      "bytes": 1993264,
+      "sha256": "34c5bd074ae63c57fd0df28c3a0a63e32dfd63be9be84fabc467823b70ccd0af"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/training_provenance/effective_config.json": {
+      "bytes": 18974,
+      "sha256": "81d20fd9950534a0720ebb6dfe60164251c6906df3ef8191ff86e206e311e5a6"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/training_provenance/evaluation/final_test/1ed128eefaa3c5812e0ccb3774d86e3c439c8c8c3ef88046b7fafcbfb145a432/paired_rows.json": {
+      "bytes": 1030366,
+      "sha256": "6c0fe96d7a226da4c57b84438016ab87afb0eafc5e80a952e37f2802ef986cf0"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/training_provenance/evaluation/final_test/1ed128eefaa3c5812e0ccb3774d86e3c439c8c8c3ef88046b7fafcbfb145a432/paired_rows_pcm16.json": {
+      "bytes": 1030294,
+      "sha256": "a94e74d5df877b094e8f7f221208a6a1e0041263cb928f3276a445af99734a59"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/training_provenance/evaluation/top5_e0189_raw/438ea8d91ff482cb91c21c2fb30046c0446978b856140c174907c1abf1f5c2e9/paired_rows.json": {
+      "bytes": 1003346,
+      "sha256": "ee4a4633f700f7c612c2019e08eab5aea7ac897f4cf8bb6303fc0da8799ff7f9"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/training_provenance/evaluation/top5_e0189_raw/438ea8d91ff482cb91c21c2fb30046c0446978b856140c174907c1abf1f5c2e9/paired_rows_pcm16.json": {
+      "bytes": 1003376,
+      "sha256": "413dd97802a15607c83d9862ed92128f1808d43e07cb3d6cfc782fd55a7e8776"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/training_provenance/evaluation/top5_e0189_raw/438ea8d91ff482cb91c21c2fb30046c0446978b856140c174907c1abf1f5c2e9/quality_report.json": {
+      "bytes": 310161,
+      "sha256": "8557c476f716fdcb4c33311be71b2130ea4dbe27f31b85a76325da0d835b1005"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/training_provenance/r2_training_bundle.json": {
+      "bytes": 2516,
+      "sha256": "60b3152ae9cccf96f61fd23babfb99f1b5ed81874c2d13906ee7bf59c2f54ec4"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/training_provenance/selection_lock.json": {
+      "bytes": 179,
+      "sha256": "86e41609425eced1b206a172a8f09c970eb4d83e9ebeaccfa0dacd60ce78dc12"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/training_provenance/train_manifest.json": {
+      "bytes": 3550825,
+      "sha256": "08d08533030cffff4689cce1b7ca97b1f5f5c3ea7955eccb34f7b8ef794d4eb3"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/vela/M55M1.ini": {
+      "bytes": 421,
+      "sha256": "c547b0878db69d0dd3792001263c85066aaeb309c28c8d98a526ac5a42b4a86a"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/vela/artifact_manifest.json": {
+      "bytes": 8984,
+      "sha256": "c583220d9913a7ff18a462257379e3754a66d250feded286d2c245f9406a88a2"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/vela/compiled/controller_16x8_summary_M55M1_sram01_x100.csv": {
+      "bytes": 1618,
+      "sha256": "b72ac9f354735a218f34a8a7646502a34a917c217f193528538725020fb41f6a"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/vela/compiled/controller_16x8_vela.tflite": {
+      "bytes": 516848,
+      "sha256": "69c1c3d2f2491df24a66c2190f266091bf8c192fcbce6724ee430d5cf28b1c27"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/vela/stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/vela/stdout.log": {
+      "bytes": 28051,
+      "sha256": "921bdafa6fe0346803ec2150de8110530ff8eaf109fdc077a6cd46bc42a0a1a2"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/vela_manifest.json": {
+      "bytes": 8984,
+      "sha256": "c583220d9913a7ff18a462257379e3754a66d250feded286d2c245f9406a88a2"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/vela_patch_manifest.json": {
+      "bytes": 853,
+      "sha256": "98b0ba5ac30852562a56451c038c31dace3c6e52d799d4da510e8d2f1b77ec95"
+    },
+    "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2/verify_raw_replay.py": {
+      "bytes": 8062,
+      "sha256": "055c87392308afa3846aa92b5b568b4ba929b4560c37546ec95c5e9eba634ee3"
+    },
+    "models/deepfir/compiled_tensor_binding.json": {
+      "bytes": 2198,
+      "sha256": "68c7367ec7b094f63ad1cc89581233843578fb5a6953b4ab01f3431b2c3a3be8"
+    },
+    "models/deepfir/deepfir_contract.h": {
+      "bytes": 46,
+      "sha256": "e76a1baae47b8eccc4db08f8565154184de9b01d95f6d38d262bf355433822f6"
+    },
+    "models/deepfir/deepfir_model_data.cc": {
+      "bytes": 2648996,
+      "sha256": "0a5ad23b501e8d12e4d07cc76857545363da21c6bcda74c41bf4aa0e2cb7bee4"
+    },
+    "models/deepfir/deepfir_model_data.h": {
+      "bytes": 187,
+      "sha256": "7a3a17c56c73c9ea98b933b7ee0966d322b1f8e77712728e259b0a3d32bd7221"
+    },
+    "models/deepfir/deepfir_model_qparams.h": {
+      "bytes": 983,
+      "sha256": "4256f54d11151720534f0104ca1f1faa87883cc7429d619808a8292a80c0df4a"
+    },
+    "models/deepfir/deepfir_r2_contract.h": {
+      "bytes": 1552,
+      "sha256": "97428b40e380cfb1b83565d1563dd6f29d2a005d8262087ac26a0b25fddbcbc5"
+    },
+    "models/deepfir/deepfir_r2_state_coordinates.h": {
+      "bytes": 4614,
+      "sha256": "cd557d830aa232ce13292c0d5646038a6c9e426d42fc918ef9ed9c8b6c2f8359"
+    },
+    "models/deepfir/dsp_contract.json": {
+      "bytes": 2429,
+      "sha256": "d0bf112f21a38b107b6a8f95aa88d85ef6504091ac6095decf8279314eead18b"
+    },
+    "models/deepfir/DSP_CONTRACT.md": {
+      "bytes": 9569,
+      "sha256": "7b92a6ee80d4c4b0dc0d714dffe32d02a60085a9bb414afab5d4d55bb4ddc50d"
+    },
+    "models/deepfir/integer_dtype_audit.json": {
+      "bytes": 5549,
+      "sha256": "16c7fcbaefde96126118cb604f79f5855399c030ba16bec0ff8e12be9262f97d"
+    },
+    "models/deepfir/m55m1_model_package.cmake": {
+      "bytes": 833,
+      "sha256": "9bde97e2eff336f6b1eb779011c42831b2f8b56ef48cd92a88346f12c50984a9"
+    },
+    "models/deepfir/native_raw_replay_receipt.json": {
+      "bytes": 1616,
+      "sha256": "fed962f11b4c3d47dc6e7f26839b48d9b7ecbe1813782a14ae25be38357c722e"
+    },
+    "models/deepfir/ptq_quality.json": {
+      "bytes": 570971,
+      "sha256": "7c34c1d73ba54d0e8cc4f2fbb31a218511b4f4d30cf2dc8e891ca43f49266c9b"
+    },
+    "models/deepfir/ptq_selection_lock.json": {
+      "bytes": 107393,
+      "sha256": "b36efa56d9e9d8e8d8c23b8e5ea38d4364c4508ae7da575fe8ba18f2c5b2b0f7"
+    },
+    "models/deepfir/README.md": {
+      "bytes": 1656,
+      "sha256": "7cfc38cf3c0db2495bd2922ddab7c25391fc2a073c6eb336dd673bb91fa1fdf3"
+    },
+    "models/deepfir/source_integration_manifest.json": {
+      "bytes": 29801,
+      "sha256": "caefa8239c579282a917c59292c41a2cff8fff1b76bf25ddc17bfb9baa12aeab"
+    },
+    "models/deepfir/state_coordinates.json": {
+      "bytes": 17975,
+      "sha256": "8402c987782e576b473e62e07bdf5a0841d7b1a4bbde62de5a5a2edb52dd181c"
+    },
+    "models/deepfir/vela_manifest.json": {
+      "bytes": 8984,
+      "sha256": "c583220d9913a7ff18a462257379e3754a66d250feded286d2c245f9406a88a2"
+    },
+    "models/deepfir/vela_patch_manifest.json": {
+      "bytes": 853,
+      "sha256": "98b0ba5ac30852562a56451c038c31dace3c6e52d799d4da510e8d2f1b77ec95"
+    }
+  }
+}

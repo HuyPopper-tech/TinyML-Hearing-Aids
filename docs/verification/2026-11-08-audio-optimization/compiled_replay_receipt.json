@@ -1,0 +1,14 @@
+{
+  "created_utc": "2026-11-08T11:18:27.468187+00:00",
+  "status": "BLOCKED",
+  "compiled_sha256": "69c1c3d2f2491df24a66c2190f266091bf8c192fcbce6724ee430d5cf28b1c27",
+  "source_manifest_sha256": "caefa8239c579282a917c59292c41a2cff8fff1b76bf25ddc17bfb9baa12aeab",
+  "trace_hops": {
+    "176f4e875a6dd550": 11324,
+    "c07ec5e74f1bd3dc": 15117
+  },
+  "deployment_approved": false,
+  "runtime_identity": null,
+  "traces": {},
+  "blocker": "No running, authorized M55M1 compiled replay backend supplied"
+}

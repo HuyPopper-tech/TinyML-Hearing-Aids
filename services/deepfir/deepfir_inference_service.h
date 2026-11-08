@@ -28,6 +28,7 @@ typedef struct {
     uint32_t carry_us;
     uint32_t taps_us;
     uint32_t fir_us;
+    uint32_t pcm_us;
     uint32_t other_us;
 #endif
 } deepfir_inference_timing_t;
@@ -71,6 +72,12 @@ bool deepfir_inference_process(const int16_t *input, int16_t *output, uint32_t s
  * @return None.
  */
 void deepfir_inference_get_last_timing(deepfir_inference_timing_t *timing);
+/**
+ * @brief Report retained Debug hop marks after capture/playback have stopped.
+ * @pre Foreground only, DMA quiesced; never call during processing or from an ISR.
+ * @note May drain Debug UART while stopped; raw marks remain visible until the next hop.
+ */
+void deepfir_inference_report_trace(void);
 
 /** @brief Read active feature/FIR MVE paths and optional Debug self-test time. */
 void deepfir_inference_get_dsp_status(bool *feature_mve_ready, bool *fir_mve_ready,

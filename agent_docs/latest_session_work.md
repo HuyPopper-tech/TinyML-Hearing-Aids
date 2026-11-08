@@ -1,5 +1,48 @@
 # Latest Session Work
 
+## Continuous audio/inference optimization — 2026-11-08
+
+Implemented the approved approach1 with one existing pipeline/interpreter and
+state owner: shared normalized PCM, direct current feature-context writes,
+guarded reciprocal quantizer, exact magnitude-shift feedback, redundant buffer
+work removal and installed CMSIS sin/cos with radians/degrees conversion/fallback.
+The evaluated real FFT failed the feature-code tolerance and was rejected.
+DMA/cache/pin/clock code and model/package/goldens/libs remain unchanged.
+
+Debug now records the latest hop as16 bounded raw events; fault recovery stops
+DMA before formatting/draining the trace. This supersedes live first-hop and
+first-capture messages below; init logs and periodic Debug telemetry remain.
+PCM stage timing was added. Opt-in Release probe observes60000 hops, stops on
+the first fault and reports COMPLETE/FAIL plus sequence/slot/stage information;
+ordinary builds retain synchronized reset/restart and silent Release UART.
+
+Verified127/127 host tests;11,570,644 quantizer and15,400,960 feedback comparisons
+have zero mismatches. Actual scalar CMSIS phase sweep max tap error2.7351718e-7.
+Long DSP comparison uses both canonical gain/phase traces with synthetic PCM:
+26441 hops, max output float error2.9802322e-7,90/46 PCM changes of at most1 code.
+It does not invoke the controller or execute target MVE. No tolerance was loosened.
+
+Arm6.24 Debug/Release and probe/replay variants build/link, final linked MVE check
+passes. Release RW_RAM77936→77168B; Debug78456→77920B; reserved arena65536B,
+DMA320B, stack8192B unchanged. Debug linker main estimate6560B is not high-water.
+Final Debug BIN638112B SHA
+f0a6e7623900e34c5d8e19cc06ac1deaf386c8e0874b876cd0ebc744048f6477;
+Release BIN615392B SHA
+72ea67e693846caa642286c2a7e9e90ecfaf03f196b3542f9fc5867384e2acbf.
+Root outputs restored to ordinary builds, opt-ins OFF; clangd database uses Debug.
+
+Evidence: docs/verification/2026-11-08-audio-optimization/; raw images/maps/logs:
+diagnostics/audio_optimization_20261108_180148/. Reproduction, device pins/recovery
+and timing/power procedure: docs/audio_inference_optimization.md.
+
+No flash/device operation. Compiled runner reports BLOCKED without authorized
+backend; Linux raw replay not rerun. Target initialization/actual memory/MVE,
+full-hop<1ms margin, physical continuity/latency and energy savings remain NOT_RUN.
+Do not claim board_status=5 fixed or deployment approval. Next: separately
+authorize exact replay/probe image and CH549-without-nRESET recovery, run compiled
+26441-hop parity, then matched60s timing and physical audio/current measurements.
+No subagents/explorer were used; unrelated untracked files/packages are preserved.
+
 ## I2C_STUCK recovery trace — 2026-11-08
 
 Approved design implemented: fixed284B Debug board snapshot of reset flags, GPIO

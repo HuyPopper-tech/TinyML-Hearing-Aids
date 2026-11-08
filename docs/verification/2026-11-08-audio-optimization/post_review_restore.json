@@ -1,0 +1,24 @@
+{
+  "rebuild_receipt": "20261108_184423_build_receipt.json",
+  "all_image_hashes_equal_182911": true,
+  "caches": {
+    "build": {
+      "M55M1_AUDIO_RELEASE_PROBE": "OFF",
+      "M55M1_AUDIO_UART_PCM_CAPTURE": "OFF",
+      "M55M1_DEEPFIR_COMPILED_REPLAY": "OFF"
+    },
+    "build-debug": {
+      "M55M1_AUDIO_RELEASE_PROBE": "OFF",
+      "M55M1_AUDIO_UART_PCM_CAPTURE": "OFF",
+      "M55M1_DEEPFIR_COMPILED_REPLAY": "OFF"
+    }
+  },
+  "editor_directory": "D:/TinyML-Hearing-Aids/build-debug",
+  "single_linked_symbols": {
+    "g_deepfir_model": "g_deepfir_model                          0x20100000   Data       516848  deepfir_model_data.o(.rodata.g_deepfir_model)",
+    "ethosu_init": "ethosu_init                              0x0010efe5   Thumb Code   136  ethosu_driver.o(.text.ethosu_init)",
+    "ethosu_runtime_init": "ethosu_runtime_init                      0x0010ffc9   Thumb Code   260  ethosu_runtime.o(.text.ethosu_runtime_init)",
+    "ethosu_invoke_async": "ethosu_invoke_async                      0x0010f075   Thumb Code   416  ethosu_driver.o(.text.ethosu_invoke_async)",
+    "ethosu_irq_handler": "ethosu_irq_handler                       0x0010f215   Thumb Code    34  ethosu_driver.o(.text.ethosu_irq_handler)"
+  }
+}

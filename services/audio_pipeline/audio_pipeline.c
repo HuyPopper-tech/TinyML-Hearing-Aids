@@ -48,9 +48,8 @@ static uint32_t g_expected_sequence;
 static audio_pipeline_stats_t g_stats;
 
 #if M55M1_RUNTIME_TELEMETRY
-// Foreground-only: boot drains end before DMA starts; recovery never drains UART.
+// Foreground-only: boot and fault-report drains run only while DMA is stopped.
 static bool g_boot_trace = true;
-static bool g_first_capture_trace = true;
 static uint32_t g_reported_faults;
 
 static void trace_init(const char *stage, const char *status, int code) {
@@ -209,6 +208,10 @@ typedef enum {
     AUDIO_PIPELINE_FAULT_RESTART,
 } audio_pipeline_fault_t;
 
+#if M55M1_AUDIO_RELEASE_PROBE
+static void finish_release_probe_if_ready(bool failed, uint32_t fault, uint32_t detail);
+#endif
+
 static void trace_fault(audio_pipeline_fault_t fault, uint32_t detail) {
 #if M55M1_RUNTIME_TELEMETRY
     const uint32_t bit = 1UL << (unsigned)fault;
@@ -221,18 +224,22 @@ static void trace_fault(audio_pipeline_fault_t fault, uint32_t detail) {
     };
     audio_transport_health_t health;
     audio_transport_get_health(&health);
-    char message[320];
-    const int length =
-        snprintf(message, sizeof(message),
-                 "[AUDIO_FAULT] stage=%s detail=%lu seq=%lu expected=%lu "
-                 "deadline=%lu model=%lu restarts=%lu restart_failures=%lu "
-                 "dmic_overrun=%lu dmic_dma=%lu dac_underrun=%lu dac_dma=%lu\r\n",
-                 stages[fault], (unsigned long)detail, (unsigned long)g_stats.last_sequence,
-                 (unsigned long)g_expected_sequence, (unsigned long)g_stats.deadline_misses,
-                 (unsigned long)g_stats.model_faults, (unsigned long)g_stats.restarts,
-                 (unsigned long)g_stats.restart_failures, (unsigned long)health.dmic_overrun_blocks,
-                 (unsigned long)health.dmic_dma_errors, (unsigned long)health.dac_underrun_blocks,
-                 (unsigned long)health.dac_dma_errors);
+    char message[512];
+    const int length = snprintf(
+        message, sizeof(message),
+        "[AUDIO_FAULT] stage=%s detail=%lu seq=%lu expected=%lu "
+        "deadline=%lu model=%lu restarts=%lu restart_failures=%lu "
+        "dmic_overrun=%lu dmic_dma=%lu dac_underrun=%lu dac_dma=%lu "
+        "capture_cycle=%lu process_start=%lu process_end=%lu published_cycle=%lu "
+        "playback_slot=%lu\r\n",
+        stages[fault], (unsigned long)detail, (unsigned long)g_stats.last_sequence,
+        (unsigned long)g_expected_sequence, (unsigned long)g_stats.deadline_misses,
+        (unsigned long)g_stats.model_faults, (unsigned long)g_stats.restarts,
+        (unsigned long)g_stats.restart_failures, (unsigned long)health.dmic_overrun_blocks,
+        (unsigned long)health.dmic_dma_errors, (unsigned long)health.dac_underrun_blocks,
+        (unsigned long)health.dac_dma_errors, (unsigned long)g_stats.capture_completed_cycle,
+        (unsigned long)g_stats.process_start_cycle, (unsigned long)g_stats.process_end_cycle,
+        (unsigned long)g_stats.published_cycle, (unsigned long)g_stats.scheduled_playback_slot);
     // Log a fault category once, retrying admission if the UART ring was full.
     if (length > 0 && (size_t)length < sizeof(message) &&
         debug_uart_tx_try_enqueue(message, (size_t)length)) {
@@ -259,8 +266,16 @@ static bool transport_faulted(void) {
 
 /* Foreground only: stop DMA before resetting any shared model/audio history. */
 static void restart_stream(audio_pipeline_fault_t fault, uint32_t detail) {
+#if M55M1_AUDIO_RELEASE_PROBE
+    // A diagnostic run ends at its first fault; never replace it with a clean restart window.
+    finish_release_probe_if_ready(true, (uint32_t)fault, detail);
+    return;
+#endif
     audio_pipeline_stop_safe();
     // Quiesce both DMA owners before spending any time formatting diagnostics.
+#if M55M1_RUNTIME_TELEMETRY
+    deepfir_inference_report_trace();
+#endif
     trace_fault(fault, detail);
     memset(&g_audio_working_set, 0, sizeof(g_audio_working_set));
     if (audio_pipeline_init() && audio_pipeline_start()) {
@@ -412,7 +427,7 @@ static void capture_store_hop(const int16_t *input, const int16_t *output, uint3
 #define AUDIO_PIPELINE_REPORT_HOPS 1000U
 #endif
 #if M55M1_AUDIO_RELEASE_PROBE
-#define AUDIO_PIPELINE_PROBE_HOPS 2000U
+#define AUDIO_PIPELINE_PROBE_HOPS 60000U
 #endif
 #define AUDIO_PIPELINE_HOP_BUDGET_US                                                               \
     ((AUDIO_TRANSPORT_SAMPLES_PER_BLOCK * 1000000UL) / AUDIO_TRANSPORT_SAMPLE_RATE_HZ)
@@ -440,6 +455,7 @@ typedef struct {
     uint32_t max_carry_us;
     uint32_t max_taps_us;
     uint32_t max_fir_us;
+    uint32_t max_pcm_us;
     uint32_t max_other_us;
 #if M55M1_AUDIO_RELEASE_PROBE
     uint64_t total_us_sum;
@@ -448,6 +464,7 @@ typedef struct {
     uint64_t carry_us_sum;
     uint64_t taps_us_sum;
     uint64_t fir_us_sum;
+    uint64_t pcm_us_sum;
     uint64_t other_us_sum;
     uint32_t capture_last_sequence;
 #endif
@@ -509,6 +526,9 @@ static void record_timing(const deepfir_inference_timing_t *timing) {
     if (timing->fir_us > g_debug_stats.max_fir_us) {
         g_debug_stats.max_fir_us = timing->fir_us;
     }
+    if (timing->pcm_us > g_debug_stats.max_pcm_us) {
+        g_debug_stats.max_pcm_us = timing->pcm_us;
+    }
     if (timing->other_us > g_debug_stats.max_other_us) {
         g_debug_stats.max_other_us = timing->other_us;
     }
@@ -518,6 +538,7 @@ static void record_timing(const deepfir_inference_timing_t *timing) {
     g_debug_stats.carry_us_sum += timing->carry_us;
     g_debug_stats.taps_us_sum += timing->taps_us;
     g_debug_stats.fir_us_sum += timing->fir_us;
+    g_debug_stats.pcm_us_sum += timing->pcm_us;
     g_debug_stats.other_us_sum += timing->other_us;
 #endif
 }
@@ -561,7 +582,7 @@ static void record_progress(uint32_t capture_completed_cycle, bool model_succeed
         "feature_max_us=%lu pre_fft_max_us=%lu fft_max_us=%lu "
         "post_fft_max_us=%lu npu_max_us=%lu invoke_max_us=%lu "
         "overhead_max_us=%lu bridge_max_us=%lu carry_max_us=%lu "
-        "taps_max_us=%lu fir_max_us=%lu other_max_us=%lu "
+        "taps_max_us=%lu fir_max_us=%lu pcm_max_us=%lu other_max_us=%lu "
         "dsp_max_us=%lu total_max_us=%lu e2e_max_us=%lu late_1ms=%lu "
         "uart_drop=%lu\r\n",
         (unsigned long)g_frame_count, (unsigned long)g_debug_stats.input_peak,
@@ -577,10 +598,10 @@ static void record_progress(uint32_t capture_completed_cycle, bool model_succeed
         (unsigned long)g_debug_stats.max_npu_us, (unsigned long)g_debug_stats.max_invoke_us,
         (unsigned long)g_debug_stats.max_overhead_us, (unsigned long)g_debug_stats.max_bridge_us,
         (unsigned long)g_debug_stats.max_carry_us, (unsigned long)g_debug_stats.max_taps_us,
-        (unsigned long)g_debug_stats.max_fir_us, (unsigned long)g_debug_stats.max_other_us,
-        (unsigned long)g_debug_stats.max_dsp_us, (unsigned long)g_debug_stats.max_total_us,
-        (unsigned long)g_debug_stats.max_e2e_us, (unsigned long)g_debug_stats.late_hops,
-        (unsigned long)debug_uart_tx_drop_count());
+        (unsigned long)g_debug_stats.max_fir_us, (unsigned long)g_debug_stats.max_pcm_us,
+        (unsigned long)g_debug_stats.max_other_us, (unsigned long)g_debug_stats.max_dsp_us,
+        (unsigned long)g_debug_stats.max_total_us, (unsigned long)g_debug_stats.max_e2e_us,
+        (unsigned long)g_debug_stats.late_hops, (unsigned long)debug_uart_tx_drop_count());
     if (length > 0 && (size_t)length < sizeof(message)) {
         (void)debug_uart_tx_try_enqueue(message, (size_t)length);
     }
@@ -588,13 +609,15 @@ static void record_progress(uint32_t capture_completed_cycle, bool model_succeed
 }
 
 #if M55M1_AUDIO_RELEASE_PROBE
-static void finish_release_probe_if_ready(void) {
-    if (g_frame_count != AUDIO_PIPELINE_PROBE_HOPS) {
+static void finish_release_probe_if_ready(bool failed, uint32_t fault, uint32_t detail) {
+    if (!failed && g_frame_count != AUDIO_PIPELINE_PROBE_HOPS) {
         return;
     }
 
     audio_transport_health_t health;
     audio_transport_get_health(&health);
+    deepfir_inference_timing_t last_timing;
+    deepfir_inference_get_last_timing(&last_timing);
     audio_pipeline_stop_safe();
     debug_uart_tx_init();
     bool feature_mve_ready = false;
@@ -603,6 +626,8 @@ static void finish_release_probe_if_ready(void) {
     deepfir_inference_get_dsp_status(&feature_mve_ready, &fir_mve_ready, &mve_self_test_us);
 
     char message[1024];
+    // A transport/sequence failure can occur before any hop has completed.
+    const uint32_t observed_hops = g_frame_count == 0U ? 1U : g_frame_count;
     const int length = snprintf(
         message, sizeof(message),
         "[AUDIO_RELEASE_PROBE] frame=%lu in_peak=%lu out_peak=%lu "
@@ -614,10 +639,10 @@ static void finish_release_probe_if_ready(void) {
         "post_fft_max_us=%lu npu_max_us=%lu invoke_max_us=%lu "
         "overhead_max_us=%lu dsp_max_us=%lu "
         "bridge_max_us=%lu carry_max_us=%lu taps_max_us=%lu "
-        "fir_max_us=%lu other_max_us=%lu total_max_us=%lu "
+        "fir_max_us=%lu pcm_max_us=%lu other_max_us=%lu total_max_us=%lu "
         "e2e_max_us=%lu late_1ms=%lu "
         "bridge_mean_us=%lu carry_mean_us=%lu taps_mean_us=%lu "
-        "fir_mean_us=%lu other_mean_us=%lu "
+        "fir_mean_us=%lu pcm_mean_us=%lu other_mean_us=%lu "
         "total_mean_us=%lu e2e_mean_us=%lu capture_last_seq=%lu\r\n",
         (unsigned long)g_frame_count, (unsigned long)g_debug_stats.input_peak,
         (unsigned long)g_debug_stats.output_peak, (unsigned long)g_debug_stats.input_clip_samples,
@@ -633,18 +658,37 @@ static void finish_release_probe_if_ready(void) {
         (unsigned long)g_debug_stats.max_overhead_us, (unsigned long)g_debug_stats.max_dsp_us,
         (unsigned long)g_debug_stats.max_bridge_us, (unsigned long)g_debug_stats.max_carry_us,
         (unsigned long)g_debug_stats.max_taps_us, (unsigned long)g_debug_stats.max_fir_us,
-        (unsigned long)g_debug_stats.max_other_us, (unsigned long)g_debug_stats.max_total_us,
-        (unsigned long)g_debug_stats.max_e2e_us, (unsigned long)g_debug_stats.late_hops,
-        (unsigned long)(g_debug_stats.bridge_us_sum / g_frame_count),
-        (unsigned long)(g_debug_stats.carry_us_sum / g_frame_count),
-        (unsigned long)(g_debug_stats.taps_us_sum / g_frame_count),
-        (unsigned long)(g_debug_stats.fir_us_sum / g_frame_count),
-        (unsigned long)(g_debug_stats.other_us_sum / g_frame_count),
-        (unsigned long)(g_debug_stats.total_us_sum / g_frame_count),
-        (unsigned long)(g_debug_stats.e2e_us_sum / g_frame_count),
+        (unsigned long)g_debug_stats.max_pcm_us, (unsigned long)g_debug_stats.max_other_us,
+        (unsigned long)g_debug_stats.max_total_us, (unsigned long)g_debug_stats.max_e2e_us,
+        (unsigned long)g_debug_stats.late_hops,
+        (unsigned long)(g_debug_stats.bridge_us_sum / observed_hops),
+        (unsigned long)(g_debug_stats.carry_us_sum / observed_hops),
+        (unsigned long)(g_debug_stats.taps_us_sum / observed_hops),
+        (unsigned long)(g_debug_stats.fir_us_sum / observed_hops),
+        (unsigned long)(g_debug_stats.pcm_us_sum / observed_hops),
+        (unsigned long)(g_debug_stats.other_us_sum / observed_hops),
+        (unsigned long)(g_debug_stats.total_us_sum / observed_hops),
+        (unsigned long)(g_debug_stats.e2e_us_sum / observed_hops),
         (unsigned long)g_debug_stats.capture_last_sequence);
     if (length > 0 && (size_t)length < sizeof(message)) {
         (void)debug_uart_tx_try_enqueue(message, (size_t)length);
+        debug_uart_tx_flush_blocking();
+    }
+    const int result_length = snprintf(
+        message, sizeof(message),
+        "[AUDIO_RELEASE_RESULT] result=%s fault=%lu detail=%lu seq=%lu playback_slot=%lu "
+        "deadline=%lu restarts=%lu last_feature_us=%lu last_invoke_us=%lu "
+        "last_carry_us=%lu last_taps_us=%lu last_fir_us=%lu last_pcm_us=%lu "
+        "last_total_us=%lu capture_publish_max_us=%lu\r\n",
+        failed ? "FAIL" : "COMPLETE", (unsigned long)fault, (unsigned long)detail,
+        (unsigned long)g_stats.last_sequence, (unsigned long)g_stats.scheduled_playback_slot,
+        (unsigned long)g_stats.deadline_misses, (unsigned long)g_stats.restarts,
+        (unsigned long)last_timing.feature_us, (unsigned long)last_timing.invoke_us,
+        (unsigned long)last_timing.carry_us, (unsigned long)last_timing.taps_us,
+        (unsigned long)last_timing.fir_us, (unsigned long)last_timing.pcm_us,
+        (unsigned long)last_timing.total_us, (unsigned long)g_stats.max_capture_to_publish_us);
+    if (result_length > 0 && (size_t)result_length < sizeof(message)) {
+        (void)debug_uart_tx_try_enqueue(message, (size_t)result_length);
         debug_uart_tx_flush_blocking();
     }
 }
@@ -762,18 +806,6 @@ void audio_pipeline_poll(void) {
     if (!audio_transport_take_capture(g_audio_working_set.capture, &timing)) {
         return;
     }
-#if M55M1_RUNTIME_TELEMETRY
-    if (g_first_capture_trace) {
-        char message[96];
-        const int length = snprintf(
-            message, sizeof(message), "[AUDIO_STAGE] stage=capture seq=%lu completed_cycle=%lu\r\n",
-            (unsigned long)timing.sequence, (unsigned long)timing.completed_cycle);
-        if (length > 0 && (size_t)length < sizeof(message)) {
-            (void)debug_uart_tx_try_enqueue(message, (size_t)length);
-        }
-        g_first_capture_trace = false;
-    }
-#endif
     if (timing.sequence != g_expected_sequence) {
         ++g_stats.sequence_faults;
         restart_stream(AUDIO_PIPELINE_FAULT_SEQUENCE, timing.sequence);
@@ -784,6 +816,8 @@ void audio_pipeline_poll(void) {
         ((uint64_t)timing.sequence - 1U) * AUDIO_TRANSPORT_SAMPLES_PER_BLOCK;
     g_stats.scheduled_playback_slot = timing.sequence + 1U;
     g_stats.capture_completed_cycle = timing.completed_cycle;
+    g_stats.process_end_cycle = 0U;
+    g_stats.published_cycle = 0U;
     g_stats.process_start_cycle = audio_transport_cycles_now();
 
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
@@ -800,7 +834,7 @@ void audio_pipeline_poll(void) {
         ++g_debug_stats.model_failures;
         record_progress(timing.completed_cycle, false);
 #if M55M1_AUDIO_RELEASE_PROBE
-        finish_release_probe_if_ready();
+        finish_release_probe_if_ready(false, 0U, 0U);
 #endif
 #endif
 #if M55M1_AUDIO_UART_PCM_CAPTURE
@@ -875,7 +909,7 @@ void audio_pipeline_poll(void) {
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     record_progress(timing.completed_cycle, true);
 #if M55M1_AUDIO_RELEASE_PROBE
-    finish_release_probe_if_ready();
+    finish_release_probe_if_ready(false, 0U, 0U);
 #endif
 #endif
 }

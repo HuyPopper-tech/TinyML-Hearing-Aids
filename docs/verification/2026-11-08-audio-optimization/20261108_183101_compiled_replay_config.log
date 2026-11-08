@@ -1,0 +1,26 @@
+[rtk] /!\ No hook installed — run `rtk init -g` for automatic token savings
+Preset CMake variables:
+
+  CMAKE_BUILD_TYPE="Release"
+  CMAKE_TOOLCHAIN_FILE="D:/TinyML-Hearing-Aids/cmake/armclang.cmake"
+  M55M1_AUDIO_RELEASE_PROBE="OFF"
+  M55M1_AUDIO_UART_PCM_CAPTURE="OFF"
+  M55M1_DEBUG_UART_IDX="2"
+  M55M1_DEEPFIR_MVE="ON"
+  M55M1_ENABLE_DAC_I2S_OUTPUT="ON"
+  M55M1_ENABLE_DCACHE="ON"
+  M55M1_ENABLE_DSP="ON"
+  M55M1_ENABLE_ETHOSU_RUNTIME="ON"
+  M55M1_ENABLE_NN="ON"
+  M55M1_ENABLE_TFLM="ON"
+  M55M1_MODEL_IN_SRAM="ON"
+  M55M1_MODEL_PACKAGE_DIR="D:/TinyML-Hearing-Aids/models/deepfir"
+
+-- Model package: D:/TinyML-Hearing-Aids/models/deepfir
+-- StdDriver: skipping utcpd.c (utcpdlib.h is not supplied)
+-- TensorFlow Lite Micro: D:/TinyML-Hearing-Aids/libs/tensorflow/runtime
+-- Linker scatter file: D:/TinyML-Hearing-Aids/cmake/m55m1_audio.scf
+-- M55M1_GestureAI: model package=D:/TinyML-Hearing-Aids/models/deepfir, Ethos-U runtime=ON, DAC/I2S output=ON, TensorFlow Lite Micro=ON
+-- Configuring done (2.1s)
+-- Generating done (0.1s)
+-- Build files have been written to: D:/TinyML-Hearing-Aids/build

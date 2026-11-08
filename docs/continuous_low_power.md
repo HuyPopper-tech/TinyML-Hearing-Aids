@@ -1,5 +1,10 @@
 # Điện năng thấp khi DeepFIR chạy liên tục — 2026-11-08
 
+Tối ưu thêm trong frontend/feedback/reconstruction và probe timing đã được kiểm
+chứng host/build: [audio_inference_optimization.md](audio_inference_optimization.md).
+Các kết quả bên dưới thuộc đợt low-power trước; chưa có đo dòng/điện năng A/B cho
+bản tối ưu mới, nên không suy ra mức tiết kiệm điện từ số thao tác hoặc RAM giảm.
+
 Đã triển khai hướng 1 được duyệt: core220MHz, audio16kHz/hop16, model chạy mỗi hop.
 Không đổi model/DSP, gain, pinout, điện áp, tần số hoặc lịch playback b+2. Chưa flash.
 Evidence: `diagnostics/continuous_low_power_20261108_122920/`.

@@ -29,6 +29,8 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
             static uint32_t flushes;
             static uint32_t early_uart;
             static char last_log[1024];
+            static char result_log[512];
+            static const char *failure = "";
 
             bool audio_transport_init(audio_transport_init_report_t *report,
                                       audio_transport_progress_callback_t callback,
@@ -52,6 +54,7 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
                 ++frame;
                 memset(destination, 0, AUDIO_TRANSPORT_SAMPLES_PER_BLOCK * sizeof(int16_t));
                 timing->sequence = frame;
+                if (!strcmp(failure, "sequence")) ++timing->sequence;
                 timing->completed_cycle = frame * 1000U;
                 return true;
             }
@@ -61,18 +64,18 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
             {
                 (void)samples;
                 (void)tag;
-                return AUDIO_TRANSPORT_STATUS_OK;
+                return !strcmp(failure, "submit") ? AUDIO_TRANSPORT_STATUS_BUSY : AUDIO_TRANSPORT_STATUS_OK;
             }
             void audio_transport_get_health(audio_transport_health_t *health)
             {
                 *health = (audio_transport_health_t){
-                    .dmic_overrun_blocks = 0U,
+                    .dmic_overrun_blocks = !strcmp(failure, "transport") ? 1U : 0U,
                     .dac_underrun_blocks = 0U,
                 };
             }
             uint32_t audio_transport_cycles_now(void)
             {
-                return frame * 1000U + 800U;
+                return frame * 1000U + (!strcmp(failure, "deadline") ? 1200U : 800U);
             }
             uint32_t audio_transport_cycles_elapsed(uint32_t start, uint32_t end)
             {
@@ -90,7 +93,7 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
                 (void)input;
                 memset(output, 0, count * sizeof(int16_t));
                 output[0] = 32767;
-                return true;
+                return strcmp(failure, "invoke") != 0;
             }
             void deepfir_inference_get_last_timing(deepfir_inference_timing_t *timing)
             {
@@ -102,7 +105,7 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
                     .dsp_us = 100U, .total_us = 850U,
             #if M55M1_AUDIO_RELEASE_PROBE
                     .bridge_us = 40U, .carry_us = 50U, .taps_us = 60U,
-                    .fir_us = 100U, .other_us = 50U,
+                    .fir_us = 100U, .pcm_us = 7U, .other_us = 50U,
             #endif
                 };
             }
@@ -123,8 +126,13 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
             {
                 if (stops != 1U) ++early_uart;
                 if (length >= sizeof(last_log)) return false;
-                memcpy(last_log, message, length);
-                last_log[length] = '\0';
+                if (strstr(message, "[AUDIO_RELEASE_RESULT]")) {
+                    if (length >= sizeof(result_log)) return false;
+                    memcpy(result_log, message, length); result_log[length] = '\0';
+                } else {
+                    memcpy(last_log, message, length);
+                    last_log[length] = '\0';
+                }
                 ++logs;
                 return true;
             }
@@ -135,18 +143,35 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
             }
             uint32_t debug_uart_tx_drop_count(void) { return 0U; }
 
-            int main(void)
+            int main(int argc, char **argv)
             {
                 if (!audio_pipeline_init() || !audio_pipeline_start()) return 1;
-                for (uint32_t index = 0U; index < 1999U; ++index) {
+                if (argc > 1) {
+                    failure = argv[1];
+                    audio_pipeline_poll();
+                    if (stops != 1U || logs != 2U || flushes != 2U || early_uart ||
+                        !strstr(result_log, "result=FAIL") || !strstr(result_log, "restarts=0")) {
+                        fprintf(stderr, "%s\n%s", last_log, result_log); return 7;
+                    }
+                    const char *fault = !strcmp(failure,"transport") ? "fault=0 " :
+                        !strcmp(failure,"sequence") ? "fault=1 " :
+                        !strcmp(failure,"invoke") ? "fault=2 " :
+                        !strcmp(failure,"deadline") ? "fault=3 " : "fault=4 ";
+                    if (!strstr(result_log, fault)) return 9;
+                    const uint32_t stopped_frame = frame;
+                    audio_pipeline_poll();
+                    if (frame != stopped_frame || stops != 1U || logs != 2U) return 8;
+                    return 0;
+                }
+                for (uint32_t index = 0U; index < 59999U; ++index) {
                     audio_pipeline_poll();
                 }
                 if (stops || logs || flushes || early_uart) return 2;
                 audio_pipeline_poll();
             #if M55M1_AUDIO_RELEASE_PROBE
-                if (stops != 1U || logs != 1U || flushes != 1U || early_uart) return 3;
+                if (stops != 1U || logs != 2U || flushes != 2U || early_uart) return 3;
                 if (!strstr(last_log, "[AUDIO_RELEASE_PROBE]") ||
-                    !strstr(last_log, "frame=2000") ||
+                    !strstr(last_log, "frame=60000") ||
                     !strstr(last_log, "dmic_overrun=0") ||
                     !strstr(last_log, "dac_underrun=0") ||
                     !strstr(last_log, "feature_mve_ready=1") ||
@@ -161,21 +186,24 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
                     !strstr(last_log, "carry_max_us=50") ||
                     !strstr(last_log, "taps_max_us=60") ||
                     !strstr(last_log, "fir_max_us=100") ||
+                    !strstr(last_log, "pcm_max_us=7") ||
                     !strstr(last_log, "other_max_us=50") ||
                     !strstr(last_log, "bridge_mean_us=40") ||
                     !strstr(last_log, "carry_mean_us=50") ||
                     !strstr(last_log, "taps_mean_us=60") ||
                     !strstr(last_log, "fir_mean_us=100") ||
+                    !strstr(last_log, "pcm_mean_us=7") ||
                     !strstr(last_log, "other_mean_us=50") ||
                     !strstr(last_log, "total_mean_us=850") ||
                     !strstr(last_log, "e2e_mean_us=800") ||
-                    !strstr(last_log, "capture_last_seq=2000") ||
+                    !strstr(last_log, "capture_last_seq=60000") ||
+                    !strstr(result_log, "result=COMPLETE") ||
                     !strstr(last_log, "late_1ms=0")) {
                     fprintf(stderr, "%s", last_log);
                     return 4;
                 }
                 audio_pipeline_poll();
-                if (frame != 2000U || stops != 1U || logs != 1U) return 5;
+                if (frame != 60000U || stops != 1U || logs != 2U) return 5;
             #else
                 if (stops || logs || flushes || early_uart) return 6;
             #endif
@@ -203,6 +231,11 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
                     [str(executable)], capture_output=True, text=True, check=False
                 )
                 self.assertEqual(run.returncode, 0, run.stderr)
+                if enabled:
+                    for failure in ('transport', 'sequence', 'invoke', 'deadline', 'submit'):
+                        with self.subTest(failure=failure):
+                            run = subprocess.run([str(executable), failure], capture_output=True, text=True)
+                            self.assertEqual(run.returncode, 0, run.stderr)
 
 
 if __name__ == "__main__":
