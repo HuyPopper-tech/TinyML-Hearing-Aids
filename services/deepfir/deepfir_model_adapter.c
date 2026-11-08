@@ -16,6 +16,7 @@
 
 #if M55M1_DEEPFIR_MVE && defined(__ARM_FEATURE_MVE) && (__ARM_FEATURE_MVE & 2)
 #include "arm_math.h"
+#include <arm_mve.h>
 #define DEEPFIR_ADAPTER_HAS_MVEF 1
 #else
 #define DEEPFIR_ADAPTER_HAS_MVEF 0
@@ -142,11 +143,91 @@ int16_t deepfir_state_feedback(int16_t code, int64_t multiplier, unsigned shift,
     return (int16_t)(rounded < -32768 ? -32768 : rounded > 32767 ? 32767 : rounded);
 }
 
+static bool feedback_q31_supported(const deepfir_model_adapter_t *adapter, unsigned state) {
+    return adapter->output_map[state + 2u].zero_point == 0 &&
+           adapter->input_map[state + 1u].zero_point == 0 &&
+           adapter->feedback_multiplier[state] >= 0 &&
+           adapter->feedback_multiplier[state] <= INT32_MAX &&
+           (adapter->feedback_shift[state] == 30u || adapter->feedback_shift[state] == 31u);
+}
+
+#if DEEPFIR_ADAPTER_HAS_MVEF
+__attribute__((noinline))
+#endif
+static void
+deepfir_feedback_q31(const int16_t *source, int16_t *destination, uint32_t count,
+                     int32_t multiplier, unsigned shift) {
+    uint32_t i = 0;
+#if DEEPFIR_ADAPTER_HAS_MVEF
+    const int32x4_t factor = vdupq_n_s32(multiplier);
+    for (; i + 4u <= count; i += 4u) {
+        const int32x4_t code = vldrhq_s32(source + i);
+        int32x4_t magnitude = vabsq_s32(code);
+        if (shift == 30u) {
+            magnitude = vshlq_n_s32(magnitude, 1);
+        }
+        // Positive lanes make Q31's rounding ties-away after restoring the original sign.
+        int32x4_t rounded = vqrdmulhq_s32(magnitude, factor);
+        rounded = vpselq_s32(vnegq_s32(rounded), rounded, vcmpltq_n_s32(code, 0));
+        rounded = vmaxq_s32(vdupq_n_s32(-32768), vminq_s32(vdupq_n_s32(32767), rounded));
+        vstrhq_s32(destination + i, rounded);
+    }
+#endif
+    for (; i < count; ++i) {
+        const int32_t code = source[i];
+        const int32_t magnitude = code < 0 ? -code : code;
+        const int32_t operand = shift == 30u ? magnitude * 2 : magnitude;
+        int32_t rounded = (int32_t)(((int64_t)operand * multiplier + (INT64_C(1) << 30)) >> 31);
+        rounded = code < 0 ? -rounded : rounded;
+        destination[i] = (int16_t)(rounded < -32768 ? -32768 : rounded > 32767 ? 32767 : rounded);
+    }
+}
+
+bool deepfir_model_adapter_prepare_mve(const deepfir_model_adapter_t *adapter) {
+#if DEEPFIR_ADAPTER_HAS_MVEF
+    if (!adapter || !adapter->qparams_ready) {
+        return false;
+    }
+    // Startup only: exercise every input code on hardware without touching live h/c.
+    for (unsigned state = 0; state < 2u; ++state) {
+        if (!feedback_q31_supported(adapter, state)) {
+            return false;
+        }
+        for (int32_t base = -32768; base <= 32764; base += 4) {
+            int16_t source[4], destination[4];
+            for (unsigned lane = 0; lane < 4u; ++lane) {
+                source[lane] = (int16_t)(base + (int32_t)lane);
+            }
+            deepfir_feedback_q31(source, destination, 4u,
+                                 (int32_t)adapter->feedback_multiplier[state],
+                                 adapter->feedback_shift[state]);
+            for (unsigned lane = 0; lane < 4u; ++lane) {
+                if (destination[lane] !=
+                    deepfir_state_feedback(source[lane], adapter->feedback_multiplier[state],
+                                           adapter->feedback_shift[state], 0, 0)) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+#else
+    (void)adapter;
+    return false;
+#endif
+}
+
 static void carry_state(deepfir_model_adapter_t *adapter, unsigned state) {
     const deepfir_tensor_map_t *source = &adapter->output_map[state + 2u];
     const deepfir_tensor_map_t *destination = &adapter->input_map[state + 1u];
     if (adapter->feedback_direct[state]) {
         memcpy(destination->data, source->data, DEEPFIR_MODEL_STATE_UNITS * sizeof(int16_t));
+        return;
+    }
+    if (feedback_q31_supported(adapter, state)) {
+        deepfir_feedback_q31(source->data, destination->data, DEEPFIR_MODEL_STATE_UNITS,
+                             (int32_t)adapter->feedback_multiplier[state],
+                             adapter->feedback_shift[state]);
         return;
     }
     for (unsigned i = 0; i < DEEPFIR_MODEL_STATE_UNITS; ++i) {

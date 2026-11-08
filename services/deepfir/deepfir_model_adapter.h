@@ -5,6 +5,7 @@
  * @date 2026-10-23
  */
 #pragma once
+#include <stdbool.h>
 #include <stdint.h>
 #include "deepfir_dsp.h"
 
@@ -136,6 +137,14 @@ int16_t deepfir_state_feedback(int16_t code, int64_t multiplier, unsigned shift,
 
 /** Foreground after successful invoke only; shared by audio and compiled replay. */
 void deepfir_model_adapter_commit_state(deepfir_model_adapter_t *adapter);
+
+/**
+ * @brief Verify the active four-lane Q31 carry kernel on every INT16 code.
+ * @param adapter Initialized, immutable qparams; adapter state is never modified.
+ * @return True only when MVE is compiled and both zero-centered shift30/31 lanes match.
+ * @note Startup-only before audio; scratch is local and no memory is allocated.
+ */
+bool deepfir_model_adapter_prepare_mve(const deepfir_model_adapter_t *adapter);
 
 #ifdef __cplusplus
 }

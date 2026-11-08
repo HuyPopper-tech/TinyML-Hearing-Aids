@@ -198,6 +198,44 @@ static void trace_transport_report(const audio_transport_init_report_t *report) 
 #define AUDIO_PIPELINE_TRACE_INIT(stage, status, code) ((void)0)
 #endif
 
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+static void trace_startup_after_stop(void) {
+    const volatile audio_startup_trace_t *trace = audio_transport_get_startup_trace();
+    if (!trace || trace->active || trace->count == 0u) {
+        return;
+    }
+    static const char *const phases[] = {"UNKNOWN", "TX_ARM", "TX_ENABLED",   "DMIC_ENABLED",
+                                         "TX_TD",   "RX_TD",  "CAPTURE_TAKE", "STOP"};
+    const uint32_t count =
+        trace->count < AUDIO_STARTUP_TRACE_CAPACITY ? trace->count : AUDIO_STARTUP_TRACE_CAPACITY;
+    for (uint32_t i = 0; i < count; ++i) {
+        const audio_startup_event_t event = trace->events[i];
+        const char *phase = event.phase <= AUDIO_STARTUP_STOP ? phases[event.phase] : phases[0];
+        char message[512];
+        const int length =
+            snprintf(message, sizeof(message),
+                     "[AUDIO_STARTUP] event=%lu phase=%s cycle=%lu elapsed_us=%lu rx_seq=%lu "
+                     "txfifo=%lu txth=%lu i2s0=%08lx i2s1=%08lx ctl1=%08lx "
+                     "txctl=%08lx rxctl=%08lx txtd=%08lx rxtd=%08lx "
+                     "primask=%lu basepri=%lu ipsr=%lu pending=%08lx\r\n",
+                     (unsigned long)i, phase, (unsigned long)event.cycle,
+                     (unsigned long)audio_transport_cycles_to_us(
+                         audio_transport_cycles_elapsed(trace->events[0].cycle, event.cycle)),
+                     (unsigned long)event.rx_sequence, (unsigned long)event.tx_fifo_words,
+                     (unsigned long)event.tx_threshold_words, (unsigned long)event.i2s_status0,
+                     (unsigned long)event.i2s_status1, (unsigned long)event.i2s_ctl1,
+                     (unsigned long)event.tx_dma_ctl, (unsigned long)event.rx_dma_ctl,
+                     (unsigned long)event.tx_td_status, (unsigned long)event.rx_td_status,
+                     (unsigned long)event.primask, (unsigned long)event.basepri,
+                     (unsigned long)event.ipsr, (unsigned long)event.irq_pending);
+        if (length > 0 && (size_t)length < sizeof(message)) {
+            (void)debug_uart_tx_try_enqueue(message, (size_t)length);
+            debug_uart_tx_flush_blocking();
+        }
+    }
+}
+#endif
+
 typedef enum {
     AUDIO_PIPELINE_FAULT_TRANSPORT,
     AUDIO_PIPELINE_FAULT_SEQUENCE,
@@ -275,6 +313,7 @@ static void restart_stream(audio_pipeline_fault_t fault, uint32_t detail) {
     // Quiesce both DMA owners before spending any time formatting diagnostics.
 #if M55M1_RUNTIME_TELEMETRY
     deepfir_inference_report_trace();
+    trace_startup_after_stop();
 #endif
     trace_fault(fault, detail);
     memset(&g_audio_working_set, 0, sizeof(g_audio_working_set));
@@ -638,6 +677,7 @@ static void finish_release_probe_if_ready(bool failed, uint32_t fault, uint32_t 
         g_debug_stats.e2e_us_sum += failure_elapsed_us;
     }
     debug_uart_tx_init();
+    trace_startup_after_stop();
     bool feature_mve_ready = false;
     bool fir_mve_ready = false;
     uint32_t mve_self_test_us = 0U;

@@ -62,6 +62,68 @@ static NVT_NONCACHEABLE LPDSCT_T g_dmic_descriptors[2] __ALIGNED(4);
 static m55m1_audio_dmic_state_t g_dmic_state;
 static m55m1_audio_clock_snapshot_t g_clock_snapshot;
 static bool g_clock_snapshot_valid;
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+static volatile audio_startup_trace_t g_startup_trace;
+
+static void m55m1_audio_begin_startup_trace(void) {
+    const uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    g_startup_trace = (audio_startup_trace_t){.active = 1u};
+    __set_PRIMASK(primask);
+}
+
+void m55m1_audio_record_startup_event(audio_startup_phase_t phase, uint32_t cycle) {
+    if (!g_startup_trace.active || phase < AUDIO_STARTUP_TX_ARM || phase > AUDIO_STARTUP_STOP) {
+        return;
+    }
+    const uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    if (!g_startup_trace.active ||
+        (phase == AUDIO_STARTUP_TX_TD && g_startup_trace.tx_events >= 4u) ||
+        (phase == AUDIO_STARTUP_RX_TD && g_startup_trace.rx_events >= 2u) ||
+        (phase == AUDIO_STARTUP_CAPTURE_TAKE && g_startup_trace.take_events >= 1u)) {
+        __set_PRIMASK(primask);
+        return;
+    }
+    if (phase == AUDIO_STARTUP_STOP) {
+        g_startup_trace.active = 0;
+    }
+    if (g_startup_trace.count < AUDIO_STARTUP_TRACE_CAPACITY) {
+        audio_startup_event_t event = {
+            .phase = (uint32_t)phase,
+            .cycle = cycle,
+            .rx_dma_ctl = LPPDMA->LPDSCT[M55M1_AUDIO_LPPDMA_CH].CTL,
+            .rx_td_status = LPPDMA_GET_TD_STS(LPPDMA),
+            .rx_sequence = g_dmic_state.completed_blocks,
+            .primask = primask,
+            .basepri = __get_BASEPRI(),
+            .ipsr = __get_IPSR(),
+            .irq_pending = SCB->ICSR,
+        };
+#if M55M1_ENABLE_DAC_I2S_OUTPUT
+        event.i2s_status0 = I2S1->STATUS0;
+        event.i2s_status1 = I2S1->STATUS1;
+        event.i2s_ctl1 = I2S1->CTL1;
+        event.tx_dma_ctl = PDMA0->DSCT[M55M1_AUDIO_PDMA_CH].CTL;
+        event.tx_td_status = PDMA_GET_TD_STS(PDMA0);
+        event.tx_fifo_words = (event.i2s_status1 & I2S_STATUS1_TXCNT_Msk) >> I2S_STATUS1_TXCNT_Pos;
+        event.tx_threshold_words = (event.i2s_ctl1 & I2S_CTL1_TXTH_Msk) >> I2S_CTL1_TXTH_Pos;
+#endif
+        g_startup_trace.events[g_startup_trace.count] = event;
+        __DMB();
+        ++g_startup_trace.count;
+        g_startup_trace.tx_events += phase == AUDIO_STARTUP_TX_TD;
+        g_startup_trace.rx_events += phase == AUDIO_STARTUP_RX_TD;
+        g_startup_trace.take_events += phase == AUDIO_STARTUP_CAPTURE_TAKE;
+    }
+    __set_PRIMASK(primask);
+}
+
+const volatile audio_startup_trace_t *m55m1_audio_get_startup_trace(void) {
+    return &g_startup_trace;
+}
+// End startup trace implementation.
+#endif
 #if M55M1_RUNTIME_TELEMETRY
 static i2c_recovery_trace_t g_i2c_recovery_trace;
 #endif
@@ -546,6 +608,9 @@ bool m55m1_audio_dmic_prepare(m55m1_audio_profile_t profile) {
                            (uint32_t)(uintptr_t)&g_dmic_descriptors[0]);
     LPPDMA_EnableInt(LPPDMA, M55M1_AUDIO_LPPDMA_CH, LPPDMA_INT_TRANS_DONE);
     NVIC_SetPriority(LPPDMA_IRQn, 1U);
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+    m55m1_audio_begin_startup_trace();
+#endif
     NVIC_EnableIRQ(LPPDMA_IRQn);
 
     return true;
@@ -557,6 +622,9 @@ void m55m1_audio_dmic_enable(void) {
     __DMB();
     DMIC_ENABLE_LPPDMA(DMIC0);
     DMIC_EnableChMsk(DMIC0, DMIC_CTL_CHEN2_Msk);
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+    m55m1_audio_record_startup_event(AUDIO_STARTUP_DMIC_ENABLED, m55m1_timebase_cycles_now());
+#endif
 }
 
 bool m55m1_audio_dmic_start(m55m1_audio_profile_t profile) {
@@ -570,6 +638,9 @@ bool m55m1_audio_dmic_start(m55m1_audio_profile_t profile) {
 void m55m1_audio_dmic_stop(void) {
     const uint32_t channel_mask = 1UL << M55M1_AUDIO_LPPDMA_CH;
     uint32_t primask;
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+    m55m1_audio_record_startup_event(AUDIO_STARTUP_STOP, m55m1_timebase_cycles_now());
+#endif
 
     /*
      * Stop new peripheral requests before disabling the interrupt and channel.
@@ -647,6 +718,9 @@ bool m55m1_audio_dmic_take_block_timed(int16_t *destination, uint16_t sample_cou
     if (timing != NULL) {
         *timing = local_timing;
     }
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+    m55m1_audio_record_startup_event(AUDIO_STARTUP_CAPTURE_TAKE, m55m1_timebase_cycles_now());
+#endif
     return true;
 }
 
@@ -671,7 +745,13 @@ void m55m1_audio_dmic_get_status(m55m1_audio_dmic_status_t *status) {
 void PDMA0_IRQHandler(void) {
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
     if (g_playback_irq_callback != NULL) {
-        g_playback_irq_callback(m55m1_timebase_cycles_now(), g_playback_irq_context);
+        const uint32_t cycle = m55m1_timebase_cycles_now();
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+        if (PDMA_GET_TD_STS(PDMA0) & (1UL << M55M1_AUDIO_PDMA_CH)) {
+            m55m1_audio_record_startup_event(AUDIO_STARTUP_TX_TD, cycle);
+        }
+#endif
+        g_playback_irq_callback(cycle, g_playback_irq_context);
     }
 #endif
 }
@@ -688,6 +768,9 @@ void LPPDMA_IRQHandler(void) {
         LPPDMA_CLR_TD_FLAG(LPPDMA, channel_mask);
         ++g_dmic_state.completed_blocks;
         g_dmic_state.last_completed_cycle = m55m1_timebase_cycles_now();
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+        m55m1_audio_record_startup_event(AUDIO_STARTUP_RX_TD, g_dmic_state.last_completed_cycle);
+#endif
         if (g_dmic_state.block_ready) {
             ++g_dmic_state.overrun_blocks;
         }

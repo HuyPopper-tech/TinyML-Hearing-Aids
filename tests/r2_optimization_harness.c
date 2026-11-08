@@ -42,6 +42,23 @@ static int check_quantizer(float value, deepfir_feature_state_t *state) {
                 value, state->scale, (long)state->zero_point, actual, expected, status, wanted);
         return 1;
     }
+    float block[4] = {value, -value, value, -value};
+    int16_t codes[6] = {1234, 1234, 1234, 1234, 1234, 1234};
+    int16_t expected_block[4];
+    int expected_status = 0;
+    for (unsigned lane = 0; lane < 4; ++lane) {
+        expected_status =
+            reference_quantize(block[lane], state->scale, state->zero_point, &expected_block[lane]);
+        if (expected_status) {
+            break;
+        }
+    }
+    const int block_status =
+        deepfir_quantize_feature_block(block, 4, state, 1.0 / state->scale, codes + 1);
+    if (block_status != expected_status || codes[0] != 1234 || codes[5] != 1234 ||
+        (!block_status && memcmp(codes + 1, expected_block, sizeof(expected_block)))) {
+        return 2;
+    }
     return 0;
 }
 
@@ -240,6 +257,51 @@ static int feedback_edges(void) {
     return 0;
 }
 
+static int feedback_commit_edges(void) {
+    static deepfir_model_adapter_t adapter;
+    if (deepfir_model_init_qparams(&adapter) || deepfir_model_adapter_prepare_mve(&adapter)) {
+        return 1; // Native execution must never claim hardware MVE readiness.
+    }
+    unsigned comparisons = 0;
+    for (unsigned mode = 0; mode < 3; ++mode) {
+        if (mode == 1) {
+            adapter.output_map[2].zero_point = -17;
+            adapter.input_map[2].zero_point = 19;
+        } else if (mode == 2) {
+            adapter.feedback_shift[0] = 29;
+            adapter.feedback_shift[1] = 32;
+        }
+        for (int base = -32768; base <= 32767; base += 200) {
+            for (unsigned i = 0; i < 200; ++i) {
+                adapter.next_h[i] = (int16_t)(base + (int)i);
+                adapter.next_c[i] = (int16_t)(base + (int)i);
+            }
+            deepfir_model_adapter_commit_state(&adapter);
+            for (unsigned state = 0; state < 2; ++state) {
+                for (unsigned i = 0; i < 200; ++i) {
+                    const int16_t code = adapter.output_map[state + 2].data[i];
+                    const int64_t product =
+                        ((int64_t)code - adapter.output_map[state + 2].zero_point) *
+                        adapter.feedback_multiplier[state];
+                    const int64_t denominator = INT64_C(1) << adapter.feedback_shift[state];
+                    int64_t expected =
+                        ((product < 0 ? -product : product) + denominator / 2) / denominator;
+                    expected = (product < 0 ? -expected : expected) +
+                               adapter.input_map[state + 1].zero_point;
+                    expected = expected < -32768 ? -32768 : expected > 32767 ? 32767 : expected;
+                    if (adapter.input_map[state + 1].data[i] != expected) {
+                        return 2;
+                    }
+                    ++comparisons;
+                }
+            }
+        }
+    }
+    printf("commit feedback comparisons=%u mismatches=0; contract/nonzero/fallback PASS\n",
+           comparisons);
+    return 0;
+}
+
 typedef struct {
     deepfir_model_adapter_t adapter;
     unsigned hop;
@@ -342,7 +404,7 @@ static int direct_feature_context(void) {
 
 int main(void) {
     if (quantization_edges() || float_quantization_guard() || frontend_equivalence() ||
-        feedback_edges() || direct_feature_context()) {
+        feedback_edges() || feedback_commit_edges() || direct_feature_context()) {
         return 1;
     }
     return 0;

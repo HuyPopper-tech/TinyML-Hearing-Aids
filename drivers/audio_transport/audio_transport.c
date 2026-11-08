@@ -30,6 +30,12 @@ typedef struct {
     void *context;
 } audio_transport_progress_context_t;
 
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+const volatile audio_startup_trace_t *audio_transport_get_startup_trace(void) {
+    return m55m1_audio_get_startup_trace();
+}
+#endif
+
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
 static void audio_transport_playback_irq(uint32_t completed_cycle, void *context) {
     (void)context;

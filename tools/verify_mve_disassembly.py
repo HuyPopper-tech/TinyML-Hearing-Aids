@@ -13,6 +13,7 @@ VECTOR_REGISTER = re.compile(r"\bq[0-7]\b", re.IGNORECASE)
 REQUIRED_KERNELS = (
     "deepfir_feature_float", "deepfir_dsp_process_mve", "arm_cfft_f32",
     "arm_vlog_f32", "arm_vexp_f32", "arm_q15_to_float",
+    "deepfir_feedback_q31", "deepfir_quantize_feature_block", "deepfir_reconstruct_taps",
 )
 
 REQUIRED_MAP_REFERENCES = (
@@ -46,6 +47,12 @@ def verify_kernel_ranges(map_text: str, disassembly: str) -> dict[str, int]:
         if name == "deepfir_dsp_process_mve" and not any(
                 re.search(r"\bvfma\.f32\s+q[0-7]", line, re.IGNORECASE) for line in lines):
             raise ValueError("FIR has no vector floating-point FMA")
+        if name == "deepfir_feedback_q31" and not any(
+                re.search(r"\bvqrdmulh\.s32\b", line, re.IGNORECASE) for line in lines):
+            raise ValueError("Feedback has no rounded Q31 vector multiply")
+        if name == "deepfir_quantize_feature_block" and not any(
+                re.search(r"\bvcvt\.s32\.f32\b", line, re.IGNORECASE) for line in lines):
+            raise ValueError("Quantizer has no vector float conversion")
         counts[name] = len(lines)
     return counts
 

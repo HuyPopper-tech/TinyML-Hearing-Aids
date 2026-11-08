@@ -10,6 +10,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+#include "common/audio_startup_trace.h"
+#endif
 #if M55M1_RUNTIME_TELEMETRY
 #include "common/i2c_recovery_trace.h"
 #endif
@@ -17,6 +20,16 @@
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+/** @brief Append a bounded raw observation; foreground/IRQ safe, never formats/logs.
+ * @param phase Startup boundary; TX TD is FIFO transfer, not serial completion.
+ * @param cycle Board counter timestamp sampled at the boundary.
+ */
+void m55m1_audio_record_startup_event(audio_startup_phase_t phase, uint32_t cycle);
+/** @brief Borrow board-owned observations after transport stops, until next prepare. */
+const volatile audio_startup_trace_t *m55m1_audio_get_startup_trace(void);
 #endif
 
 #define M55M1_AUDIO_SAFE_MAX_GAIN_DB (-12)

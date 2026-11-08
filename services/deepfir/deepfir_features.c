@@ -91,6 +91,55 @@ static int quantize_feature(float value, const deepfir_feature_state_t *state, d
     return 0;
 }
 
+#if DEEPFIR_DSP_HAS_MVEF
+__attribute__((noinline))
+#endif
+static int
+deepfir_quantize_feature_block(const float *values, uint32_t count,
+                               const deepfir_feature_state_t *state, double inverse_scale,
+                               int16_t *output) {
+    uint32_t i = 0;
+#if DEEPFIR_DSP_HAS_MVEF
+    const float inverse = (float)inverse_scale;
+    if (inverse >= FLT_MIN && isfinite(inverse)) {
+        for (; i + 4u <= count; i += 4u) {
+            const float32x4_t value = vld1q_f32(values + i);
+            const uint32x4_t bits =
+                vandq_u32(vreinterpretq_u32_f32(value), vdupq_n_u32(0x7fffffffU));
+            const float32x4_t scaled = vmulq_n_f32(value, inverse);
+            mve_pred16_t accepted = (vcmpeqq_n_u32(bits, 0) | vcmpcsq_n_u32(bits, 0x00800000U)) &
+                                    vcmpleq_n_f32(vabsq_f32(scaled), 65536.0f);
+            // Mask exceptional lanes before integer conversion; they use the scalar reference.
+            const float32x4_t code =
+                vaddq_n_f32(vpselq_f32(scaled, vdupq_n_f32(0), accepted), (float)state->zero_point);
+            const int32x4_t whole = vcvtq_s32_f32(code);
+            const float32x4_t fraction = vabsq_f32(vsubq_f32(code, vcvtq_f32_s32(whole)));
+            accepted &= vcmpgtq_n_f32(vabsq_f32(vsubq_n_f32(fraction, 0.5f)), 0.03125f);
+            const float32x4_t half =
+                vpselq_f32(vdupq_n_f32(-0.5f), vdupq_n_f32(0.5f), vcmpltq_n_f32(code, 0));
+            int32x4_t rounded = vcvtq_s32_f32(vaddq_f32(code, half));
+            rounded = vmaxq_s32(vdupq_n_s32(-32768), vminq_s32(vdupq_n_s32(32767), rounded));
+            vstrhq_s32(output + i, rounded);
+            if (accepted != UINT16_MAX) {
+                for (unsigned lane = 0; lane < 4u; ++lane) {
+                    if (!(accepted & (1u << (4u * lane))) &&
+                        quantize_feature(values[i + lane], state, inverse_scale,
+                                         output + i + lane)) {
+                        return -2;
+                    }
+                }
+            }
+        }
+    }
+#endif
+    for (; i < count; ++i) {
+        if (quantize_feature(values[i], state, inverse_scale, output + i)) {
+            return -2;
+        }
+    }
+    return 0;
+}
+
 int deepfir_feature_float(const float *pcm, uint32_t count, int16_t *feature, void *context) {
     deepfir_feature_state_t *state = (deepfir_feature_state_t *)context;
     float spectrum[512];
@@ -152,15 +201,19 @@ int deepfir_feature_float(const float *pcm, uint32_t count, int16_t *feature, vo
         gain[index] = powf(gain[index], -0.7f);
     }
 #endif
-    for (index = 0; index < 129u; ++index) {
-        float re = spectrum[2u * index], im = spectrum[2u * index + 1u];
-        const float values[3] = {re == 0.0f && im == 0.0f ? 0.0f : magnitude[index],
-                                 re * gain[index], im * gain[index]};
-        for (unsigned channel = 0; channel < 3u; ++channel) {
-            if (quantize_feature(values[channel], state, inverse_scale,
-                                 &feature[3u * index + channel]) != 0) {
-                return -2;
-            }
+    for (index = 0; index < 129u; index += 4u) {
+        const unsigned bins = index + 4u <= 129u ? 4u : 1u;
+        float values[12];
+        for (unsigned lane = 0; lane < bins; ++lane) {
+            const unsigned bin = index + lane;
+            const float re = spectrum[2u * bin], im = spectrum[2u * bin + 1u];
+            values[3u * lane] = re == 0.0f && im == 0.0f ? 0.0f : magnitude[bin];
+            values[3u * lane + 1u] = re * gain[bin];
+            values[3u * lane + 2u] = im * gain[bin];
+        }
+        if (deepfir_quantize_feature_block(values, bins * 3u, state, inverse_scale,
+                                           feature + 3u * index)) {
+            return -2;
         }
     }
     return 0;
@@ -186,6 +239,46 @@ bool deepfir_feature_mve_ready(void) {
 }
 
 #if DEEPFIR_DSP_HAS_MVEF
+static bool quantizer_check_mve(const deepfir_feature_state_t *state) {
+    const int codes[] = {-65536, -32768, -32767, -128, -1, 0, 1, 127, 32766, 32767, 65535};
+    const double offsets[] = {0.0, 0.46875, 0.5, 0.53125};
+    for (unsigned c = 0; c < sizeof(codes) / sizeof(codes[0]); ++c) {
+        for (int direction = -1; direction <= 1; ++direction) {
+            float values[4];
+            int16_t actual[4];
+            for (unsigned lane = 0; lane < 4u; ++lane) {
+                values[lane] =
+                    (float)((codes[c] + offsets[lane] - state->zero_point) * state->scale);
+                if (direction) {
+                    // Microlib lacks nextafterf; step IEEE binary32 bits for startup checks only.
+                    uint32_t bits;
+                    memcpy(&bits, &values[lane], sizeof(bits));
+                    if ((bits & 0x7fffffffU) == 0) {
+                        bits = direction < 0 ? 0x80000001U : 1u;
+                    } else if ((values[lane] > 0) == (direction > 0)) {
+                        ++bits;
+                    } else {
+                        --bits;
+                    }
+                    memcpy(&values[lane], &bits, sizeof(bits));
+                }
+            }
+            if (deepfir_quantize_feature_block(values, 4u, state, 1.0 / state->scale, actual)) {
+                return false;
+            }
+            for (unsigned lane = 0; lane < 4u; ++lane) {
+                double code = (double)values[lane] / state->scale + state->zero_point;
+                code = code >= 0 ? floor(code + 0.5) : -floor(-code + 0.5);
+                const int expected = code < -32768 ? -32768 : code > 32767 ? 32767 : (int)code;
+                if (actual[lane] != expected) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
 static int feature_check_fft(float *buffer, uint32_t length, uint8_t inverse, void *context) {
     const unsigned mode = *(const unsigned *)context;
     (void)length;
@@ -209,7 +302,7 @@ bool deepfir_feature_prepare_mve(deepfir_feature_state_t *state) {
     void *saved_context = state->fft_context;
     int16_t feature[387], pcm[16] = {0};
     unsigned mode;
-    bool valid = true;
+    bool valid = quantizer_check_mve(state);
     state->fft = feature_check_fft;
     state->fft_context = &mode;
     deepfir_feature_reset(state);

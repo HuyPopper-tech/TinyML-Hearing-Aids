@@ -1,5 +1,42 @@
 # Latest Session Work
 
+## Submillisecond runtime implementation — 2026-11-08
+
+User approved implementation after6967118. Added exact MVE Q31 h/c feedback,
+guarded batched feature quantization and vector finite/roll/taper reconstruction.
+Generic fallbacks, encoded state, model/DSP contract and1ms/b+2 guards retained.
+Startup exhaustive feedback self-test uses scratch, never live state. Debug/Probe
+record at most12 raw FIFO/TD/IRQ events and format after stop; ordinary Release
+excludes trace. No pin/clock/DMA configuration, start-order, queue or libs changes.
+
+Verified132/132 native tests, no skips, plus6/6 focused checks. Arm6.24 builds
+Debug/Release/Probe;9 scoped optimized MVE ranges pass for Release/Probe. Debug
+links; its unoptimized out-of-line FFT helpers make the optimized wrapper-range
+gate inapplicable. Native lane model tests production vector branches, not Arm
+hardware. DSP-only canonical gain/phase replay with synthetic PCM covers26441
+hops; max output error2.98e-7,136 PCM differences <=1 against historical libm.
+This is not compiled-controller parity; existing float tolerance unchanged.
+
+BIN Debug642752B SHA c97208b2714337387395c177337dd1cad9cefec2ae07aa0e3634ed61550d0e03;
+Release617696B SHA ad63d63fc2749c69c7ce80b799b8768483ebd5e05eb33a443c39c37903a2d5ab;
+Probe624736B SHA 1df3d97b31b6452c360d5512a892bcf8c684732fa02616e75bda41bbb53bbb80.
+RW_RAM Debug78712/Release77168/Probe78216B; Release unchanged. Arena65536,
+DMA320, stack8192B unchanged. Debug static stack6656B+Unknown is not a watermark.
+New-image allocation/stack/target MVE/timing/audio/latency/power NOT_RUN;
+compiled parity BLOCKED without backend; raw Linux replay not rerun.
+
+Evidence/reproduction: docs/verification/2026-11-08-submillisecond-runtime/.
+Raw attempts/images/maps: diagnostics/submillisecond_runtime_20261108/225414/.
+Builds caught LPDSCT field and microlib nextafterf dependency defects; corrected
+and all profiles rebuilt. Ordinary outputs restored, opt-ins OFF, editor Debug.
+Light route, no agents/explorer; no package/golden/approval change or device flash.
+
+Next user run: existing Release Probe OpenOCD Flash+Debug profile, F5/Continue
+without later halts. Keep all AUDIO_STARTUP and both complete result lines with
+BIN hash. Require60000 fault-free hops,<1ms,target <=900us. Old seq0 underrun
+remains unresolved; establish FIFO/TD phase before changing transport. No new
+speedup or continuous schedule acceptance claimed. Earlier entries are snapshots.
+
 ## Submillisecond pipeline analysis — 2026-11-08
 
 Analysis-only follow-up to6bf6b37. Latest user log fails before any capture/hop

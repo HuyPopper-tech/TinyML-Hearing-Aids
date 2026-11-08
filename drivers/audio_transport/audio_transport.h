@@ -9,6 +9,9 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+#include "common/audio_startup_trace.h"
+#endif
 
 #if M55M1_RUNTIME_TELEMETRY
 #include "common/i2c_recovery_trace.h"
@@ -16,6 +19,11 @@
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+/** @brief Borrow read-only startup observations after stop, until next start. */
+const volatile audio_startup_trace_t *audio_transport_get_startup_trace(void);
 #endif
 
 #define AUDIO_TRANSPORT_SAMPLE_RATE_HZ 16000UL

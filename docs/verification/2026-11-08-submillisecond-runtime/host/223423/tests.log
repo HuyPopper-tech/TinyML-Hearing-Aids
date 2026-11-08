@@ -1,0 +1,32 @@
+test_cmsis_reconstruction_avoids_libm_in_contract_phase_range (test_r2_optimization.R2OptimizationTests.test_cmsis_reconstruction_avoids_libm_in_contract_phase_range) ... ok
+test_feedback_has_no_runtime_integer_division (test_r2_optimization.R2OptimizationTests.test_feedback_has_no_runtime_integer_division) ... ok
+test_release_feedback_uses_rounded_q31_vectors (test_r2_optimization.R2OptimizationTests.test_release_feedback_uses_rounded_q31_vectors) ... ok
+test_release_quantizer_and_reconstruction_have_vector_kernels (test_r2_optimization.R2OptimizationTests.test_release_quantizer_and_reconstruction_have_vector_kernels) ...
+  test_release_quantizer_and_reconstruction_have_vector_kernels (test_r2_optimization.R2OptimizationTests.test_release_quantizer_and_reconstruction_have_vector_kernels) (name='deepfir_features.c') ... FAIL
+test_shared_normalized_frontend_quantizer_and_feedback_edges (test_r2_optimization.R2OptimizationTests.test_shared_normalized_frontend_quantizer_and_feedback_edges) ... FAIL
+
+======================================================================
+FAIL: test_release_quantizer_and_reconstruction_have_vector_kernels (test_r2_optimization.R2OptimizationTests.test_release_quantizer_and_reconstruction_have_vector_kernels) (name='deepfir_features.c')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\TinyML-Hearing-Aids\tests\test_r2_optimization.py", line 29, in test_release_quantizer_and_reconstruction_have_vector_kernels
+    self.assertIsNotNone(kernel, name+' has no vector kernel')
+AssertionError: unexpectedly None : deepfir_features.c has no vector kernel
+
+======================================================================
+FAIL: test_shared_normalized_frontend_quantizer_and_feedback_edges (test_r2_optimization.R2OptimizationTests.test_shared_normalized_frontend_quantizer_and_feedback_edges)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\TinyML-Hearing-Aids\tests\test_r2_optimization.py", line 106, in test_shared_normalized_frontend_quantizer_and_feedback_edges
+    self.assertEqual(result.returncode, 0, result.stderr)
+AssertionError: 1 != 0 : D:\TinyML-Hearing-Aids\tests\r2_optimization_harness.c: In function 'check_quantizer':
+D:\TinyML-Hearing-Aids\tests\r2_optimization_harness.c:56:30: error: implicit declaration of function 'deepfir_quantize_feature_block' [-Werror=implicit-function-declaration]
+   56 |     const int block_status = deepfir_quantize_feature_block(block, 4, state, 1.0 / state->scale,
+      |                              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+cc1.exe: all warnings being treated as errors
+
+
+----------------------------------------------------------------------
+Ran 5 tests in 3.461s
+
+FAILED (failures=2)

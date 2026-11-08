@@ -1,0 +1,538 @@
+[
+  {
+    "path": "diagnostics/submillisecond_runtime_20261108/223115/command.json",
+    "sha256": "2f05d72bee0612b6f6df44c6f533ea11c72802ca66d946bac7577dc7b6309708",
+    "result": {
+      "command": [
+        "rtk",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_r2_optimization.py",
+        "-v"
+      ],
+      "exit_code": 1
+    }
+  },
+  {
+    "path": "diagnostics/submillisecond_runtime_20261108/223209/command.json",
+    "sha256": "96b8566e5c51b96c1c86bcc130f50c8989c654f4ee46f1e84a6b302bd2589c98",
+    "result": {
+      "command": [
+        "rtk",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_r2_optimization.py",
+        "-v"
+      ],
+      "exit_code": 0
+    }
+  },
+  {
+    "path": "diagnostics/submillisecond_runtime_20261108/223423/command.json",
+    "sha256": "2f05d72bee0612b6f6df44c6f533ea11c72802ca66d946bac7577dc7b6309708",
+    "result": {
+      "command": [
+        "rtk",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_r2_optimization.py",
+        "-v"
+      ],
+      "exit_code": 1
+    }
+  },
+  {
+    "path": "diagnostics/submillisecond_runtime_20261108/223534/command.json",
+    "sha256": "2f05d72bee0612b6f6df44c6f533ea11c72802ca66d946bac7577dc7b6309708",
+    "result": {
+      "command": [
+        "rtk",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_r2_optimization.py",
+        "-v"
+      ],
+      "exit_code": 1
+    }
+  },
+  {
+    "path": "diagnostics/submillisecond_runtime_20261108/223646/command.json",
+    "sha256": "2f05d72bee0612b6f6df44c6f533ea11c72802ca66d946bac7577dc7b6309708",
+    "result": {
+      "command": [
+        "rtk",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_r2_optimization.py",
+        "-v"
+      ],
+      "exit_code": 1
+    }
+  },
+  {
+    "path": "diagnostics/submillisecond_runtime_20261108/223728/command.json",
+    "sha256": "96b8566e5c51b96c1c86bcc130f50c8989c654f4ee46f1e84a6b302bd2589c98",
+    "result": {
+      "command": [
+        "rtk",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_r2_optimization.py",
+        "-v"
+      ],
+      "exit_code": 0
+    }
+  },
+  {
+    "path": "diagnostics/submillisecond_runtime_20261108/223946/command.json",
+    "sha256": "96b8566e5c51b96c1c86bcc130f50c8989c654f4ee46f1e84a6b302bd2589c98",
+    "result": {
+      "command": [
+        "rtk",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_r2_optimization.py",
+        "-v"
+      ],
+      "exit_code": 0
+    }
+  },
+  {
+    "path": "diagnostics/submillisecond_runtime_20261108/224407/command.json",
+    "sha256": "1e58901be4ede9e46a2a1adbcf4816466a55cbb83c8476e7c4c032ce61b1e513",
+    "result": {
+      "command": [
+        "rtk",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_audio_startup_trace.py",
+        "-v"
+      ],
+      "exit_code": 1
+    }
+  },
+  {
+    "path": "diagnostics/submillisecond_runtime_20261108/224608/command.json",
+    "sha256": "b1d8074da5330136984dc8a6f647186bcf507cbf1645744eea2fcfc78c02e95a",
+    "result": {
+      "command": [
+        "rtk",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_deepfir_audio_release_probe.py",
+        "-v"
+      ],
+      "exit_code": 1
+    }
+  },
+  {
+    "path": "diagnostics/submillisecond_runtime_20261108/224639/command.json",
+    "sha256": "6357161cd8bbce2b39e43124a78a4a5b066221cd5dac3151985a620ff2187a4d",
+    "result": {
+      "command": [
+        "rtk",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_audio_startup_trace.py",
+        "-v"
+      ],
+      "exit_code": 0
+    }
+  },
+  {
+    "path": "diagnostics/submillisecond_runtime_20261108/224644/command.json",
+    "sha256": "b42b199e63152edad1d70e5d90dc99c8cb67f3f17135030705e56518dd8df70d",
+    "result": {
+      "command": [
+        "rtk",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_deepfir_audio_release_probe.py",
+        "-v"
+      ],
+      "exit_code": 0
+    }
+  },
+  {
+    "path": "diagnostics/submillisecond_runtime_20261108/224746/command.json",
+    "sha256": "c593266cde08183074b78df5f104ce79d833fa37cd31bd7da6077161061f6d3e",
+    "result": {
+      "command": [
+        "rtk",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test*.py",
+        "-v"
+      ],
+      "exit_code": 1
+    }
+  },
+  {
+    "path": "diagnostics/submillisecond_runtime_20261108/224857/command.json",
+    "sha256": "80dd277b81ad9509928859fadae4fcfca6bed9b624064e7f460107460342e989",
+    "result": {
+      "command": [
+        "rtk",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test*.py",
+        "-v"
+      ],
+      "exit_code": 0
+    }
+  },
+  {
+    "path": "diagnostics/submillisecond_runtime_20261108/225121/commands.json",
+    "sha256": "0d37faf1d7d55496349807a15aeb9236cc41d5683d7099f0ce36a174d718d8d3",
+    "result": [
+      {
+        "name": "debug_config",
+        "command": [
+          "rtk",
+          "proxy",
+          "cmd",
+          "/c",
+          "build.bat",
+          "debug",
+          "config"
+        ],
+        "exit_code": 0,
+        "log": "debug_config.log"
+      },
+      {
+        "name": "debug_build",
+        "command": [
+          "rtk",
+          "proxy",
+          "cmd",
+          "/c",
+          "build.bat",
+          "debug",
+          "build"
+        ],
+        "exit_code": 1,
+        "log": "debug_build.log"
+      }
+    ]
+  },
+  {
+    "path": "diagnostics/submillisecond_runtime_20261108/225234/commands.json",
+    "sha256": "0d37faf1d7d55496349807a15aeb9236cc41d5683d7099f0ce36a174d718d8d3",
+    "result": [
+      {
+        "name": "debug_config",
+        "command": [
+          "rtk",
+          "proxy",
+          "cmd",
+          "/c",
+          "build.bat",
+          "debug",
+          "config"
+        ],
+        "exit_code": 0,
+        "log": "debug_config.log"
+      },
+      {
+        "name": "debug_build",
+        "command": [
+          "rtk",
+          "proxy",
+          "cmd",
+          "/c",
+          "build.bat",
+          "debug",
+          "build"
+        ],
+        "exit_code": 1,
+        "log": "debug_build.log"
+      }
+    ]
+  },
+  {
+    "path": "diagnostics/submillisecond_runtime_20261108/225331/commands.json",
+    "sha256": "98695d49b728bcb070d4545c234ac10c2071bc341f92b233841b6e31c7c8063a",
+    "result": [
+      {
+        "name": "debug_config",
+        "command": [
+          "rtk",
+          "proxy",
+          "cmd",
+          "/c",
+          "build.bat",
+          "debug",
+          "config"
+        ],
+        "exit_code": 0,
+        "log": "debug_config.log"
+      },
+      {
+        "name": "debug_build",
+        "command": [
+          "rtk",
+          "proxy",
+          "cmd",
+          "/c",
+          "build.bat",
+          "debug",
+          "build"
+        ],
+        "exit_code": 0,
+        "log": "debug_build.log"
+      },
+      {
+        "name": "debug_mve",
+        "command": [
+          "rtk",
+          "proxy",
+          "python",
+          "-X",
+          "utf8",
+          "tools/verify_mve_disassembly.py",
+          "D:\\TinyML-Hearing-Aids\\diagnostics\\submillisecond_runtime_20261108\\225331\\debug\\M55M1_GestureAI.axf",
+          "--objdump",
+          "C:/ST/STM32CubeCLT_1.20.0/GNU-tools-for-STM32/bin/arm-none-eabi-objdump.EXE"
+        ],
+        "exit_code": 1,
+        "log": "debug_mve.log"
+      }
+    ]
+  },
+  {
+    "path": "diagnostics/submillisecond_runtime_20261108/225414/commands.json",
+    "sha256": "c924f73a8ab00981f553793e0afd3e469582819ac9165eda14686f82e9826024",
+    "result": [
+      {
+        "name": "debug_config",
+        "command": [
+          "rtk",
+          "proxy",
+          "cmd",
+          "/c",
+          "build.bat",
+          "debug",
+          "config"
+        ],
+        "exit_code": 0,
+        "log": "debug_config.log"
+      },
+      {
+        "name": "debug_build",
+        "command": [
+          "rtk",
+          "proxy",
+          "cmd",
+          "/c",
+          "build.bat",
+          "debug",
+          "build"
+        ],
+        "exit_code": 0,
+        "log": "debug_build.log"
+      },
+      {
+        "name": "Configure_Release",
+        "command": [
+          "rtk",
+          "proxy",
+          "cmd.exe",
+          "/d",
+          "/c",
+          "build.bat release config"
+        ],
+        "exit_code": 0,
+        "log": "Configure_Release.log"
+      },
+      {
+        "name": "Configure_Release_Probe",
+        "command": [
+          "rtk",
+          "proxy",
+          "cmake",
+          "-S",
+          "D:/TinyML-Hearing-Aids",
+          "-B",
+          "D:/TinyML-Hearing-Aids/build",
+          "-DM55M1_AUDIO_RELEASE_PROBE=ON"
+        ],
+        "exit_code": 0,
+        "log": "Configure_Release_Probe.log"
+      },
+      {
+        "name": "Build_Release_Probe",
+        "command": [
+          "rtk",
+          "proxy",
+          "cmd.exe",
+          "/d",
+          "/c",
+          "build.bat release only"
+        ],
+        "exit_code": 0,
+        "log": "Build_Release_Probe.log"
+      },
+      {
+        "name": "release_probe_mve",
+        "command": [
+          "rtk",
+          "proxy",
+          "python",
+          "-X",
+          "utf8",
+          "tools/verify_mve_disassembly.py",
+          "D:\\TinyML-Hearing-Aids\\diagnostics\\submillisecond_runtime_20261108\\225414\\release_probe\\M55M1_GestureAI.axf",
+          "--objdump",
+          "C:/ST/STM32CubeCLT_1.20.0/GNU-tools-for-STM32/bin/arm-none-eabi-objdump.EXE"
+        ],
+        "exit_code": 0,
+        "log": "release_probe_mve.log"
+      },
+      {
+        "name": "Build_Release",
+        "command": [
+          "rtk",
+          "proxy",
+          "cmd.exe",
+          "/d",
+          "/c",
+          "build.bat release build"
+        ],
+        "exit_code": 0,
+        "log": "Build_Release.log"
+      },
+      {
+        "name": "release_mve",
+        "command": [
+          "rtk",
+          "proxy",
+          "python",
+          "-X",
+          "utf8",
+          "tools/verify_mve_disassembly.py",
+          "D:\\TinyML-Hearing-Aids\\diagnostics\\submillisecond_runtime_20261108\\225414\\release\\M55M1_GestureAI.axf",
+          "--objdump",
+          "C:/ST/STM32CubeCLT_1.20.0/GNU-tools-for-STM32/bin/arm-none-eabi-objdump.EXE"
+        ],
+        "exit_code": 0,
+        "log": "release_mve.log"
+      },
+      {
+        "name": "Configure_Debug",
+        "command": [
+          "rtk",
+          "proxy",
+          "cmd.exe",
+          "/d",
+          "/c",
+          "build.bat debug config"
+        ],
+        "exit_code": 0,
+        "log": "Configure_Debug.log"
+      }
+    ]
+  },
+  {
+    "path": "diagnostics/submillisecond_runtime_20261108/225547/command.json",
+    "sha256": "80dd277b81ad9509928859fadae4fcfca6bed9b624064e7f460107460342e989",
+    "result": {
+      "command": [
+        "rtk",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test*.py",
+        "-v"
+      ],
+      "exit_code": 0
+    }
+  },
+  {
+    "path": "diagnostics/submillisecond_runtime_20261108/225907/command.json",
+    "sha256": "96b8566e5c51b96c1c86bcc130f50c8989c654f4ee46f1e84a6b302bd2589c98",
+    "result": {
+      "command": [
+        "rtk",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_r2_optimization.py",
+        "-v"
+      ],
+      "exit_code": 0
+    }
+  }
+]

@@ -1,0 +1,14 @@
+test_probe_is_opt_in_and_reports_after_stop (test_deepfir_audio_release_probe.DeepfirAudioReleaseProbeTests.test_probe_is_opt_in_and_reports_after_stop) ... FAIL
+
+======================================================================
+FAIL: test_probe_is_opt_in_and_reports_after_stop (test_deepfir_audio_release_probe.DeepfirAudioReleaseProbeTests.test_probe_is_opt_in_and_reports_after_stop)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\TinyML-Hearing-Aids\tests\test_deepfir_audio_release_probe.py", line 265, in test_probe_is_opt_in_and_reports_after_stop
+    self.assertEqual(run.returncode, 0, run.stderr)
+AssertionError: 3 != 0 :
+
+----------------------------------------------------------------------
+Ran 1 test in 1.655s
+
+FAILED (failures=1)

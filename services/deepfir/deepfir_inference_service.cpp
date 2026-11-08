@@ -563,6 +563,18 @@ extern "C" bool deepfir_inference_init(void) {
         g_fir_mve_ready = deepfir_dsp_prepare_mve();
         g_mve_self_test_us = feature_us + elapsed_us(fir_start, audio_transport_cycles_now());
         DEEPFIR_TRACE_INIT("mve.fir", g_fir_mve_ready ? "OK" : "FAIL", g_fir_mve_ready ? 0 : -1);
+#if M55M1_DEEPFIR_MVE
+        DEEPFIR_TRACE_INIT("mve.feedback", "BEGIN", 0);
+        const uint32_t feedback_start = audio_transport_cycles_now();
+        const bool feedback_ready = deepfir_model_adapter_prepare_mve(&g_adapter);
+        g_mve_self_test_us += elapsed_us(feedback_start, audio_transport_cycles_now());
+        DEEPFIR_TRACE_INIT("mve.feedback", feedback_ready ? "OK" : "FAIL", feedback_ready ? 0 : -1);
+        if (!feedback_ready) {
+            (void)ethosu_runtime_deinit();
+            g_interpreter = nullptr;
+            return false;
+        }
+#endif
     }
 #else
     g_fir_mve_ready = deepfir_dsp_mve_ready();

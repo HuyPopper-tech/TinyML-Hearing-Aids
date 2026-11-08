@@ -48,6 +48,16 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
             }
             void audio_transport_wait_for_work(void) {}
             void audio_transport_stop_safe(void) { ++stops; }
+            #if M55M1_AUDIO_RELEASE_PROBE
+            const volatile audio_startup_trace_t *audio_transport_get_startup_trace(void) {
+                static audio_startup_trace_t trace = {.count=1, .events={{
+                    .phase=AUDIO_STARTUP_TX_TD, .cycle=11, .tx_fifo_words=8,
+                    .tx_threshold_words=8, .tx_dma_ctl=0x1234, .primask=0,
+                }}};
+                if (stops != 1U) ++early_uart;
+                return &trace;
+            }
+            #endif
             bool audio_transport_take_capture(
                 int16_t destination[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
                 audio_transport_capture_timing_t *timing)
@@ -133,9 +143,12 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
                 if (strstr(message, "[AUDIO_RELEASE_RESULT]")) {
                     if (length >= sizeof(result_log)) return false;
                     memcpy(result_log, message, length); result_log[length] = '\0';
-                } else {
+                } else if (strstr(message, "[AUDIO_RELEASE_PROBE]")) {
                     memcpy(last_log, message, length);
                     last_log[length] = '\0';
+                } else if (strstr(message, "[AUDIO_STARTUP]")) {
+                    if (!strstr(message,"phase=TX_TD") || !strstr(message,"txfifo=8") ||
+                        !strstr(message,"txth=8") || !strstr(message,"txctl=00001234")) return false;
                 }
                 ++logs;
                 return true;
@@ -153,7 +166,7 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
                 if (argc > 1) {
                     failure = argv[1];
                     audio_pipeline_poll();
-                    if (stops != 1U || logs != 2U || flushes != 2U || early_uart ||
+                    if (stops != 1U || logs != 3U || flushes != 3U || early_uart ||
                         !strstr(result_log, "result=FAIL") || !strstr(result_log, "restarts=0")) {
                         fprintf(stderr, "%s\n%s", last_log, result_log); return 7;
                     }
@@ -179,7 +192,7 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
                     }
                     const uint32_t stopped_frame = frame;
                     audio_pipeline_poll();
-                    if (frame != stopped_frame || stops != 1U || logs != 2U) return 8;
+                    if (frame != stopped_frame || stops != 1U || logs != 3U) return 8;
                     return 0;
                 }
                 for (uint32_t index = 0U; index < 59999U; ++index) {
@@ -188,7 +201,7 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
                 if (stops || logs || flushes || early_uart) return 2;
                 audio_pipeline_poll();
             #if M55M1_AUDIO_RELEASE_PROBE
-                if (stops != 1U || logs != 2U || flushes != 2U || early_uart) return 3;
+                if (stops != 1U || logs != 3U || flushes != 3U || early_uart) return 3;
                 if (!strstr(last_log, "[AUDIO_RELEASE_PROBE]") ||
                     !strstr(last_log, "frame=60000") ||
                     !strstr(last_log, "dmic_overrun=0") ||
@@ -222,7 +235,7 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
                     return 4;
                 }
                 audio_pipeline_poll();
-                if (frame != 60000U || stops != 1U || logs != 2U) return 5;
+                if (frame != 60000U || stops != 1U || logs != 3U) return 5;
             #else
                 if (stops || logs || flushes || early_uart) return 6;
             #endif

@@ -1,0 +1,17 @@
+[rtk] /!\ No hook installed — run `rtk init -g` for automatic token savings
+[0/2] Re-checking globbed directories...
+[1/9] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/audio_pipeline/audio_pipeline.o
+[2/9] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/drivers/audio_transport/audio_transport.o
+[3/9] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_reconstruction.o
+[4/9] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/board/m55m1_audio.o
+[5/9] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/drivers/tlv320dac3100/tlv320dac3100.o
+[6/9] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_features.o
+[7/9] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_model_adapter.o
+[8/9] Building CXX object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_inference_service.o
+[9/9] Linking CXX executable M55M1_GestureAI.axf
+
+Build OK. Output in build\:
+M55M1_GestureAI.axf
+M55M1_GestureAI.axf.map
+M55M1_GestureAI.bin
+M55M1_GestureAI.htm

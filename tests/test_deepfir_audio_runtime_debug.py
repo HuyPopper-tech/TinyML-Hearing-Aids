@@ -195,6 +195,7 @@ class DeepfirAudioRuntimeDebugTests(unittest.TestCase):
             }
             void audio_transport_wait_for_work(void) {}
             void audio_transport_stop_safe(void) { audio_running = false; ++stops; }
+            const volatile audio_startup_trace_t *audio_transport_get_startup_trace(void) { return NULL; }
             bool audio_transport_take_capture(
                 int16_t destination[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
                                               audio_transport_capture_timing_t *timing)

@@ -8,6 +8,9 @@
 #include <stddef.h>
 
 #include "board/m55m1_timebase.h"
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+#include "board/m55m1_audio.h"
+#endif
 #include "drivers/tlv320dac3100/tlv320dac3100.h"
 
 /* Page 0 register addresses used by the 16 kHz playback script. */
@@ -532,8 +535,14 @@ tlv320dac3100_status_t tlv320dac3100_start(void) {
     g_context.slot_available[1] = false;
     __set_PRIMASK(primask);
 
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+    m55m1_audio_record_startup_event(AUDIO_STARTUP_TX_ARM, m55m1_timebase_cycles_now());
+#endif
     I2S_ENABLE_TXDMA(g_context.config.i2s);
     I2S_ENABLE_TX(g_context.config.i2s);
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+    m55m1_audio_record_startup_event(AUDIO_STARTUP_TX_ENABLED, m55m1_timebase_cycles_now());
+#endif
     g_context.status.running = true;
     return TLV320DAC3100_STATUS_OK;
 }

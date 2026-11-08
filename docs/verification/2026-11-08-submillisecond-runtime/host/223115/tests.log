@@ -1,0 +1,31 @@
+test_cmsis_reconstruction_avoids_libm_in_contract_phase_range (test_r2_optimization.R2OptimizationTests.test_cmsis_reconstruction_avoids_libm_in_contract_phase_range) ... ok
+test_feedback_has_no_runtime_integer_division (test_r2_optimization.R2OptimizationTests.test_feedback_has_no_runtime_integer_division) ... ok
+test_release_feedback_uses_rounded_q31_vectors (test_r2_optimization.R2OptimizationTests.test_release_feedback_uses_rounded_q31_vectors) ... FAIL
+test_shared_normalized_frontend_quantizer_and_feedback_edges (test_r2_optimization.R2OptimizationTests.test_shared_normalized_frontend_quantizer_and_feedback_edges) ... FAIL
+
+======================================================================
+FAIL: test_release_feedback_uses_rounded_q31_vectors (test_r2_optimization.R2OptimizationTests.test_release_feedback_uses_rounded_q31_vectors)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\TinyML-Hearing-Aids\tests\test_r2_optimization.py", line 25, in test_release_feedback_uses_rounded_q31_vectors
+    self.assertIsNotNone(kernel, 'Feedback still uses the generic scalar loop')
+AssertionError: unexpectedly None : Feedback still uses the generic scalar loop
+
+======================================================================
+FAIL: test_shared_normalized_frontend_quantizer_and_feedback_edges (test_r2_optimization.R2OptimizationTests.test_shared_normalized_frontend_quantizer_and_feedback_edges)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\TinyML-Hearing-Aids\tests\test_r2_optimization.py", line 86, in test_shared_normalized_frontend_quantizer_and_feedback_edges
+    self.assertEqual(result.returncode, 0, result.stderr)
+AssertionError: 1 != 0 : D:\TinyML-Hearing-Aids\tests\r2_optimization_harness.c: In function 'feedback_commit_edges':
+D:\TinyML-Hearing-Aids\tests\r2_optimization_harness.c:245:49: error: implicit declaration of function 'deepfir_model_adapter_prepare_mve'; did you mean 'deepfir_model_adapter_process_hop'? [-Werror=implicit-function-declaration]
+  245 |     if (deepfir_model_init_qparams(&adapter) || deepfir_model_adapter_prepare_mve(&adapter)) {
+      |                                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                                 deepfir_model_adapter_process_hop
+cc1.exe: all warnings being treated as errors
+
+
+----------------------------------------------------------------------
+Ran 4 tests in 2.925s
+
+FAILED (failures=2)

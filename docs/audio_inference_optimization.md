@@ -1,5 +1,25 @@
 # Tối ưu audio/inference liên tục — 2026-11-08
 
+## Submillisecond implementation update — 2026-11-08
+
+Implemented exact MVE Q31 state feedback, guarded batched feature quantization
+and vector reconstruction roll/taper/finite checks. No model/DSP/schedule change.
+Debug/Probe record bounded raw startup FIFO/TD events, printed after stop as
+`[AUDIO_STARTUP]`; ordinary Release remains silent. Feedback self-test adds boot
+work, not per-hop work; `mve_test_us` includes it.
+
+132/132 tests, Debug/Release/Probe builds and optimized Release/Probe MVE checks
+pass. DSP replay26441 hops with synthetic PCM stays within existing floating
+tolerance;136 PCM differences <=1 remain versus historical libm. This is not
+compiled-controller or target parity. Release RW_RAM77168B unchanged. BIN sizes
+Debug642752/Release617696/Probe624736B. Ordinary outputs restored, editor Debug.
+
+Target speedup, <1ms acceptance and startup underrun resolution remain unmeasured.
+Use existing Release Probe OpenOCD profile; preserve all AUDIO_STARTUP lines and
+both complete summary/result lines. Exact hashes, memory, acceptance and next-run
+steps: [implementation evidence](verification/2026-11-08-submillisecond-runtime/README.md).
+No flash or power measurement. Earlier sections below are historical snapshots.
+
 Đã triển khai hướng 1 được duyệt trên luồng custom PCB, dùng chung cho Debug và
 Release. Model R2, 16 kHz/hop 16, qparams, encoded state và lịch b+2 giữ đúng hợp
 đồng. Agent chưa flash; phép đo điện năng vẫn chưa thực hiện.

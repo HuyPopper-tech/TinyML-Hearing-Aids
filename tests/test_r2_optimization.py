@@ -1,6 +1,7 @@
 """Numeric and compiled-work regression gates for continuous R2 optimization."""
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -9,6 +10,71 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class R2OptimizationTests(unittest.TestCase):
+    def test_production_vector_branches_with_native_lane_semantics(self):
+        # Runs the actual SIMD C branches; the explicit test-only lane model is
+        # neither hardware MVE execution nor a timing/CMSIS FFT accuracy claim.
+        with tempfile.TemporaryDirectory() as directory:
+            objects = []
+            for name, vector in (('tests/r2_mve_kernel_harness.c', True),
+                                 ('services/deepfir/deepfir_reconstruction.c', True),
+                                 ('services/deepfir/deepfir_dsp.c', False)):
+                obj = Path(directory)/(Path(name).stem+'.o')
+                command = ['gcc', '-std=c11', '-O2', '-Wall', '-Wextra', '-Werror',
+                           '-ffp-contract=off', '-I', str(ROOT), '-I', str(ROOT/'tests/mve_model')]
+                if vector:
+                    command += ['-DM55M1_DEEPFIR_MVE=1', '-D__ARM_FEATURE_MVE=2']
+                result = subprocess.run([*command, '-c', str(ROOT/name), '-o', str(obj)],
+                                        capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                objects.append(str(obj))
+            executable = Path(directory)/'lanes.exe'
+            result = subprocess.run(['gcc', *objects, '-lm', '-o', str(executable)],
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            result = subprocess.run([str(executable)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
+            print(result.stdout, end='')
+
+    @unittest.skipUnless(shutil.which('armclang'), 'Arm Compiler required for target code-generation checks')
+    def test_release_quantizer_and_reconstruction_have_vector_kernels(self):
+        for name, function, instruction in (
+            ('deepfir_features.c', 'deepfir_quantize_feature_block', r'vcvt\.s32\.f32'),
+            ('deepfir_reconstruction.c', 'deepfir_reconstruct_taps', r'vmul\.f32\s+q')):
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
+                assembly = Path(directory) / 'kernel.s'
+                result = subprocess.run([
+                    'armclang', '--target=arm-arm-none-eabi', '-mthumb', '-mcpu=cortex-m55',
+                    '-mfloat-abi=hard', '-O3', '-DNDEBUG', '-fno-finite-math-only', '-DM55M1_DEEPFIR_MVE=1',
+                    '-DARM_MATH_MVEF=1', '-DDEEPFIR_DSP_CMSIS_FFT=1',
+                    '-I', str(ROOT/'libs/CMSIS/DSP/Include'),
+                    '-I', str(ROOT/'libs/CMSIS/Core/Include'), '-std=c11', '-S',
+                    str(ROOT/'services/deepfir'/name), '-o', str(assembly)],
+                    capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                kernel = re.search(r'(?ms)^'+function+r':.*?(?=^\s*\.size\s+'+function+r'\b)',
+                                   assembly.read_text())
+                self.assertIsNotNone(kernel, name+' has no vector kernel')
+                self.assertRegex(kernel.group(), r'(?i)\b'+instruction)
+
+    @unittest.skipUnless(shutil.which('armclang'), 'Arm Compiler required for target code-generation checks')
+    def test_release_feedback_uses_rounded_q31_vectors(self):
+        with tempfile.TemporaryDirectory() as directory:
+            assembly = Path(directory) / 'feedback.s'
+            result = subprocess.run([
+                'armclang', '--target=arm-arm-none-eabi', '-mthumb', '-mcpu=cortex-m55',
+                '-mfloat-abi=hard', '-O3', '-DNDEBUG', '-fno-finite-math-only', '-DM55M1_DEEPFIR_MVE=1',
+                '-DARM_MATH_MVEF=1', '-I', str(ROOT/'libs/CMSIS/DSP/Include'),
+                '-I', str(ROOT/'libs/CMSIS/Core/Include'), '-std=c11', '-S',
+                str(ROOT/'services/deepfir/deepfir_model_adapter.c'), '-o', str(assembly)],
+                capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            kernel = re.search(r'(?ms)^deepfir_feedback_q31:.*?(?=^\s*\.size\s+deepfir_feedback_q31\b)',
+                               assembly.read_text())
+            self.assertIsNotNone(kernel, 'Feedback still uses the generic scalar loop')
+            self.assertRegex(kernel.group(), r'(?i)\bvqrdmulh\.s32\b')
+            self.assertRegex(kernel.group(), r'(?i)\bvldrh\.s32\b')
+            self.assertNotRegex(kernel.group(), r'\b(?:umull|smull|__aeabi_ldivmod)\b')
+
     def test_cmsis_reconstruction_avoids_libm_in_contract_phase_range(self):
         harness = r'''
         #include <assert.h>

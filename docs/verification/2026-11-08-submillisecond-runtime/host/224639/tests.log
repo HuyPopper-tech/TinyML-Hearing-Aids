@@ -1,0 +1,6 @@
+test_recorder_is_bounded_preserves_irq_mask_and_freezes_on_stop (test_audio_startup_trace.AudioStartupTraceTests.test_recorder_is_bounded_preserves_irq_mask_and_freezes_on_stop) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.256s
+
+OK
