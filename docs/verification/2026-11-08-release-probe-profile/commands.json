@@ -1,0 +1,84 @@
+[
+  {
+    "name": "Configure_Release",
+    "command": [
+      "rtk",
+      "proxy",
+      "cmd.exe",
+      "/d",
+      "/c",
+      "build.bat release config"
+    ],
+    "exit_code": 0,
+    "log": "Configure_Release.log"
+  },
+  {
+    "name": "Configure_Release_Probe",
+    "command": [
+      "rtk",
+      "proxy",
+      "cmake",
+      "-S",
+      "D:/TinyML-Hearing-Aids",
+      "-B",
+      "D:/TinyML-Hearing-Aids/build",
+      "-DM55M1_AUDIO_RELEASE_PROBE=ON"
+    ],
+    "exit_code": 0,
+    "log": "Configure_Release_Probe.log"
+  },
+  {
+    "name": "Build_Release_Probe",
+    "command": [
+      "rtk",
+      "proxy",
+      "cmd.exe",
+      "/d",
+      "/c",
+      "build.bat release only"
+    ],
+    "exit_code": 0,
+    "log": "Build_Release_Probe.log"
+  },
+  {
+    "name": "tests",
+    "command": [
+      "rtk",
+      "python",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-v"
+    ],
+    "exit_code": 0,
+    "log": "tests.log"
+  },
+  {
+    "name": "Build_Release",
+    "command": [
+      "rtk",
+      "proxy",
+      "cmd.exe",
+      "/d",
+      "/c",
+      "build.bat release build"
+    ],
+    "exit_code": 0,
+    "log": "Build_Release.log"
+  },
+  {
+    "name": "Configure_Debug",
+    "command": [
+      "rtk",
+      "proxy",
+      "cmd.exe",
+      "/d",
+      "/c",
+      "build.bat debug config"
+    ],
+    "exit_code": 0,
+    "log": "Configure_Debug.log"
+  }
+]

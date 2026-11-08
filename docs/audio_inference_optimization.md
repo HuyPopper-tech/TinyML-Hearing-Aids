@@ -104,6 +104,12 @@ vật lý/cấp nguồn và SWD sẵn dùng; không coi reset request OpenOCD l�
    rtk proxy cmake --build --preset m55m1-release
    ```
 
+   Trong VS Code có thể chọn **M55M1: Release Probe: Flash + Debug (OpenOCD
+   Nuvoton)** rồi F5/Continue. Để đo độc lập, dùng task **M55M1: Flash Release
+   Probe (APROM, verify)**, chờ verify xong rồi power-cycle toàn bo. Cả hai tự
+   configure Release, bật probe và build-only, không cần nạp thủ công. Chọn
+   Release thường sẽ tắt probe; không chạy hai task chung `build/` đồng thời.
+
 4. Đo baseline/candidate cùng compiler/clock/cache/instrumentation. Probe chạy
    tối đa 60.000 hop và kết thúc ngay khi lỗi. `COMPLETE` chỉ là đủ thời gian quan
    sát, chưa đồng nghĩa đạt timing. Fault IDs: 0 transport, 1 sequence, 2 inference,

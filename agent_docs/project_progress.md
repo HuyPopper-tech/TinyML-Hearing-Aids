@@ -1,5 +1,15 @@
 # Project Progress
 
+## Release Probe OpenOCD profile — 2026-11-08
+
+Added Release Probe Flash + Debug and standalone APROM flash task. Actual task
+chain configures canonical Release, enables probe, then build-only in build/;
+ordinary Release resets probe OFF. No extra build directory/preset or hardware
+changes. Verified128/128 host tests, probe build and ordinary Release restore;
+probe BIN620896B SHA7a6df1b8e6655216d1bae78d6f62289e74278713b9bf8dc8081efb87d7482e61.
+Editor restored to Debug. Evidence: docs/verification/2026-11-08-release-probe-profile/.
+VS Code F5 UI, target flash and physical timing NOT_RUN; no device operation.
+
 ## Continuous audio/inference optimization — 2026-11-08
 
 Approved approach1 implemented inline, no agents: adapter normalizes PCM once and

@@ -1,5 +1,16 @@
 # Latest Session Work
 
+## Release Probe OpenOCD profile — 2026-11-08
+
+VS Code now has M55M1: Release Probe: Flash + Debug (OpenOCD Nuvoton), plus
+M55M1: Flash Release Probe (APROM, verify) for standalone timing. Both use the
+same build/ AXF/BIN and ordered configure Release → probe ON → build-only tasks.
+Ordinary Release still forces probe OFF. No new preset/build directory or board
+changes. Verified128/128 tests and the actual build task commands, then restored
+ordinary Release image615392B and Debug editor. No F5 UI/target flash/device run.
+Evidence: docs/verification/2026-11-08-release-probe-profile/; usage and CH549
+reset limits: docs/M55M1_OPENOCD_DEBUG.md. Device acceptance remains open.
+
 ## Continuous audio/inference optimization — 2026-11-08
 
 Implemented the approved approach1 with one existing pipeline/interpreter and

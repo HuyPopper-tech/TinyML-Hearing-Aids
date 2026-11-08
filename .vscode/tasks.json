@@ -62,6 +62,38 @@
             }
         },
         {
+            "label": "M55M1: Configure Release Probe",
+            "type": "process",
+            "command": "cmake",
+            "args": [
+                "-S", "${workspaceFolder}",
+                "-B", "${workspaceFolder}/build",
+                "-DM55M1_AUDIO_RELEASE_PROBE=ON"
+            ],
+            "dependsOn": "M55M1: Configure Release",
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "M55M1: Build Release Probe",
+            "type": "process",
+            "command": "cmd.exe",
+            "args": [
+                "/d",
+                "/c",
+                "build.bat release only"
+            ],
+            "dependsOn": "M55M1: Configure Release Probe",
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
             "label": "M55M1: Install OpenOCD Nuvoton",
             "type": "process",
             "command": "powershell.exe",
@@ -147,6 +179,32 @@
                 "shutdown"
             ],
             "dependsOn": "M55M1: Build Release",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "M55M1: Flash Release Probe (APROM, verify)",
+            "type": "process",
+            "command": "${workspaceFolder}/tools/openocd/.runtime/bin/openocd.exe",
+            "args": [
+                "-s",
+                "${workspaceFolder}/tools/openocd",
+                "-s",
+                "${workspaceFolder}/tools/openocd/.runtime/share/openocd/scripts",
+                "-f",
+                "${workspaceFolder}/tools/openocd/m55m1-ch549.cfg",
+                "-c",
+                "init",
+                "-c",
+                "poll off",
+                "-c",
+                "m55m1_program {${workspaceFolder}/build/M55M1_GestureAI.bin}",
+                "-c",
+                "shutdown"
+            ],
+            "dependsOn": "M55M1: Build Release Probe",
             "options": {
                 "cwd": "${workspaceFolder}"
             },

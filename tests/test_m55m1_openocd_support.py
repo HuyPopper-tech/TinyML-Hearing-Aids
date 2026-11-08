@@ -109,7 +109,7 @@ foreach call $calls {echo "CALL:[join $call |]"}
     def test_cortex_monitor_image_resolves_without_windows_path_escaping(self):
         launch = json.loads((REPO_ROOT / ".vscode/launch.json").read_text(encoding="utf-8"))
         configs = [c for c in launch["configurations"] if c["request"] == "launch"]
-        self.assertEqual(len(configs), 2)
+        self.assertEqual(len(configs), 3)
         for config in configs:
             with self.subTest(profile=config["name"]):
                 self.assertEqual(config["cwd"], "${workspaceFolder}")

@@ -60,7 +60,7 @@ class DebugConfigurationTests(unittest.TestCase):
         launch_path = REPO_ROOT / ".vscode" / "launch.json"
         launch = json.loads(launch_path.read_text(encoding="utf-8"))
         configs = {item["name"]: item for item in launch["configurations"]}
-        self.assertEqual(len(configs), 4)
+        self.assertEqual(len(configs), 5)
 
         for config in configs.values():
             self.assertEqual(config["type"], "cortex-debug")
@@ -92,6 +92,26 @@ class DebugConfigurationTests(unittest.TestCase):
                 ])
                 self.assertEqual(flash["runToEntryPoint"], "main")
 
+        probe = configs["M55M1: Release Probe: Flash + Debug (OpenOCD Nuvoton)"]
+        release = configs["M55M1: Release: Flash + Debug (OpenOCD Nuvoton)"]
+        self.assertEqual(probe, dict(release, name=probe["name"],
+                                     preLaunchTask="M55M1: Build Release Probe"))
+
+    def test_probe_build_enables_instrumentation_after_product_configure(self):
+        task_file = json.loads((REPO_ROOT / ".vscode/tasks.json").read_text(encoding="utf-8"))
+        tasks = {task["label"]: task for task in task_file["tasks"]}
+        configure = tasks["M55M1: Configure Release Probe"]
+        self.assertEqual(configure["dependsOn"], "M55M1: Configure Release")
+        self.assertEqual(configure["command"], "cmake")
+        self.assertEqual(configure["args"], ["-S", "${workspaceFolder}",
+            "-B", "${workspaceFolder}/build", "-DM55M1_AUDIO_RELEASE_PROBE=ON"])
+        build = tasks["M55M1: Build Release Probe"]
+        self.assertEqual(build["dependsOn"], configure["label"])
+        self.assertEqual(build["command"], "cmd.exe")
+        self.assertEqual(build["args"], ["/d", "/c", "build.bat release only"])
+        self.assertEqual(tasks["M55M1: Configure Release"]["args"][-1], "build.bat release config")
+        self.assertEqual(tasks["M55M1: Build Release"]["args"][-1], "build.bat release build")
+
     def test_flash_tasks_build_matching_images_and_the_server_stays_running(self):
         launch = json.loads((REPO_ROOT / ".vscode/launch.json").read_text(encoding="utf-8"))
         task_file = json.loads((REPO_ROOT / ".vscode/tasks.json").read_text(encoding="utf-8"))
@@ -102,7 +122,8 @@ class DebugConfigurationTests(unittest.TestCase):
         for task in tasks.values():
             if "dependsOn" in task:
                 self.assertIn(task["dependsOn"], tasks)
-        for profile, directory in [("Debug", "build-debug"), ("Release", "build")]:
+        for profile, directory in [("Debug", "build-debug"), ("Release", "build"),
+                                   ("Release Probe", "build")]:
             task = tasks[f"M55M1: Flash {profile} (APROM, verify)"]
             self.assertEqual(task["dependsOn"], f"M55M1: Build {profile}")
             self.assertIn(f"m55m1_program {{${{workspaceFolder}}/{directory}/M55M1_GestureAI.bin}}", task["args"])

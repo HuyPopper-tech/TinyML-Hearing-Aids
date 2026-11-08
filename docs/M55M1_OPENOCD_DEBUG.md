@@ -33,7 +33,8 @@ Arm Compiler 6 remains the firmware compiler.
 ## Debug initialization and first-hop logs
 
 Debug enables UART2 TX PC5 / RX PC4 at 115200-8N1. Open the terminal before reset,
-then Continue if the debugger is stopped at `main`. Release keeps UART disabled.
+then Continue if the debugger is stopped at `main`. Ordinary Release keeps UART
+disabled; the opt-in Release Probe reports only after its observation stops.
 
 `[MODEL_MEMORY] status=ALLOCATED` confirms AllocateTensors succeeded. Initialization
 continues with the following checkpoints; the list is an expected sequence, not a
@@ -55,10 +56,11 @@ its result identifies the next operation to inspect, but does not distinguish a
 CPU fault, debugger halt, wait or lost UART output by itself. Failure returns retain
 the existing safe-stop behavior and emit an explicit stage before main stops.
 
-After stream start, `[AUDIO_STAGE] stage=capture` marks the first completed input.
-`[HOP_STAGE]` follows frontend/FFT, Invoke, state feedback, taps, FIR and PCM of the
-first PCM call only. Boot FFT self-tests and compiled replay do not emit these hop
-markers. No blocking UART drain occurs after DMA starts or on automatic recovery.
+After stream start, Debug records up to16 raw latest-hop stage/cycle/status marks.
+`[HOP_STAGE]` reports frontend/FFT, Invoke, feedback, taps, FIR and PCM only after
+fault recovery stops DMA. Boot self-tests and compiled replay do not emit these
+marks. No live first-capture or first-hop formatting remains; UART draining is
+allowed only during boot or stopped fault reporting.
 `[AUDIO_FAULT]` reports the first admitted message per fault category, including
 sequence/deadline/submit/model/transport/restart failures and health counters.
 Periodic `[AUDIO] frame=...` still requires 1000 processed hops; repeated recovery
@@ -66,8 +68,8 @@ can prevent that count from being reached, so its absence is not proof of a hang
 
 Cold-boot checkpoints are drained before proceeding so a later initialization
 failure cannot hide behind queued output. These boot waits add startup time.
-First-hop UART formatting/interrupt work also adds Debug overhead; this build is
-for diagnosis, not evidence of the Release 1 ms deadline or measured power.
+Debug raw marks and periodic telemetry add overhead; this build is for diagnosis,
+not evidence of the Release 1 ms deadline or measured power.
 
 ## VS Code operations
 
@@ -76,6 +78,7 @@ for diagnosis, not evidence of the Release 1 ms deadline or measured power.
 | M55M1: Debug: Flash + Debug (OpenOCD Nuvoton) | Builds the custom product Debug image, programs/verifies `build-debug/M55M1_GestureAI.bin`, resets and stops at `main`. |
 | M55M1: Debug: Attach (OpenOCD Nuvoton) | Halts the existing custom product image using `build-debug/M55M1_GestureAI.axf`; no build, flash or automatic reset. |
 | M55M1: Release: Flash + Debug (OpenOCD Nuvoton) | Builds the custom product Release image, programs/verifies `build/M55M1_GestureAI.bin`, resets and stops at `main`. |
+| M55M1: Release Probe: Flash + Debug (OpenOCD Nuvoton) | Configures Release, enables the finite timing probe, builds without reconfiguration, programs/verifies `build/M55M1_GestureAI.bin` and stops at `main`. |
 | M55M1: Release: Attach (OpenOCD Nuvoton) | Halts the existing custom product image using `build/M55M1_GestureAI.axf`; no build, flash or automatic reset. |
 
 Choose a profile and press F5. Cortex-Debug starts and owns its OpenOCD process;
@@ -85,8 +88,8 @@ Stop ends the debug session and its server. Attach symbols must match the image
 already in flash; using a different build AXF gives
 incorrect source information.
 
-The Run and Debug selector contains Debug and Release variants of Flash + Debug
-and Attach. Both build configurations use the same custom PCB and OpenOCD target.
+The Run and Debug selector contains Debug/Release Flash + Debug and Attach, plus
+Release Probe Flash + Debug. All use the same custom PCB and OpenOCD target.
 Release optimization can limit stepping and variable visibility.
 Do not flash without separate authorization. See `docs/r2_custom_integration.md`.
 
@@ -101,6 +104,24 @@ Use **Terminal > Run Task** for these two programming choices:
 | --- | --- | --- |
 | M55M1: Flash Debug (APROM, verify) | `build-debug/` | `build-debug/M55M1_GestureAI.bin` |
 | M55M1: Flash Release (APROM, verify) | `build/` | `build/M55M1_GestureAI.bin` |
+| M55M1: Flash Release Probe (APROM, verify) | `build/` | `build/M55M1_GestureAI.bin`, probe ON |
+
+For a timing test, prefer **M55M1: Flash Release Probe (APROM, verify)**: after
+verification exits, open UART2 at115200-8N1 and physically power-cycle the whole
+board for standalone execution. CH549 cannot assert nRESET. The probe runs up to
+60000 hops, stops on its first fault and prints `[AUDIO_RELEASE_PROBE]` followed
+by `[AUDIO_RELEASE_RESULT]` after DMA stops. No live log is expected during the run.
+`COMPLETE` means the observation finished; inspect deadline/DMA/model counters and
+capture-to-publish maximum before declaring a timing pass. For F5, select the
+Release Probe profile, Continue from main and avoid breakpoints while measuring.
+
+The task dependency chain is **Configure Release → Configure Release Probe →
+Build Release Probe**. The first step restores canonical flags, the second sets
+`M55M1_AUDIO_RELEASE_PROBE=ON`, and the last uses `build.bat release only` so it
+cannot reset the flag. Replay/capture remain OFF. No extra CMake preset or build
+directory is added. The ordinary Release build/flash task deliberately restores
+probe OFF and silent continuous audio. They share `build/`; never run these
+build/flash tasks concurrently. Attach symbols must match the last image built.
 
 Both tasks use the same pinned CH549/Nuvoton configuration. F5 uses the AXF and
 BIN of the selected Debug or Release launch profile. Programming tasks only use
