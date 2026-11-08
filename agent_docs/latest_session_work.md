@@ -1,5 +1,30 @@
 # Latest Session Work
 
+## Submillisecond pipeline analysis — 2026-11-08
+
+Analysis-only follow-up to6bf6b37. Latest user log fails before any capture/hop
+(frame0,seq0,DAC underrun1); no timing benefit of guarded FP32 is established.
+Historical subms logs are valid limited evidence, with different model hashes
+and one underrun, not acceptance of the current transport. R2's extra CPU work
+is both state requantizations and gain/phase reconstruction. Old1088us capture-
+to-deadline baseline needs89us reduction to <1ms,188us for target900us.
+
+Compiled/executed native C exhaustive formula proof: h/c65536 codes each,
+131072 exact matches, zero max code error. Positive-magnitude Q31 multiplication
+can express both feedback shifts while preserving ties-away; MVE implementation
+and speed remain NOT_RUN. DMA TD marks FIFO transfer, not serial completion;
+TX threshold8/16-level FIFO motivates startup phase tracing, not a proven fix.
+Illustrative FIFO model must not be reported as hardware timing.
+
+Detailed priority/budget/acceptance: docs/pipeline_submillisecond_analysis.md.
+Evidence: docs/verification/2026-11-08-pipeline-budget/; raw native proof/Thumb
+disassembly: diagnostics/pipeline_budget_20261108/221230/. Next: capture first
+TX/RX/TD/FIFO epochs without live ISR logging, then exact feedback MVE, frontend
+split and reconstruction profiling. No runtime/config/package/golden/libs/DMA
+changes, no new firmware build, no device operation. Compiled parity and board
+deadline/audio/power remain open. Fresh128/128 host tests pass, no skips; source
+and contract hashes match. Light route, no subagents/explorer.
+
 ## First-hop deadline investigation — 2026-11-08
 
 User confirmed F5→Continue, no later Pause/step. Previous UART Release first hop

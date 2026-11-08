@@ -1,0 +1,22 @@
+{
+  "command": [
+    "rtk",
+    "python",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "tests",
+    "-v"
+  ],
+  "exit_code": 0,
+  "raw_log": "D:\\TinyML-Hearing-Aids\\diagnostics\\pipeline_budget_20261108\\222259\\tests.log",
+  "raw_sha256": "c9836727c5898bc3dd7bd4e04f195bb02b78c877e64e0c5f11f582f5f6c0e1d4",
+  "log": "tests.log",
+  "log_normalization": "CRLF/CR to LF, trailing whitespace stripped; raw retained",
+  "source_contract_hashes": "PASS",
+  "local_markdown_links": "PASS",
+  "target_build": "NOT_RUN",
+  "target_execution": "NOT_RUN",
+  "firmware_changed": false
+}

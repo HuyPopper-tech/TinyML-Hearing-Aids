@@ -1,0 +1,57 @@
+{
+  "kind": "ILLUSTRATIVE_DISCRETE_EVENT_MODEL",
+  "hardware_measurement": false,
+  "assumptions": [
+    "16000 stereo frames/s, 16 words/descriptor, initially empty FIFO",
+    "single-word DMA refill when FIFO occupancy <= threshold",
+    "no separate shift-register latency, no DMA/IRQ latency",
+    "first capture completes at 1000 us; actual DMIC startup unknown"
+  ],
+  "limit": "Request rule and phase must be confirmed from target snapshots/TRM; not a board result",
+  "results": [
+    {
+      "threshold": 8,
+      "completions": [
+        {
+          "descriptor": 1,
+          "consumed_frames": 7,
+          "ideal_us": 437.5,
+          "fifo_words": 9
+        },
+        {
+          "descriptor": 2,
+          "consumed_frames": 23,
+          "ideal_us": 1437.5,
+          "fifo_words": 9
+        },
+        {
+          "descriptor": 3,
+          "consumed_frames": 39,
+          "ideal_us": 2437.5,
+          "fifo_words": 9
+        }
+      ],
+      "first_capture_ideal_us": 1000,
+      "capture_to_second_td_window_us": 437.5
+    },
+    {
+      "threshold": 0,
+      "completions": [
+        {
+          "descriptor": 1,
+          "consumed_frames": 15,
+          "ideal_us": 937.5,
+          "fifo_words": 1
+        },
+        {
+          "descriptor": 2,
+          "consumed_frames": 31,
+          "ideal_us": 1937.5,
+          "fifo_words": 1
+        }
+      ],
+      "first_capture_ideal_us": 1000,
+      "capture_to_second_td_window_us": 937.5
+    }
+  ]
+}

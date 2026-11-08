@@ -1,0 +1,47 @@
+{
+  "commands": [
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "gcc",
+        "-std=c11",
+        "-O2",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "D:\\TinyML-Hearing-Aids\\diagnostics\\pipeline_budget_20261108\\221230\\feedback_q31_proof.c",
+        "-o",
+        "D:\\TinyML-Hearing-Aids\\diagnostics\\pipeline_budget_20261108\\221230\\feedback_q31_proof.exe"
+      ],
+      "exit_code": 0,
+      "log": "command_0.log"
+    },
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "D:\\TinyML-Hearing-Aids\\diagnostics\\pipeline_budget_20261108\\221230\\feedback_q31_proof.exe"
+      ],
+      "exit_code": 0,
+      "log": "command_1.log"
+    }
+  ],
+  "multiplier": [
+    2147371134,
+    1075624845
+  ],
+  "shift": [
+    31,
+    30
+  ],
+  "codes": 131072,
+  "reference": "Actual current deepfir_state_feedback C function, extracted unchanged",
+  "function_sha256": "255bcdada8b8446d2877fad7bf751bea79a021f668f914af14bcf3873e8a9693",
+  "source_sha256": "3aa342885b5e84d1d9f3a88175d6ae36fe01d872103aaba78a2bbd1ba81254e2",
+  "contract_sha256": "97428b40e380cfb1b83565d1563dd6f29d2a005d8262087ac26a0b25fddbcbc5",
+  "dtype": "INT16 input, zero points 0",
+  "hardware_mve_execution": "NOT_RUN",
+  "runtime_measurement": "NOT_RUN",
+  "product_code_changed": false
+}

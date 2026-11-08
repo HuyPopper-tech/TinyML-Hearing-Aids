@@ -1,5 +1,27 @@
 # Project Progress
 
+## Submillisecond pipeline analysis — 2026-11-08
+
+Latest user Release Probe stops with frame0/capture_seq0 and DAC underrun1;
+no stage timing measures the guarded FP32 image yet. Historical reports do show
+submillisecond service/e2e for older models, but also underrun1 and different
+artifact identities. R2 adds nonidentity feedback on both lanes and gain/phase
+reconstruction. Earlier R2 single-hop1088us needs at least89us reduction to <1ms,
+or188us for a900us margin target; this is not a new board measurement.
+
+Native arithmetic proof of nonnegative-lane rounded Q31 feedback matches the
+current C reference for all131072 h/c INT16 cases, max error0. Candidate MVE
+instructions are not implemented/executed. Source inspection identifies FIFO
+prefetch versus DMA-TD playback epoch as a startup hypothesis; simplified model
+is illustrative, actual request rule/phase unconfirmed. Next: bounded raw
+startup FIFO trace, then exact MVE feedback and measured frontend/reconstruction
+optimization; retain one owner, b+2,1ms deadline and existing parity requirements.
+
+Analysis: docs/pipeline_submillisecond_analysis.md; native evidence:
+docs/verification/2026-11-08-pipeline-budget/. Runtime/model/build/pins/clocks/DMA
+unchanged; fresh128/128 host tests pass, no skips. No flash or target timing.
+Light route, no agents/explorer.
+
 ## First-hop deadline investigation — 2026-11-08
 
 User reports F5→Continue without later halt. Previous Release Probe first hop
