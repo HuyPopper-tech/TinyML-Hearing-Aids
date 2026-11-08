@@ -1,0 +1,44 @@
+[
+  {
+    "label": "baseline",
+    "command": [
+      "rtk",
+      "proxy",
+      "C:/ST/STM32CubeCLT_1.20.0/GNU-tools-for-STM32/bin/arm-none-eabi-objdump.EXE",
+      "-d",
+      "-m",
+      "armv8.1-m.main",
+      "-M",
+      "force-thumb",
+      "--start-address=0x10c420",
+      "--stop-address=0x10cb60",
+      "D:\\TinyML-Hearing-Aids\\diagnostics\\first_hop_deadline_20261108\\baseline_release.axf"
+    ],
+    "exit_code": 0,
+    "start": "0x10c420",
+    "bytes": 1856,
+    "log": "baseline_feature_thumb.log",
+    "timing_claim": false
+  },
+  {
+    "label": "candidate",
+    "command": [
+      "rtk",
+      "proxy",
+      "C:/ST/STM32CubeCLT_1.20.0/GNU-tools-for-STM32/bin/arm-none-eabi-objdump.EXE",
+      "-d",
+      "-m",
+      "armv8.1-m.main",
+      "-M",
+      "force-thumb",
+      "--start-address=0x10ba80",
+      "--stop-address=0x10c408",
+      "D:\\TinyML-Hearing-Aids\\diagnostics\\first_hop_deadline_20261108\\213838\\release\\M55M1_GestureAI.axf"
+    ],
+    "exit_code": 0,
+    "start": "0x10ba80",
+    "bytes": 2440,
+    "log": "candidate_feature_thumb.log",
+    "timing_claim": false
+  }
+]

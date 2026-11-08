@@ -1,0 +1,6 @@
+test_probe_is_opt_in_and_reports_after_stop (test_deepfir_audio_release_probe.DeepfirAudioReleaseProbeTests.test_probe_is_opt_in_and_reports_after_stop) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.548s
+
+OK

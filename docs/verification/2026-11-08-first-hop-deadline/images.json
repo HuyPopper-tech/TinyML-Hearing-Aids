@@ -1,0 +1,53 @@
+{
+  "debug": [
+    {
+      "file": "M55M1_GestureAI.bin",
+      "bytes": 638560,
+      "sha256": "cd290d053bd68558f86c43a3b554cb8e1a132dd6d7c254292d9489b1b16491fb"
+    },
+    {
+      "file": "M55M1_GestureAI.axf",
+      "bytes": 3508784,
+      "sha256": "8c3a88fb1f2aa8295a775e664787e4b514540999e82136d1a4ba7d1e7ee6605f"
+    },
+    {
+      "file": "M55M1_GestureAI.axf.map",
+      "bytes": 3811636,
+      "sha256": "528bb871f3ab3ce3766a613159aeb723320c1170c15a9067cf6be3e42ce58e7f"
+    }
+  ],
+  "release": [
+    {
+      "file": "M55M1_GestureAI.bin",
+      "bytes": 615936,
+      "sha256": "8fb1a0dcde5f1bd10b0a51fc019b0f9914d7c320c1981c1cf47f5af353f1e60f"
+    },
+    {
+      "file": "M55M1_GestureAI.axf",
+      "bytes": 619652,
+      "sha256": "9fca134a7d284a1cad532da3b0eb31d2b1fde32d7da7d4de0bbffa0a37517ed9"
+    },
+    {
+      "file": "M55M1_GestureAI.axf.map",
+      "bytes": 1225491,
+      "sha256": "6cf65747fb6a03754b48d5a79fccb1ee1fa4fca298fbd80b4829ecacf5d72795"
+    }
+  ],
+  "release_probe": [
+    {
+      "file": "M55M1_GestureAI.bin",
+      "bytes": 621696,
+      "sha256": "7b58ec0a68353db5fdd66028567c853e808c7d99f368ad12722c577148a376da"
+    },
+    {
+      "file": "M55M1_GestureAI.axf",
+      "bytes": 625508,
+      "sha256": "e8c8f70bb1d708cce0429850c7530521974dc30ada36b715cc326c22bb51cb0f"
+    },
+    {
+      "file": "M55M1_GestureAI.axf.map",
+      "bytes": 1251344,
+      "sha256": "4f0795e248353ac15126287a1ac135985d98b899968794db381ada0138bb017e"
+    }
+  ]
+}

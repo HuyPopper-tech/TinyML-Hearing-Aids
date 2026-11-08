@@ -28,8 +28,9 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
             static uint32_t logs;
             static uint32_t flushes;
             static uint32_t early_uart;
+            static bool submitted;
             static char last_log[1024];
-            static char result_log[512];
+            static char result_log[1024];
             static const char *failure = "";
 
             bool audio_transport_init(audio_transport_init_report_t *report,
@@ -64,6 +65,7 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
             {
                 (void)samples;
                 (void)tag;
+                submitted = true;
                 return !strcmp(failure, "submit") ? AUDIO_TRANSPORT_STATUS_BUSY : AUDIO_TRANSPORT_STATUS_OK;
             }
             void audio_transport_get_health(audio_transport_health_t *health)
@@ -75,7 +77,9 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
             }
             uint32_t audio_transport_cycles_now(void)
             {
-                return frame * 1000U + (!strcmp(failure, "deadline") ? 1200U : 800U);
+                return frame * 1000U +
+                    ((!strcmp(failure, "deadline") ||
+                      (!strcmp(failure, "publish") && submitted)) ? 1200U : 800U);
             }
             uint32_t audio_transport_cycles_elapsed(uint32_t start, uint32_t end)
             {
@@ -156,8 +160,23 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
                     const char *fault = !strcmp(failure,"transport") ? "fault=0 " :
                         !strcmp(failure,"sequence") ? "fault=1 " :
                         !strcmp(failure,"invoke") ? "fault=2 " :
-                        !strcmp(failure,"deadline") ? "fault=3 " : "fault=4 ";
+                        !strcmp(failure,"deadline") ? "fault=3 " :
+                        !strcmp(failure,"publish") ? "fault=5 " : "fault=4 ";
                     if (!strstr(result_log, fault)) return 9;
+                    if ((!strcmp(failure, "deadline") || !strcmp(failure, "publish") ||
+                         !strcmp(failure, "submit")) &&
+                        (!strstr(last_log, "feature_max_us=250") ||
+                         !strstr(last_log, "total_max_us=850") ||
+                         !strstr(last_log, "total_mean_us=850") ||
+                         !strstr(last_log, !strcmp(failure, "submit") ?
+                                 "e2e_max_us=800" : "e2e_max_us=1200") ||
+                         !strstr(last_log, !strcmp(failure, "submit") ?
+                                 "late_1ms=0" : "late_1ms=1") ||
+                         !strstr(result_log, "last_pre_fft_us=20") ||
+                         !strstr(result_log, "last_fft_us=80") ||
+                         !strstr(result_log, "last_post_fft_us=150"))) {
+                        fprintf(stderr, "%s\n%s", last_log, result_log); return 10;
+                    }
                     const uint32_t stopped_frame = frame;
                     audio_pipeline_poll();
                     if (frame != stopped_frame || stops != 1U || logs != 2U) return 8;
@@ -232,7 +251,7 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
                 )
                 self.assertEqual(run.returncode, 0, run.stderr)
                 if enabled:
-                    for failure in ('transport', 'sequence', 'invoke', 'deadline', 'submit'):
+                    for failure in ('transport', 'sequence', 'invoke', 'deadline', 'submit', 'publish'):
                         with self.subTest(failure=failure):
                             run = subprocess.run([str(executable), failure], capture_output=True, text=True)
                             self.assertEqual(run.returncode, 0, run.stderr)

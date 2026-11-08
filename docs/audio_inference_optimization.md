@@ -2,7 +2,39 @@
 
 Đã triển khai hướng 1 được duyệt trên luồng custom PCB, dùng chung cho Debug và
 Release. Model R2, 16 kHz/hop 16, qparams, encoded state và lịch b+2 giữ đúng hợp
-đồng. Chưa flash và chưa đo tốc độ hoặc điện năng trên bo.
+đồng. Agent chưa flash; phép đo điện năng vẫn chưa thực hiện.
+
+## Cập nhật từ log hop đầu và bản sửa tiếp theo
+
+Người dùng đã chạy F5 → Continue, không Pause/step sau đó. Log Release Probe
+cho thấy hop đầu mất 1.079 µs trong inference, 1.088 µs từ capture đến kiểm tra
+deadline: **chưa đạt 1 ms**. Init Debug, binding và self-test MVE báo OK; arena
+đã cấp phát 6.976/65.536 byte. Debug sau đó underrun ở `seq=0`, chưa đủ dữ liệu
+để kết luận nguyên nhân giống Release hoặc do debugger/DMA. Đây là log do người
+dùng cung cấp, chưa có hash BIN xác nhận; không phải phép đo bản sửa mới.
+
+Đã sửa probe bỏ sót thống kê hop lỗi process/submit/publish, nên `*_max_us=0` và
+`late_1ms=0` không còn che hop hoàn tất nhưng bị từ chối. Thêm `last_pre_fft_us`,
+`last_fft_us`, `last_post_fft_us`, `last_npu_us`, `last_bridge_us`, `last_other_us`.
+Trên nhánh fault, e2e là capture→snapshot lỗi trước stop/reset/log; `detail` vẫn
+giữ thời gian tại điểm kiểm tra deadline. `out_peak=0` trên nhánh chưa ghi thống
+kê output không chứng minh model trả toàn zero.
+
+Frontend thêm đường FP32 có guard 1/32 code quanh half-integer, quay về double
+khi có thể mơ hồ hoặc gặp trường hợp cực trị. Không đổi code INT16 trong các
+phép so sánh host đã chạy; chưa đo được lợi ích thời gian trên bo. Mã máy trước
+đó đã có lệnh FP64, không được gọi nó là floating point bằng phần mềm.
+
+128/128 tests và Debug/Release/Release Probe build đạt. BIN mới Debug 638.560 byte,
+Release 615.936 byte, Probe 621.696 byte; RAM tĩnh không tăng. Root outputs đã trả
+về bản thường và clangd Debug. Các số BIN của đợt tối ưu trước ở phần dưới là
+snapshot lịch sử. Hash, map và nghiệm thu mới:
+[first-hop-deadline](verification/2026-11-08-first-hop-deadline/README.md).
+
+Chạy lại đúng profile **M55M1: Release Probe: Flash + Debug (OpenOCD Nuvoton)**,
+F5 → Continue và giữ cả hai dòng `AUDIO_RELEASE_PROBE`/`AUDIO_RELEASE_RESULT` mới.
+Đối chiếu frontend split trước khi chọn tối ưu tiếp; chưa kết luận đã sửa xong
+deadline, underrun hoặc lỗi I2C chập chờn. Không đổi giới hạn 1 ms/lịch b+2.
 
 Evidence và bảng nghiệm thu: [audio-optimization](verification/2026-11-08-audio-optimization/README.md).
 Thiết kế/tiêu chí đã duyệt: [design](superpowers/specs/2026-11-08-audio-inference-optimization-design.md).

@@ -1,0 +1,18 @@
+[
+  {
+    "path": "services\\deepfir\\deepfir_features.c",
+    "sha256": "c07339676f8b439ed0cf34a5585d0aae471ed1b35819b37eb020ac36b81c44db"
+  },
+  {
+    "path": "services\\audio_pipeline\\audio_pipeline.c",
+    "sha256": "90ec5b169f195b4178071889dc0d1b25210db44c5f3a59a71b08c7ae947fb127"
+  },
+  {
+    "path": "tests\\r2_optimization_harness.c",
+    "sha256": "7b9911cf0c643606ac8e5f098dc85ba37558e1107c76122719a05beeb6385ee8"
+  },
+  {
+    "path": "tests\\test_deepfir_audio_release_probe.py",
+    "sha256": "5d2bf8f27e34803d9825961d7286f62fe71b168ef9dc5032afee3374ed28f0d1"
+  }
+]

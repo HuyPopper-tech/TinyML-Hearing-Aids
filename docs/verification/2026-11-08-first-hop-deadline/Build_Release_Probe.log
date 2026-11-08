@@ -1,0 +1,11 @@
+[rtk] /!\ No hook installed — run `rtk init -g` for automatic token savings
+[0/2] Re-checking globbed directories...
+[1/3] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/audio_pipeline/audio_pipeline.o
+[2/3] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_features.o
+[3/3] Linking CXX executable M55M1_GestureAI.axf
+
+Build OK. Output in build\:
+M55M1_GestureAI.axf
+M55M1_GestureAI.axf.map
+M55M1_GestureAI.bin
+M55M1_GestureAI.htm

@@ -1,5 +1,31 @@
 # Project Progress
 
+## First-hop deadline investigation — 2026-11-08
+
+User reports F5→Continue without later halt. Previous Release Probe first hop
+FAIL: inference1079us, capture-to-deadline1088us, seq1/playback_slot2. Debug init,
+binding,6976/65536B arena and MVE tests report OK, then seq0 transport underrun.
+User observations have no BIN hash; Debug cause and intermittent I2C remain open.
+
+Fixed missing completed-hop statistics on process/submit/publish fault exits;
+probe now reports last pre-FFT/FFT/post-FFT/NPU/bridge/other stages after stop.
+Added private guarded FP32 feature quantization with unchanged double fallback.
+Existing11,570,644 comparisons plus786,432 accepted FP32 and4,718,592 guard-edge
+cases have zero integer mismatches.128/128 tests, Arm6.24 Debug/Release/Probe
+build/link and scoped MVE checks pass. Ordinary RW_RAM77920/77168B unchanged.
+New BIN Debug638560B SHAcd290d053bd68558f86c43a3b554cb8e1a132dd6d7c254292d9489b1b16491fb;
+Release615936B SHA8fb1a0dcde5f1bd10b0a51fc019b0f9914d7c320c1981c1cf47f5af353f1e60f.
+Probe621696B SHA7b58ec0a68353db5fdd66028567c853e808c7d99f368ad12722c577148a376da.
+Ordinary root outputs/opt-ins OFF and Debug editor restored. Evidence:
+docs/verification/2026-11-08-first-hop-deadline/; guide updated.
+
+No device operation; candidate timing benefit, continuous1ms margin/b+2, physical
+audio/power and stack watermark NOT_RUN. Compiled parity remains BLOCKED without
+authorized execution; raw Linux replay not rerun. No package/golden/libs, board,
+DMA/cache/pins/clocks or approval changes. Next: user retries same Release Probe,
+preserves both lines and compares frontend split; no claim of resolved deadline.
+Light route, no subagents/explorer.
+
 ## Release Probe OpenOCD profile — 2026-11-08
 
 Added Release Probe Flash + Debug and standalone APROM flash task. Actual task

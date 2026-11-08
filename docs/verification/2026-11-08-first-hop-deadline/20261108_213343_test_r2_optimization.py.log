@@ -1,0 +1,13 @@
+test_cmsis_reconstruction_avoids_libm_in_contract_phase_range (test_r2_optimization.R2OptimizationTests.test_cmsis_reconstruction_avoids_libm_in_contract_phase_range) ... ok
+test_feedback_has_no_runtime_integer_division (test_r2_optimization.R2OptimizationTests.test_feedback_has_no_runtime_integer_division) ... ok
+test_shared_normalized_frontend_quantizer_and_feedback_edges (test_r2_optimization.R2OptimizationTests.test_shared_normalized_frontend_quantizer_and_feedback_edges) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 2.711s
+
+OK
+quantizer comparisons=11570644 mismatches=0
+float quantizer fast-path comparisons=786432 mismatches=0; half-code fallback PASS
+frontend PCM/float comparisons=4096 mismatches=0; finite/size gates PASS
+feedback comparisons=15400960 mismatches=0; shifts0..46, offsets and saturation PASS
+shared PCM/current-context lifecycle PASS; failed feature never invoked/published

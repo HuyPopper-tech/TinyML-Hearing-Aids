@@ -1,0 +1,22 @@
+test_cmsis_reconstruction_avoids_libm_in_contract_phase_range (test_r2_optimization.R2OptimizationTests.test_cmsis_reconstruction_avoids_libm_in_contract_phase_range) ... ok
+test_feedback_has_no_runtime_integer_division (test_r2_optimization.R2OptimizationTests.test_feedback_has_no_runtime_integer_division) ... ok
+test_shared_normalized_frontend_quantizer_and_feedback_edges (test_r2_optimization.R2OptimizationTests.test_shared_normalized_frontend_quantizer_and_feedback_edges) ... FAIL
+
+======================================================================
+FAIL: test_shared_normalized_frontend_quantizer_and_feedback_edges (test_r2_optimization.R2OptimizationTests.test_shared_normalized_frontend_quantizer_and_feedback_edges)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\TinyML-Hearing-Aids\tests\test_r2_optimization.py", line 68, in test_shared_normalized_frontend_quantizer_and_feedback_edges
+    self.assertEqual(result.returncode, 0, result.stderr)
+AssertionError: 1 != 0 : D:\TinyML-Hearing-Aids\tests\r2_optimization_harness.c: In function 'float_quantization_guard':
+D:\TinyML-Hearing-Aids\tests\r2_optimization_harness.c:117:22: error: implicit declaration of function 'quantize_feature_f32'; did you mean 'quantize_feature'? [-Werror=implicit-function-declaration]
+  117 |                 if (!quantize_feature_f32(value, (float)(1.0 / scales[s]), zeros[z], &actual) ||
+      |                      ^~~~~~~~~~~~~~~~~~~~
+      |                      quantize_feature
+cc1.exe: all warnings being treated as errors
+
+
+----------------------------------------------------------------------
+Ran 3 tests in 1.856s
+
+FAILED (failures=1)

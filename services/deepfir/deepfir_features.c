@@ -4,6 +4,7 @@
  * @author Bui Minh Huy
  * @date 2026-10-23
  */
+#include <float.h>
 #include <math.h>
 #include <string.h>
 
@@ -34,8 +35,36 @@ void deepfir_feature_reset(deepfir_feature_state_t *state) {
     }
 }
 
+static bool quantize_feature_f32(float value, float inverse_scale, int32_t zero_point,
+                                 int16_t *output) {
+    uint32_t bits;
+    memcpy(&bits, &value, sizeof(bits));
+    // Leave subnormal inputs to the reference path, independent of target flush-to-zero mode.
+    if (((bits & 0x7f800000U) == 0U && (bits & 0x007fffffU) != 0U) || !(inverse_scale >= FLT_MIN) ||
+        !isfinite(inverse_scale)) {
+        return false;
+    }
+    const float scaled = value * inverse_scale;
+    if (!isfinite(scaled) || fabsf(scaled) > 65536.0f) {
+        return false;
+    }
+    const float code = scaled + zero_point;
+    const int32_t whole = (int32_t)code;
+    // Normal reciprocal/product/addition error is <0.012 codes in this bounded range.
+    // A wider 1/32-code guard delegates ambiguous halfway decisions to double arithmetic.
+    if (fabsf(fabsf(code - whole) - 0.5f) <= 0.03125f) {
+        return false;
+    }
+    const int32_t rounded = (int32_t)(code >= 0.0f ? code + 0.5f : code - 0.5f);
+    *output = (int16_t)(rounded < -32768 ? -32768 : rounded > 32767 ? 32767 : rounded);
+    return true;
+}
+
 static int quantize_feature(float value, const deepfir_feature_state_t *state, double inverse_scale,
                             int16_t *output) {
+    if (quantize_feature_f32(value, (float)inverse_scale, state->zero_point, output)) {
+        return 0;
+    }
     double code = (double)value * inverse_scale + state->zero_point;
     // Extreme codes use division to preserve its overflow/non-finite behavior too.
     if (!isfinite(code) || fabs(code) >= 65536.0) {

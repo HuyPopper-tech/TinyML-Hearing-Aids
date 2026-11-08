@@ -105,6 +105,61 @@ static int quantization_edges(void) {
     return 0;
 }
 
+static int float_quantization_guard(void) {
+    const double scales[] = {9.672559826867655e-05, 0.5, 1.0};
+    const int32_t zeros[] = {0, -32768, 32767, -17};
+    unsigned accepted = 0;
+    unsigned guard_edges = 0;
+    deepfir_feature_state_t state = {0};
+    for (unsigned s = 0; s < 3; ++s) {
+        state.scale = scales[s];
+        for (unsigned z = 0; z < 4; ++z) {
+            state.zero_point = zeros[z];
+            for (int code = -32768; code <= 32767; ++code) {
+                const float value = (float)((code - zeros[z]) * scales[s]);
+                int16_t actual = 1234, expected = 1234;
+                if (!quantize_feature_f32(value, (float)(1.0 / scales[s]), zeros[z], &actual) ||
+                    reference_quantize(value, scales[s], zeros[z], &expected) ||
+                    actual != expected) {
+                    return 1;
+                }
+                ++accepted;
+                const float halfway = (float)((code + 0.5 - zeros[z]) * scales[s]);
+                if (quantize_feature_f32(halfway, (float)(1.0 / scales[s]), zeros[z], &actual)) {
+                    return 2;
+                }
+                // Check both sides of the float/double handoff, including adjacent float values.
+                const double offsets[] = {0.46875, 0.53125};
+                for (unsigned edge = 0; edge < 2; ++edge) {
+                    const float boundary = (float)((code + offsets[edge] - zeros[z]) * scales[s]);
+                    const float values[] = {boundary, nextafterf(boundary, -INFINITY),
+                                            nextafterf(boundary, INFINITY)};
+                    for (unsigned i = 0; i < 3; ++i) {
+                        if (check_quantizer(values[i], &state)) {
+                            return 6;
+                        }
+                        ++guard_edges;
+                    }
+                }
+            }
+        }
+    }
+    int16_t output = 1234;
+    const float invalid_inverse[] = {0, -1, INFINITY, NAN, FLT_MIN / 2};
+    for (unsigned i = 0; i < 5; ++i) {
+        if (quantize_feature_f32(1, invalid_inverse[i], 0, &output) || output != 1234) {
+            return 3;
+        }
+    }
+    if (quantize_feature_f32(INFINITY, 1, 0, &output) || quantize_feature_f32(NAN, 1, 0, &output) ||
+        output != 1234) {
+        return 4;
+    }
+    puts("float quantizer fast-path comparisons=786432 mismatches=0; half-code fallback PASS");
+    printf("float/double guard-edge comparisons=%u mismatches=0\n", guard_edges);
+    return accepted == 786432 ? 0 : 5;
+}
+
 static int frame_check_fft(float *frame, uint32_t length, uint8_t inverse, void *context) {
     const deepfir_feature_state_t *state = context;
     if (length != 256 || inverse != 0) {
@@ -286,8 +341,8 @@ static int direct_feature_context(void) {
 }
 
 int main(void) {
-    if (quantization_edges() || frontend_equivalence() || feedback_edges() ||
-        direct_feature_context()) {
+    if (quantization_edges() || float_quantization_guard() || frontend_equivalence() ||
+        feedback_edges() || direct_feature_context()) {
         return 1;
     }
     return 0;

@@ -1,0 +1,227 @@
+{
+  "debug": {
+    "regions": {
+      "ITCM": {
+        "address": "0x00000000",
+        "load_address": "0x0019b994",
+        "bytes": 436
+      },
+      "ER_ROM": {
+        "address": "0x00100000",
+        "load_address": "0x00100000",
+        "bytes": 120468
+      },
+      "DTCM_VTOR": {
+        "address": "0x20000000",
+        "load_address": "0x0019bb48",
+        "bytes": 712
+      },
+      "DTCM": {
+        "address": "0x200002c8",
+        "load_address": "0x0019be10",
+        "bytes": 2048
+      },
+      "ARM_LIB_STACK": {
+        "address": "0x2001e000",
+        "load_address": "0x0019be60",
+        "bytes": 8192
+      },
+      "U55_MODEL_RAM": {
+        "address": "0x20100000",
+        "load_address": "0x0011d6a0",
+        "bytes": 516852
+      },
+      "RW_NOINIT": {
+        "address": "0x201c0000",
+        "load_address": "0x0019be10",
+        "bytes": 0
+      },
+      "RW_RAM": {
+        "address": "0x201c0000",
+        "load_address": "0x0019be20",
+        "bytes": 77920
+      },
+      "ARM_LIB_HEAP": {
+        "address": "0x201d3060",
+        "load_address": "0x0019be60",
+        "bytes": 2048
+      },
+      "SRAM_NONCACHEABLE": {
+        "address": "0x20230000",
+        "load_address": "0x0019be60",
+        "bytes": 320
+      },
+      "SRAM_NONCACHEABLE_END": {
+        "address": "0x20250000",
+        "load_address": "0x0019be60",
+        "bytes": 0
+      },
+      "LPSRAM": {
+        "address": "0x20310000",
+        "load_address": "0x0019be60",
+        "bytes": 0
+      }
+    },
+    "symbols": [
+      "(anonymous namespace)::g_tensor_arena    0x201c01c0   Data       65536  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_114g_tensor_arenaE)",
+      "(anonymous namespace)::g_feature_state   0x201d01c8   Data        2072  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_115g_feature_stateE)",
+      "(anonymous namespace)::g_adapter         0x201d0b28   Data        5288  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_19g_adapterE)",
+      "g_audio_working_set                      0x201d2c90   Data          64  audio_pipeline.o(.bss.g_audio_working_set)"
+    ],
+    "totals": [
+      "Total RO  Size (Code + RO Data)               638468 ( 623.50kB)",
+      "Total RW  Size (RW Data + ZI Data)             90528 (  88.41kB)"
+    ],
+    "runtime_high_water": "NOT_RUN"
+  },
+  "release": {
+    "regions": {
+      "ITCM": {
+        "address": "0x00000000",
+        "load_address": "0x001961d4",
+        "bytes": 320
+      },
+      "ER_ROM": {
+        "address": "0x00100000",
+        "load_address": "0x00100000",
+        "bytes": 98016
+      },
+      "DTCM_VTOR": {
+        "address": "0x20000000",
+        "load_address": "0x00196314",
+        "bytes": 712
+      },
+      "DTCM": {
+        "address": "0x200002c8",
+        "load_address": "0x001965dc",
+        "bytes": 0
+      },
+      "ARM_LIB_STACK": {
+        "address": "0x2001e000",
+        "load_address": "0x00196600",
+        "bytes": 8192
+      },
+      "U55_MODEL_RAM": {
+        "address": "0x20100000",
+        "load_address": "0x00117ee0",
+        "bytes": 516852
+      },
+      "RW_NOINIT": {
+        "address": "0x201c0000",
+        "load_address": "0x001965dc",
+        "bytes": 0
+      },
+      "RW_RAM": {
+        "address": "0x201c0000",
+        "load_address": "0x001965e0",
+        "bytes": 77168
+      },
+      "ARM_LIB_HEAP": {
+        "address": "0x201d2d70",
+        "load_address": "0x00196600",
+        "bytes": 2048
+      },
+      "SRAM_NONCACHEABLE": {
+        "address": "0x20230000",
+        "load_address": "0x00196600",
+        "bytes": 320
+      },
+      "SRAM_NONCACHEABLE_END": {
+        "address": "0x20250000",
+        "load_address": "0x00196600",
+        "bytes": 0
+      },
+      "LPSRAM": {
+        "address": "0x20310000",
+        "load_address": "0x00196600",
+        "bytes": 0
+      }
+    },
+    "symbols": [
+      "(anonymous namespace)::g_tensor_arena    0x201c0220   Data       65536  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_114g_tensor_arenaE)",
+      "(anonymous namespace)::g_feature_state   0x201d0220   Data        2072  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_115g_feature_stateE)",
+      "(anonymous namespace)::g_adapter         0x201d0b38   Data        5280  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_19g_adapterE)",
+      "g_audio_working_set                      0x201d2c60   Data          64  audio_pipeline.o(.bss.g_audio_working_set)"
+    ],
+    "totals": [
+      "Total RO  Size (Code + RO Data)               615900 ( 601.46kB)",
+      "Total RW  Size (RW Data + ZI Data)             87728 (  85.67kB)"
+    ],
+    "runtime_high_water": "NOT_RUN"
+  },
+  "release_probe": {
+    "regions": {
+      "ITCM": {
+        "address": "0x00000000",
+        "load_address": "0x00197854",
+        "bytes": 320
+      },
+      "ER_ROM": {
+        "address": "0x00100000",
+        "load_address": "0x00100000",
+        "bytes": 103756
+      },
+      "DTCM_VTOR": {
+        "address": "0x20000000",
+        "load_address": "0x00197994",
+        "bytes": 712
+      },
+      "DTCM": {
+        "address": "0x200002c8",
+        "load_address": "0x00197c5c",
+        "bytes": 2048
+      },
+      "ARM_LIB_STACK": {
+        "address": "0x2001e000",
+        "load_address": "0x00197c80",
+        "bytes": 8192
+      },
+      "U55_MODEL_RAM": {
+        "address": "0x20100000",
+        "load_address": "0x00119560",
+        "bytes": 516852
+      },
+      "RW_NOINIT": {
+        "address": "0x201c0000",
+        "load_address": "0x00197c5c",
+        "bytes": 0
+      },
+      "RW_RAM": {
+        "address": "0x201c0000",
+        "load_address": "0x00197c60",
+        "bytes": 77428
+      },
+      "ARM_LIB_HEAP": {
+        "address": "0x201d2e78",
+        "load_address": "0x00197c80",
+        "bytes": 2048
+      },
+      "SRAM_NONCACHEABLE": {
+        "address": "0x20230000",
+        "load_address": "0x00197c80",
+        "bytes": 320
+      },
+      "SRAM_NONCACHEABLE_END": {
+        "address": "0x20250000",
+        "load_address": "0x00197c80",
+        "bytes": 0
+      },
+      "LPSRAM": {
+        "address": "0x20310000",
+        "load_address": "0x00197c80",
+        "bytes": 0
+      }
+    },
+    "symbols": [
+      "(anonymous namespace)::g_tensor_arena    0x201c02a0   Data       65536  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_114g_tensor_arenaE)",
+      "(anonymous namespace)::g_feature_state   0x201d02a0   Data        2072  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_115g_feature_stateE)",
+      "(anonymous namespace)::g_adapter         0x201d0b88   Data        5288  deepfir_inference_service.o(.bss._ZN12_GLOBAL__N_19g_adapterE)",
+      "g_audio_working_set                      0x201d2cb8   Data          64  audio_pipeline.o(.bss.g_audio_working_set)"
+    ],
+    "totals": [
+      "Total RO  Size (Code + RO Data)               621640 ( 607.07kB)",
+      "Total RW  Size (RW Data + ZI Data)             90036 (  87.93kB)"
+    ],
+    "runtime_high_water": "NOT_RUN"
+  }
+}

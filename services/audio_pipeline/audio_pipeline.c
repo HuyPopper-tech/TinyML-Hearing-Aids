@@ -618,7 +618,25 @@ static void finish_release_probe_if_ready(bool failed, uint32_t fault, uint32_t 
     audio_transport_get_health(&health);
     deepfir_inference_timing_t last_timing;
     deepfir_inference_get_last_timing(&last_timing);
+    const bool unrecorded_hop = failed && (fault == AUDIO_PIPELINE_FAULT_PROCESS_DEADLINE ||
+                                           fault == AUDIO_PIPELINE_FAULT_SUBMIT ||
+                                           fault == AUDIO_PIPELINE_FAULT_PUBLISH_DEADLINE);
+    const uint32_t failure_elapsed_us =
+        unrecorded_hop ? audio_transport_cycles_to_us(audio_transport_cycles_elapsed(
+                             g_stats.capture_completed_cycle, audio_transport_cycles_now()))
+                       : 0U;
     audio_pipeline_stop_safe();
+    if (unrecorded_hop) {
+        // These exits precede record_progress; include their completed inference exactly once.
+        record_timing(&last_timing);
+        if (failure_elapsed_us > g_debug_stats.max_e2e_us) {
+            g_debug_stats.max_e2e_us = failure_elapsed_us;
+        }
+        if (failure_elapsed_us >= AUDIO_PIPELINE_HOP_BUDGET_US) {
+            ++g_debug_stats.late_hops;
+        }
+        g_debug_stats.e2e_us_sum += failure_elapsed_us;
+    }
     debug_uart_tx_init();
     bool feature_mve_ready = false;
     bool fir_mve_ready = false;
@@ -678,12 +696,17 @@ static void finish_release_probe_if_ready(bool failed, uint32_t fault, uint32_t 
         message, sizeof(message),
         "[AUDIO_RELEASE_RESULT] result=%s fault=%lu detail=%lu seq=%lu playback_slot=%lu "
         "deadline=%lu restarts=%lu last_feature_us=%lu last_invoke_us=%lu "
+        "last_pre_fft_us=%lu last_fft_us=%lu last_post_fft_us=%lu "
+        "last_npu_us=%lu last_bridge_us=%lu last_other_us=%lu "
         "last_carry_us=%lu last_taps_us=%lu last_fir_us=%lu last_pcm_us=%lu "
         "last_total_us=%lu capture_publish_max_us=%lu\r\n",
         failed ? "FAIL" : "COMPLETE", (unsigned long)fault, (unsigned long)detail,
         (unsigned long)g_stats.last_sequence, (unsigned long)g_stats.scheduled_playback_slot,
         (unsigned long)g_stats.deadline_misses, (unsigned long)g_stats.restarts,
         (unsigned long)last_timing.feature_us, (unsigned long)last_timing.invoke_us,
+        (unsigned long)last_timing.pre_fft_us, (unsigned long)last_timing.fft_us,
+        (unsigned long)last_timing.post_fft_us, (unsigned long)last_timing.npu_us,
+        (unsigned long)last_timing.bridge_us, (unsigned long)last_timing.other_us,
         (unsigned long)last_timing.carry_us, (unsigned long)last_timing.taps_us,
         (unsigned long)last_timing.fir_us, (unsigned long)last_timing.pcm_us,
         (unsigned long)last_timing.total_us, (unsigned long)g_stats.max_capture_to_publish_us);

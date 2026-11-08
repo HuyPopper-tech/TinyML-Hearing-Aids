@@ -1,0 +1,19 @@
+[
+  {
+    "command": [
+      "rtk",
+      "python",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test_r2_optimization.py",
+      "-v"
+    ],
+    "exit_code": 1,
+    "elapsed_s": 2.097546100616455,
+    "log": "20261108_213116_test_r2_optimization.py.log"
+  }
+]

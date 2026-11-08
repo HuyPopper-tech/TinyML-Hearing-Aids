@@ -1,5 +1,36 @@
 # Latest Session Work
 
+## First-hop deadline investigation — 2026-11-08
+
+User confirmed F5→Continue, no later Pause/step. Previous UART Release first hop
+FAIL fault3:1079us inference,1088us capture-to-deadline,seq1/slot2. Debug init,
+binding,6976B actual allocation and MVE self-tests report OK, then underrun seq0.
+This is user-reported old-image evidence without BIN hash, not a candidate run.
+Neither OpenOCD nor DMA is proven the cause of Debug's early fault.
+
+Implemented a guarded FP32 quantizer fast path, preserving existing double
+fallback at ambiguous half codes/extremes. Source quantization contract unchanged.
+Fixed probe failing-hop aggregates, snapshotting before reset and updating after
+DMA stop. Added last frontend split/NPU/bridge/other fields. Integer comparisons:
+11,570,644 existing +786,432 accepted float +4,718,592 guard-edge, zero mismatches.
+128/128 host tests, all three Arm6.24 builds and scoped MVE disassembly pass.
+
+Debug BIN638560B SHAcd290d053bd68558f86c43a3b554cb8e1a132dd6d7c254292d9489b1b16491fb;
+Release BIN615936B SHA8fb1a0dcde5f1bd10b0a51fc019b0f9914d7c320c1981c1cf47f5af353f1e60f;
+Probe BIN621696B SHA7b58ec0a68353db5fdd66028567c853e808c7d99f368ad12722c577148a376da.
+RW_RAM remains77920/77168B ordinary Debug/Release; arena65536B/DMA320B/stack8192B.
+Images/maps archived at diagnostics/first_hop_deadline_20261108/213838/; curated
+commands/acceptance: docs/verification/2026-11-08-first-hop-deadline/. Root outputs
+ordinary, opt-ins OFF; editor Debug. No device connection/flash/board changes.
+
+Next: same Release Probe profile F5→Continue, keep both complete lines, compare
+pre-FFT/FFT/post-FFT before further optimization. Candidate timing/steady-state,
+physical audio/latency/power and stack watermark NOT_RUN. Compiled parity BLOCKED
+without authorized backend execution; raw replay not rerun. Guarded FP32 is host-
+verified, not a measured speed/energy saving. Intermittent board_status5 and Debug
+seq0 underrun remain open. No model/package/golden/libs/pin/clock/DMA/cache changes,
+no deployment approval, no subagents/explorer. Preserve unrelated untracked files.
+
 ## Release Probe OpenOCD profile — 2026-11-08
 
 VS Code now has M55M1: Release Probe: Flash + Debug (OpenOCD Nuvoton), plus

@@ -1,0 +1,65 @@
+{
+  "commands": [
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "diagnostics/i2c_stuck_trace_20261108_162019/style_tools/clang_format/data/bin/clang-format.exe",
+        "--dry-run",
+        "--Werror",
+        "services/deepfir/deepfir_features.c",
+        "services/audio_pipeline/audio_pipeline.c",
+        "tests/r2_optimization_harness.c"
+      ],
+      "exit_code": 0,
+      "log": "final_check_0.log"
+    },
+    {
+      "command": [
+        "rtk",
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "final_check_1.log"
+    },
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "C:/Program Files/ArmCompilerforEmbedded6.24/bin/armclang.exe",
+        "--version"
+      ],
+      "exit_code": 0,
+      "log": "final_check_2.log"
+    },
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "diagnostics/i2c_stuck_trace_20261108_162019/host_compiler_runtime/gcc.exe",
+        "--version"
+      ],
+      "exit_code": 0,
+      "log": "final_check_3.log"
+    },
+    {
+      "command": [
+        "rtk",
+        "git",
+        "diff",
+        "--cached",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "final_check_4.log"
+    }
+  ],
+  "tested_source_hashes": "PASS",
+  "restored_image_hashes": "PASS",
+  "opt_ins_off": "PASS",
+  "editor": "Debug",
+  "local_document_links": "PASS",
+  "device_execution": "NOT_RUN"
+}
