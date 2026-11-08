@@ -25,7 +25,7 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
             "tlv320dac3100_init",
             "tlv320dac3100_start",
             "tlv320dac3100_stop",
-            "tlv320dac3100_submit_mono_block",
+            "tlv320dac3100_submit_mono_block_tagged",
             "tlv320dac3100_set_digital_gain_db",
             "tlv320dac3100_mute",
             "tlv320dac3100_get_status",
@@ -36,7 +36,7 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
         ):
             self.assertIn(required, header)
 
-    def test_driver_declares_validated_16k_and_32k_ten_ms_profiles(self):
+    def test_driver_declares_only_the_fixed_16k_one_ms_profile(self):
         """TinyML transport must select a complete profile before any DMA starts."""
         header = (REPO_ROOT / "drivers" / "tlv320dac3100" / "tlv320dac3100.h").read_text(
             encoding="utf-8"
@@ -47,11 +47,8 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
 
         for required in (
             "TLV320DAC3100_AUDIO_PROFILE_16KHZ",
-            "TLV320DAC3100_AUDIO_PROFILE_32KHZ",
             "TLV320DAC3100_16KHZ_MCLK_HZ",
-            "TLV320DAC3100_32KHZ_MCLK_HZ",
             "TLV320DAC3100_16KHZ_SAMPLES_PER_BLOCK",
-            "TLV320DAC3100_32KHZ_SAMPLES_PER_BLOCK",
             "TLV320DAC3100_BLOCK_DURATION_MS",
             "tlv320dac3100_audio_profile_t",
             "max_digital_gain_db",
@@ -60,12 +57,13 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
         ):
             self.assertIn(required, header)
 
+        self.assertNotIn("32KHZ", header + source)
+        self.assertNotIn("has_queued_audio", source)
         for required in (
             "tlv320dac3100_get_profile_sample_rate",
             "tlv320dac3100_get_profile_mclk",
             "tlv320dac3100_get_profile_samples_per_block",
             "TLV320DAC3100_DMA_MAX_FRAMES_PER_BLOCK",
-            "g_context.has_queued_audio",
         ):
             self.assertIn(required, source)
 
@@ -113,7 +111,7 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
         self.assertNotIn("printf", lppdma_handler)
         self.assertNotIn("printf", pdma_handler)
 
-    def test_board_and_normal_passthrough_select_one_matching_profile(self):
+    def test_board_and_product_select_one_matching_profile(self):
         """I2S and DMIC must use the same profile; a mixed rate audibly changes pitch."""
         board_header = (REPO_ROOT / "board" / "m55m1_audio.h").read_text(
             encoding="utf-8"
@@ -132,9 +130,7 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
             "m55m1_audio_profile_t profile",
             "M55M1_AUDIO_SAFE_MAX_GAIN_DB",
             "CLK_I2SDIV_I2S1DIV(58)",
-            "CLK_I2SDIV_I2S1DIV(29)",
             "DMIC_DOWNSAMPLE_128",
-            "DMIC_DOWNSAMPLE_64",
             "m55m1_audio_profile_samples_per_block",
         ):
             self.assertIn(required, board_header + board_source)
@@ -363,7 +359,6 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
             "LPPDMA0_MODULE",
             "LPPDMA_DMIC0_RX",
             "DMIC_DOWNSAMPLE_128",
-            "DMIC_DOWNSAMPLE_64",
             "DMIC_SET_LATCHEDGE_CH23(DMIC0, DMIC_LATCHDATA_CH23RF);",
             "m55m1_audio_dmic_start",
             "m55m1_audio_dmic_take_block",

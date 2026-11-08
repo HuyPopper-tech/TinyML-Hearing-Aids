@@ -1,0 +1,8 @@
+test_fixed_profiles_reject_removed_rates_and_invalid_values (test_r2_dma_ownership.DmaOwnershipTests.test_fixed_profiles_reject_removed_rates_and_invalid_values) ... ok
+test_product_fifo_prefetch_preserves_two_silences_and_full_processing_slot (test_r2_dma_ownership.DmaOwnershipTests.test_product_fifo_prefetch_preserves_two_silences_and_full_processing_slot) ... ok
+test_product_terminal_mode_and_idle_underflow_irq_binding (test_r2_dma_ownership.DmaOwnershipTests.test_product_terminal_mode_and_idle_underflow_irq_binding) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.646s
+
+OK

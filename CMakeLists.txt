@@ -18,7 +18,6 @@ set(M55M1_STACK_SIZE "0x2000" CACHE STRING "Stack size in bytes")
 set(M55M1_HEAP_SIZE "" CACHE STRING "Heap size override, e.g. 0x1000")
 option(M55M1_ENABLE_DSP "Build and link CMSIS-DSP" ON)
 option(M55M1_ENABLE_NN "Build and link CMSIS-NN (requires DSP)" ON)
-option(M55M1_ENABLE_RTOS2 "Build and link CMSIS-RTOS2/RTX" OFF)
 option(M55M1_ENABLE_ETHOSU_RUNTIME "Build the Ethos-U runtime" ON)
 option(M55M1_ENABLE_TFLM "Build and link TensorFlow Lite Micro with Ethos-U" ON)
 option(M55M1_ENABLE_DCACHE "Enable M55M1 data cache maintenance" ON)
@@ -52,14 +51,7 @@ if(M55M1_AUDIO_UART_PCM_CAPTURE)
 else()
     set(M55M1_AUDIO_UART_PCM_CAPTURE_VALUE 0)
 endif()
-set(M55M1_MODEL_SRAM_PARTS M55M1_DEEP FIR_MODEL_IN_SRAM)
-list(JOIN M55M1_MODEL_SRAM_PARTS "" M55M1_MODEL_SRAM_ALIAS_NAME)
-if(DEFINED ${M55M1_MODEL_SRAM_ALIAS_NAME})
-    set(M55M1_MODEL_IN_SRAM "${${M55M1_MODEL_SRAM_ALIAS_NAME}}" CACHE BOOL
-        "Place the model image in SRAM at runtime" FORCE)
-else()
-    option(M55M1_MODEL_IN_SRAM "Place the model image in SRAM at runtime" ON)
-endif()
+option(M55M1_MODEL_IN_SRAM "Place the model image in SRAM at runtime" ON)
 
 include(${PROJ_ROOT}/cmake/model_package.cmake)
 
@@ -67,11 +59,11 @@ set(M55M1_DMIC_GAIN_DB 30 CACHE STRING "DMIC hardware DSP gain in dB")
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(M55M1_RUNTIME_TELEMETRY_VALUE 1)
-    set(M55M1_DEEPFIR_MVE_SELF_TEST_VALUE 1)
 else()
     set(M55M1_RUNTIME_TELEMETRY_VALUE 0)
-    set(M55M1_DEEPFIR_MVE_SELF_TEST_VALUE 1)
 endif()
+
+set(M55M1_DEEPFIR_MVE_SELF_TEST_VALUE 1)
 
 set(M55_CPU "${M55_CPU}" CACHE STRING "-mcpu value" FORCE)
 
@@ -97,10 +89,8 @@ else()
 endif()
 
 set(M55M1_DEFS
-    M55M1_PRODUCT_AUDIO=1
     NVT_DCACHE_ON=${M55M1_ENABLE_DCACHE_VALUE}
     DEBUG_PORT_UART_IDX=${M55M1_DEBUG_UART_IDX}
-    AUDIO_TRANSPORT_MIC_GAIN_DB=${M55M1_DMIC_GAIN_DB}
     M55M1_DMIC_GAIN_DB=${M55M1_DMIC_GAIN_DB}
     M55M1_RUNTIME_TELEMETRY=${M55M1_RUNTIME_TELEMETRY_VALUE}
     ETHOSU_LOG_SEVERITY=-1)
@@ -168,23 +158,6 @@ if(M55M1_ENABLE_TFLM)
     include(${PROJ_ROOT}/cmake/tensorflow_lite_micro.cmake)
 endif()
 
-if(M55M1_ENABLE_RTOS2)
-    set(RTOS2_ROOT ${PROJ_ROOT}/libs/RTOS2)
-    set(RTX_ROOT ${PROJ_ROOT}/libs/RTX)
-    file(GLOB M55M1_RTX_C_SOURCES
-        ${RTX_ROOT}/Source/rtx_*.c
-        ${RTX_ROOT}/Config/RTX_Config.c
-        ${RTOS2_ROOT}/Source/os_systick.c)
-    set(M55M1_RTX_ASM ${RTX_ROOT}/Source/GCC/irq_armv8mml.S)
-    set_source_files_properties(${M55M1_RTX_ASM} PROPERTIES LANGUAGE C)
-    set_source_files_properties(${M55M1_RTX_ASM} PROPERTIES
-        COMPILE_OPTIONS "-x;assembler-with-cpp;-Wno-unused-command-line-argument")
-    add_library(CMSISRTOS2 OBJECT ${M55M1_RTX_C_SOURCES} ${M55M1_RTX_ASM})
-    target_include_directories(CMSISRTOS2 PUBLIC
-        ${RTOS2_ROOT}/Include ${RTX_ROOT}/Include ${RTX_ROOT}/Config ${RTX_ROOT}/Source
-        ${M55M1_INC_DIRS})
-endif()
-
 set(M55M1_RUNTIME_SOURCES)
 if(M55M1_ENABLE_ETHOSU_RUNTIME)
     list(APPEND M55M1_RUNTIME_SOURCES
@@ -232,10 +205,6 @@ if(M55M1_RUNTIME_TELEMETRY_VALUE OR M55M1_AUDIO_RELEASE_PROBE_VALUE OR
 else()
     set(M55M1_DEBUG_UART_ENABLED_VALUE 0)
 endif()
-if(M55M1_RUNTIME_TELEMETRY_VALUE)
-    list(APPEND M55M1_APP_SOURCES
-        ${PROJ_ROOT}/services/audio_telemetry.c)
-endif()
 set(ELF_NAME M55M1_GestureAI.axf)
 add_executable(${ELF_NAME}
     ${M55M1_DEVICE_SOURCES}
@@ -277,9 +246,6 @@ elseif(M55M1_ENABLE_NN)
     target_link_libraries(${ELF_NAME} PRIVATE CMSISNN)
 elseif(M55M1_ENABLE_DSP)
     target_link_libraries(${ELF_NAME} PRIVATE CMSISDSP)
-endif()
-if(M55M1_ENABLE_RTOS2)
-    target_link_libraries(${ELF_NAME} PRIVATE CMSISRTOS2)
 endif()
 
 if(M55M1_STACK_SIZE)

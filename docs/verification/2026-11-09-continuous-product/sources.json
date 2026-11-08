@@ -1,0 +1,29 @@
+{
+  "base": "99c617b867f842d5f5ce2de96b9e3c70ce43a49d",
+  "files": {
+    "CMakeLists.txt": "cd4bf845c7272b63fd5f80e872c1f86b28f656cb5f68fdd6ec908551b3744e5c",
+    "agent_docs/project_overview.md": "389bfc5ad410ab3da13fc620ee10881c398c392af113629971c0556bffb6dcb8",
+    "agent_docs/project_structure.md": "2126e8609ddc1db8bbcbf506b4722e15a754446806f332b9e6b433fc21faab5f",
+    "app/main.c": "b67e952a86b63e7c0c412bcc1818244150674d6324a20adf9d09be54a2b800db",
+    "board/m55m1_audio.c": "f2beb87ebe9e55d9f4a141bba6440ebf92413aa734dc87234eb43c25ca620c0a",
+    "board/m55m1_audio.h": "7116cb4b1e66cbc6101a83a5c20398ad26e1fb6b398903e5e4b750025d4af40b",
+    "build.bat": "9d2268067c5297fb587d4fc4a60317b6d646d1736e98dae81e75491bcb58ebbf",
+    "build.sh": "a1405808469d26a85b10166c151784b7d54f16d24b036d257b3aa3ad0db0a364",
+    "docs/driver/tlv320dac3100.md": "c7624742c22df0f98babd9f99cfec4e65ebdf0a2274b0c18cfe14399b489e5d1",
+    "docs/r2_custom_integration.md": "38a9603c36bd830d294442130aa6c4db63d3e175a0abcd9a66fcc648616f4d9d",
+    "drivers/audio_transport/audio_transport.c": "34baeeaaaeb85cfd198e4cc4355c25492c94d881475f93f6fa1e453e8483bef9",
+    "drivers/audio_transport/audio_transport.h": "72da48fb9ead5e574c9c5e2d0d73d0ba53cc94c535a764c91ad9e5502113d0bf",
+    "drivers/tlv320dac3100/tlv320dac3100.c": "6c0fdb408c52ca2aebfe6465a919f6279f70eb0ee6850eaa542907df883daafd",
+    "drivers/tlv320dac3100/tlv320dac3100.h": "f6cc3229084b2f10de0b4103a1655f88b98906460623e2a5838c0f63b022d343",
+    "services/audio_telemetry.c": "DELETED",
+    "services/audio_telemetry.h": "DELETED",
+    "tests/test_audio_telemetry.py": "DELETED",
+    "tests/test_continuous_low_power.py": "5cacfe41589eb1201c697c79ecfb866e96697cd4b959ef2ff5c06deced39a335",
+    "tests/test_custom_dmic.py": "74e21bf3b80e6cc44d45277e8cddb536ac84a55ceb4203bc5df6aaf2721231a2",
+    "tests/test_deepfir_audio_runtime_debug.py": "8aa75518163d6647fb72f1c141283aedbcbf97f816f8f812c19a95f0a3d274fd",
+    "tests/test_model_diagnostic_contract.py": "6772d704fd3e89a360c4a2ac9acba1a56ed93b87a0e83cb264e378da31ce7336",
+    "tests/test_r2_dma_ownership.py": "a1ac57c225bc0ef9f34ef25193fa1a1520e6d02937056a4e1fcefbb4f63c6586",
+    "tests/test_r2_schedule.py": "b215f7aa94d5161694466a818a99a51eed4c779ae2ecd5a5821d41f745327ce3",
+    "tests/test_tlv320dac3100_driver.py": "a05cdf919de7a2f75c5bb1a5cd09c5769f65f0e8f1b3e7a6462e6923c1ac691c"
+  }
+}

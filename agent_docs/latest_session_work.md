@@ -1,5 +1,48 @@
 # Latest Session Work
 
+## Continuous custom audio delivery — 2026-11-09
+
+User's latest supplied Probe completed60000 hops with total max863us, capture-to-
+progress max885us, publish max884us and all fault/deadline counters0. First TX TD
+1066us follows RX TD1048us/capture take1051us, unlike the old seq0 prefetch fault.
+Associated candidate99c617b; flashed hash NOT_SUPPLIED. This is user-reported
+timing acceptance for that run, not final-image identity, physical latency or
+compiled-controller parity. STOP60233us is modular SysTick elapsed, not wall time.
+Preserved exact log/hash/parser in docs/verification/2026-11-08-board-probe-60000/.
+
+Completed shared ordinary Debug/Release delivery and cleanup. One custom16k/
+hop16 pipeline/terminal FIFO-aware driver; ordinary service has no60000-hop
+stop. Kept Release Probe's finite stopped timing report and current Debug
+init/fault/periodic UART logs; ordinary Release UART stays OFF. Removed unused
+32k/scatter/warmup branches, untagged submit, write-only flag, historical
+uncalled telemetry source/header/test, obsolete SRAM alias and RTOS build block.
+DSP/model, gain, pins/clocks, libs, packages, replay/capture tools, historical
+evidence and unrelated user files preserved. No device operation.
+
+134/134 tests PASS/no skips, including60005 ordinary Debug/Release foreground
+hops each,60000 modeled driver handoffs, current invalid-rate/tag and fault cases.
+The removed private telemetry/scatter tests exercised deleted code; current
+numeric/recovery assertions remain. Arm6.24 Debug/Release/Probe build/link PASS;
+Release/Probe9-range MVE checks PASS.47 source artifact/destination hashes and
+C-array/compiled bytes match, one model/core/device/service linked.
+
+Final BIN hashes: Debug643552B1b7861e65c5c520d92a30ef642a5681dfdffabdc07a109bad7dd6d3f18565254;
+Release618528Bc124cf7b37b38c1f9c0bf4fd0ace1c75cd400c4409f7bc0127ae28d13e61a044;
+Probe625536Be2c6cf28e912fdf070fee5ff57e3b624da78b2d7d6f5ce906a402775b33895a4.
+RW_RAM Debug78712/Release77168/Probe78216B unchanged; arena65536 within RW_RAM,
+model SRAM516852, DMA320, stack8192, heap2048B separately. Static stack6656+
+Unknown is not watermark; earlier user Debug arena6976/65536 not final-image
+measurement. Root images ordinary/diagnostics OFF, editor Debug. Binaries/maps
+in diagnostics/submillisecond_runtime_20261108/fifo_build_001119/; curated
+commands/logs/nine acceptance gates in docs/verification/2026-11-09-continuous-product/.
+
+Next: retest final Probe with BIN hash, ordinary Release30-minute soak and Debug
+boot/recovery. Debug has no measured1ms guarantee; strict deadline guard retained.
+Compiled parity BLOCKED without authorized running backend; raw replay NOT_RUN;
+new-image board/stack/audio/physical latency/power NOT_RUN. No flash by agent,
+deployment_approved=false. Light route, no agents/explorer. Older entries below
+are historical and do not override this status.
+
 ## FIFO-aware product DMA handoff — 2026-11-08
 
 New user trace: TX TD at4us and1021us, FIFO16/RXseq0 at both; software underrun

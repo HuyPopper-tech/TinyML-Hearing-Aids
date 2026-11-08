@@ -39,7 +39,6 @@ const volatile audio_startup_trace_t *m55m1_audio_get_startup_trace(void);
 
 typedef enum {
     M55M1_AUDIO_PROFILE_16KHZ = 0,
-    M55M1_AUDIO_PROFILE_32KHZ,
 } m55m1_audio_profile_t;
 
 typedef enum {
@@ -104,7 +103,7 @@ typedef void (*m55m1_audio_playback_irq_callback_t)(uint32_t completed_cycle, vo
 
 /**
  * @brief Configure this PCB's clocks, pins, DMA and codec binding.
- * @param profile Requested 16/32 kHz profile.
+ * @param profile Fixed 16 kHz product profile; other values are rejected.
  * @param binding Output vendor peripheral binding.
  * @param playback_irq_callback ISR callback.
  * @param playback_irq_context Caller-retained callback context.

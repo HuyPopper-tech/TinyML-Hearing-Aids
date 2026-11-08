@@ -37,36 +37,17 @@ extern "C" {
  */
 #define TLV320DAC3100_16KHZ_SAMPLES_PER_BLOCK 16U
 /**
- * @brief 32 kHz profile PCM rate.
- */
-#define TLV320DAC3100_32KHZ_SAMPLE_RATE_HZ 32000UL
-/**
- * @brief 32 kHz profile direct codec MCLK, 256 times the PCM rate.
- */
-#define TLV320DAC3100_32KHZ_MCLK_HZ 8192000UL
-/**
- * @brief 32 kHz profile mono samples in one 10 ms block.
- */
-#define TLV320DAC3100_32KHZ_SAMPLES_PER_BLOCK 320U
-/**
- * @brief Maximum foreground PCM storage required by either supported profile.
- */
-#define TLV320DAC3100_MAX_SAMPLES_PER_BLOCK TLV320DAC3100_32KHZ_SAMPLES_PER_BLOCK
-/**
- * @brief Compatibility aliases for existing fixed-16-kHz applications.
+ * @brief Fixed production PCM and codec clock contract.
  */
 #define TLV320DAC3100_SAMPLE_RATE_HZ TLV320DAC3100_16KHZ_SAMPLE_RATE_HZ
 #define TLV320DAC3100_MCLK_HZ TLV320DAC3100_16KHZ_MCLK_HZ
 #define TLV320DAC3100_MONO_SAMPLES_PER_BLOCK TLV320DAC3100_16KHZ_SAMPLES_PER_BLOCK
 
 /**
- * @brief Supported PCM and codec-clock profiles.
- *
- * Profile changes require a new driver initialization lifecycle.
+ * @brief Fixed product PCM and codec-clock profile; reject unsupported enum values.
  */
 typedef enum {
     TLV320DAC3100_AUDIO_PROFILE_16KHZ = 0,
-    TLV320DAC3100_AUDIO_PROFILE_32KHZ,
 } tlv320dac3100_audio_profile_t;
 
 /**
@@ -244,7 +225,7 @@ uint16_t tlv320dac3100_profile_samples_per_block(tlv320dac3100_audio_profile_t p
 tlv320dac3100_status_t tlv320dac3100_init(const tlv320dac3100_config_t *config);
 
 /**
- * @brief Start continuous PDMA playback using queued blocks or silence.
+ * @brief Start playback with two silence slots, then sequence-tagged 16-sample hops.
  * @return `TLV320DAC3100_STATUS_OK` or `TLV320DAC3100_STATUS_INVALID_STATE`.
  */
 tlv320dac3100_status_t tlv320dac3100_start(void);
@@ -259,26 +240,14 @@ tlv320dac3100_status_t tlv320dac3100_start(void);
 tlv320dac3100_status_t tlv320dac3100_stop(void);
 
 /**
- * @brief Copy one profile-sized mono PCM block into the next available stereo DMA slot.
- * @param samples Caller-owned signed-16 samples; copied before this call returns.
- * @param sample_count Number of samples at `samples`; must match the selected profile.
- * @return `OK`, `BUSY`, or `INVALID_ARGUMENT` for a null or wrong-sized block.
- *
- * Ownership remains with the caller: the input is copied before this function
- * returns and may be reused immediately.
- */
-tlv320dac3100_status_t tlv320dac3100_submit_mono_block(const int16_t *samples,
-                                                       uint16_t sample_count);
-
-/**
- * @brief Submit PCM with a capture timestamp for end-to-end latency tracking.
+ * @brief Submit PCM with a capture sequence/timestamp for software timing tracking.
  * @param samples Caller-owned mono PCM copied before return.
  * @param sample_count Number of samples; must match the selected profile.
- * @param tag Optional capture metadata copied on successful submission.
+ * @param tag Required nonzero capture sequence and timestamp; copied on success.
  * @return `OK`, `BUSY`, or an argument/state error.
  *
  * The tag is copied into the released PDMA slot and returned by
- * `tlv320dac3100_take_audio_completion` after that slot is played.
+ * `tlv320dac3100_take_audio_completion` after FIFO transfer; this is not physical playback latency.
  */
 tlv320dac3100_status_t
 tlv320dac3100_submit_mono_block_tagged(const int16_t *samples, uint16_t sample_count,

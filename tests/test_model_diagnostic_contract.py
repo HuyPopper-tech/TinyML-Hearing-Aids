@@ -62,7 +62,8 @@ class DeepfirProductContractTests(unittest.TestCase):
             self.assertIn("M55M1_ENABLE_TFLM=ON", text)
             self.assertIn("M55M1_ENABLE_ETHOSU_RUNTIME=ON", text)
             self.assertIn("M55M1_ENABLE_DCACHE=ON", text)
-            self.assertIn("M55M1_DEEPFIR_MODEL_IN_SRAM=ON", text)
+            self.assertIn("-DM55M1_MODEL_IN_SRAM=ON", text)
+            self.assertNotIn("-DM55M1_DEEPFIR_MODEL_IN_SRAM=ON", text)
 
     def test_deepfir_sources_follow_project_ownership(self):
         model_files = {

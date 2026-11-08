@@ -9,12 +9,33 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class R2ScheduleTests(unittest.TestCase):
+    def test_active_audio_has_only_the_fixed_product_handoff(self):
+        paths = ('board/m55m1_audio.c', 'drivers/tlv320dac3100/tlv320dac3100.c',
+                 'drivers/audio_transport/audio_transport.c')
+        for path in paths:
+            source = (ROOT / path).read_text()
+            for obsolete in ('M55M1_PRODUCT_AUDIO', 'M55M1_CUSTOM_DMIC_TEST',
+                             'M55M1_DMIC_PRODUCT_STARTUP', 'PROFILE_32KHZ',
+                             'has_queued_audio'):
+                self.assertNotIn(obsolete, source, path)
+        for path, obsolete in (('drivers/audio_transport/audio_transport.h', 'audio_transport_submit('),
+                               ('drivers/tlv320dac3100/tlv320dac3100.h', 'tlv320dac3100_submit_mono_block(')):
+            self.assertNotIn(obsolete, (ROOT / path).read_text(), path)
+        cmake = (ROOT / 'CMakeLists.txt').read_text()
+        self.assertNotIn('M55M1_ENABLE_RTOS2', cmake)
+        self.assertNotIn('services/audio_telemetry.c', cmake)
+        self.assertFalse((ROOT / 'services/audio_telemetry.c').exists())
+        self.assertFalse((ROOT / 'services/audio_telemetry.h').exists())
+
     def test_only_product_debug_release_profiles_use_custom_uart(self):
         presets = json.loads((ROOT / 'CMakePresets.json').read_text())
         for key in ('configurePresets', 'buildPresets'):
             self.assertEqual({p['name'] for p in presets[key]}, {'m55m1-debug', 'm55m1-release'})
         for profile in presets['configurePresets']:
             self.assertEqual(profile['cacheVariables']['M55M1_DEBUG_UART_IDX'], '2')
+            for diagnostic in ('M55M1_AUDIO_RELEASE_PROBE', 'M55M1_DEEPFIR_COMPILED_REPLAY',
+                               'M55M1_AUDIO_UART_PCM_CAPTURE'):
+                self.assertEqual(profile['cacheVariables'][diagnostic], 'OFF')
         for wrapper in ('build.bat', 'build.sh'):
             text = (ROOT / wrapper).read_text()
             self.assertIn('-DM55M1_DEBUG_UART_IDX=2', text)
@@ -88,6 +109,16 @@ class R2ScheduleTests(unittest.TestCase):
             assert(stats.sequence_faults == 3 && stats.deadline_misses == 1);
             assert(stats.model_faults == 1 && stats.transport_faults == 3);
             assert(stats.restarts == 7 && stats.restart_failures == 1);
+            restart_ok = true;
+            assert(audio_pipeline_init() && audio_pipeline_start());
+            const unsigned prior_stops = stops, prior_invokes = invokes, prior_submits = submits;
+            for (uint32_t seq = 1; seq <= 60005; ++seq) {
+                capture(seq);
+            }
+            audio_pipeline_get_stats(&stats);
+            assert(stops == prior_stops && invokes == prior_invokes + 60005);
+            assert(submits == prior_submits + 60005 && stats.scheduled_playback_slot == 60006);
+            assert(stats.capture_sample_position == 60004ULL * 16);
             return 0;
         }
         '''

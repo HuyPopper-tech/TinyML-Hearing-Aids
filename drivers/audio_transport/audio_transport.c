@@ -10,9 +10,7 @@
 #include "board/m55m1_audio.h"
 #include "board/m55m1_stack_monitor.h"
 #include "board/m55m1_timebase.h"
-#if M55M1_PRODUCT_AUDIO
 #include "board/m55m1_power.h"
-#endif
 #ifndef M55M1_ENABLE_DAC_I2S_OUTPUT
 #define M55M1_ENABLE_DAC_I2S_OUTPUT 0
 #endif
@@ -21,9 +19,7 @@
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
 #include "drivers/tlv320dac3100/tlv320dac3100.h"
 #endif
-#if M55M1_PRODUCT_AUDIO
 #include "NuMicro.h"
-#endif
 
 typedef struct {
     audio_transport_progress_callback_t callback;
@@ -171,7 +167,6 @@ bool audio_transport_capture_pending(void) {
 }
 
 void audio_transport_wait_for_work(void) {
-#if M55M1_PRODUCT_AUDIO
     const uint32_t primask = __get_PRIMASK();
     audio_transport_health_t health;
 
@@ -188,18 +183,6 @@ void audio_transport_wait_for_work(void) {
         m55m1_power_idle();
     }
     __set_PRIMASK(primask);
-#endif
-}
-
-audio_transport_status_t
-audio_transport_submit(const int16_t samples[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK]) {
-#if M55M1_ENABLE_DAC_I2S_OUTPUT
-    return audio_transport_map_status(
-        tlv320dac3100_submit_mono_block(samples, AUDIO_TRANSPORT_SAMPLES_PER_BLOCK));
-#else
-    (void)samples;
-    return AUDIO_TRANSPORT_STATUS_ERROR;
-#endif
 }
 
 audio_transport_status_t

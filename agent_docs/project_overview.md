@@ -8,6 +8,10 @@ Dependency direction remains `app -> services -> drivers -> board -> libs`. ISR 
 
 The sole Debug/Release profiles use custom pins and preserve PF0/PF1 SWD. Build directories are `build-debug/` and `build/`. No NuMaker target remains. Obsolete standalone diagnostic applications and their exclusive modules were removed; app/main.c is the only application entry point.
 
-Host numeric/regression checks and both product builds pass. Compiled replay is in scope: its opt-in firmware and runner are implemented and build, but execution is BLOCKED without an authorized running backend. The package's Linux raw replay receipt is historical evidence; it was not rerun in this session. Actual arena use, board initialization, full-hop deadline, audio and physical latency remain unmeasured. `deployment_approved=false`; no board was flashed.
+Host numeric/regression checks and both product builds pass. Compiled replay is in scope: its opt-in firmware and runner are implemented and build, but execution is BLOCKED without an authorized running backend. The package's Linux raw replay receipt is historical evidence; it was not rerun in this session. User-supplied Debug boot logs report arena use6976/65536B. A supplied Release Probe
+completed60,000 hops with max total863us/capture-to-progress885us and zero reported
+faults; its flashed BIN hash was not supplied. Final cleanup image board retest,
+physical sample/slot alignment, acoustic latency, stack watermark and power remain
+unmeasured. Ordinary Debug/Release are continuous; Probe alone is finite. `deployment_approved=false`; no board was flashed by the agent.
 
 See `docs/r2_custom_integration.md` and its timestamped acceptance evidence.

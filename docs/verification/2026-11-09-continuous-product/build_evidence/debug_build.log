@@ -1,0 +1,44 @@
+[rtk] /!\ No hook installed — run `rtk init -g` for automatic token savings
+-- Model package: D:/TinyML-Hearing-Aids/models/deepfir
+-- StdDriver: skipping utcpd.c (utcpdlib.h is not supplied)
+-- TensorFlow Lite Micro: D:/TinyML-Hearing-Aids/libs/tensorflow/runtime
+-- Linker scatter file: D:/TinyML-Hearing-Aids/cmake/m55m1_audio.scf
+-- M55M1_GestureAI: model package=D:/TinyML-Hearing-Aids/models/deepfir, Ethos-U runtime=ON, DAC/I2S output=ON, TensorFlow Lite Micro=ON
+-- Configuring done (2.0s)
+-- Generating done (0.2s)
+-- Build files have been written to: D:/TinyML-Hearing-Aids/build-debug
+[0/2] Re-checking globbed directories...
+[1/7] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/audio_pipeline/audio_pipeline.o
+[2/7] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/drivers/audio_transport/audio_transport.o
+[3/7] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/board/m55m1_audio.o
+[4/7] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/drivers/tlv320dac3100/tlv320dac3100.o
+[5/7] Building CXX object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_inference_service.o
+[6/7] Linking CXX executable M55M1_GestureAI.axf
+[7/7] C:\Windows\system32\cmd.exe /C "cd /D D:\TinyML-Hearing-Aids\build-debug && C:\Users\proha\AppData\Local\Programs\Python\Python312\python.exe D:/TinyML-Hearing-Aids/tools/report_model_sram.py D:/TinyML-Hearing-Aids/build-debug/M55M1_GestureAI.axf.map"
+[MODEL SRAM] D:\TinyML-Hearing-Aids\build-debug\M55M1_GestureAI.axf.map
+  model image and metadata :   516,852 B
+  region alignment/padding :         0 B
+  U55_MODEL_RAM linked      :   516,852 B / 786,432 B reserved (65.7%); free 269,580 B
+
+  tensor arena            :    65,536 B
+
+  recurrent/FIR adapter   :     5,288 B
+
+  feature and FFT state   :     2,072 B
+
+  interpreter storage     :       208 B
+
+  other DeepFIR statics    :     3,676 B
+
+  model-owned SRAM linked  :   593,632 B
+
+  RW_RAM all firmware      :    78,712 B
+
+  Tensor arena is allocated capacity; runtime peak use is not in the map.
+
+
+Build OK. Output in build-debug\:
+M55M1_GestureAI.axf
+M55M1_GestureAI.axf.map
+M55M1_GestureAI.bin
+M55M1_GestureAI.htm

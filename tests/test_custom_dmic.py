@@ -23,10 +23,10 @@ class CustomCaptureTests(unittest.TestCase):
             #include <stdbool.h>
             #include <stdint.h>
             #include <stdlib.h>
-            #define TEST_WARMUP (M55M1_CUSTOM_DMIC_TEST && !M55M1_DMIC_PRODUCT_STARTUP)
+            #define TEST_WARMUP 0
             #define M55M1_AUDIO_PROFILE_16KHZ 0
             #define M55M1_AUDIO_LPPDMA_CH 0
-            #define M55M1_AUDIO_MAX_SAMPLES_PER_BLOCK 320U
+            #define M55M1_AUDIO_MAX_SAMPLES_PER_BLOCK 16U
             #define CLK_SRCCTL_HXTEN_Msk 1
             #define CLK_STATUS_HXTSTB_Msk 1
             #define CLK_STATUS_APLL1STB_Msk 128
@@ -167,21 +167,17 @@ class CustomCaptureTests(unittest.TestCase):
             source = Path(directory) / "start.c"
             binary = Path(directory) / "start.exe"
             source.write_text(harness)
-            for custom, numaker, gain in ((1, 1, 30),):
-                with self.subTest(custom=custom, numaker=numaker):
-                    compiled = subprocess.run([
-                        "gcc", "-std=c11", "-Wall", "-Wextra", "-Werror",
-                        "-Wno-pointer-to-int-cast",
-                        f"-DM55M1_CUSTOM_DMIC_TEST={custom}",
-                        f"-DM55M1_DMIC_PRODUCT_STARTUP={numaker}",
-                        f"-DM55M1_DMIC_GAIN_DB={gain}", str(source), "-o", str(binary),
-                    ], capture_output=True, text=True)
-                    self.assertEqual(compiled.returncode, 0, compiled.stderr)
-                    for scenario in range(6):
-                        with self.subTest(scenario=scenario):
-                            result = subprocess.run([str(binary), str(scenario)],
-                                                    capture_output=True, text=True)
-                            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            compiled = subprocess.run([
+                "gcc", "-std=c11", "-Wall", "-Wextra", "-Werror",
+                "-Wno-pointer-to-int-cast", "-DM55M1_DMIC_GAIN_DB=30",
+                str(source), "-o", str(binary),
+            ], capture_output=True, text=True)
+            self.assertEqual(compiled.returncode, 0, compiled.stderr)
+            for scenario in range(6):
+                with self.subTest(scenario=scenario):
+                    result = subprocess.run([str(binary), str(scenario)],
+                                            capture_output=True, text=True)
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 
 if __name__ == "__main__":

@@ -76,7 +76,7 @@ class ContinuousLowPowerTests(unittest.TestCase):
         source = (ROOT / "drivers/audio_transport/audio_transport.c").read_text()
         self.assertIn("void audio_transport_wait_for_work(void)", source)
         start = source.index("void audio_transport_wait_for_work(void)")
-        end = re.search(r"audio_transport_status_t\s+audio_transport_submit\(", source[start:]).start() + start
+        end = re.search(r"audio_transport_status_t\s+audio_transport_submit_tagged\(", source[start:]).start() + start
         body = r'''
         #include <assert.h>
         #include <stdbool.h>
@@ -128,7 +128,7 @@ class ContinuousLowPowerTests(unittest.TestCase):
             return 0;
         }
         '''
-        run_c(("", body), defines=["-DM55M1_PRODUCT_AUDIO=1"])
+        run_c(("", body))
 
     def test_product_clock_gates_and_shallow_idle_preserve_audio_swd_and_debug(self):
         path = ROOT / "board/m55m1_power.c"

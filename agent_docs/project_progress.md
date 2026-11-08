@@ -1,5 +1,45 @@
 # Project Progress
 
+## Continuous product finalization — 2026-11-09
+
+Current result supersedes the earlier startup-fault snapshots below. User-supplied
+Probe reached60000 hops: max total863us, capture-to-progress885us, publication884us,
+zero deadline/model/submit/DMA/overrun/underrun faults, COMPLETE. Nominal60s from
+sample count; STOP elapsed60233us is modular counter time, not run duration.
+Flashed BIN identity was not supplied. Supplied-run timing subgate PASS; physical
+slot/acoustic latency, power and final-image long soak remain unverified.
+Snapshot/receipt: docs/verification/2026-11-08-board-probe-60000/.
+
+The same pipeline now has only the fixed custom16k/hop16 audio implementation.
+Removed legacy32k/scatter/warmup branches, untagged publication, write-only flag,
+unused historical telemetry service/test, duplicate SRAM alias and dormant RTOS
+build/link block. Kept current Debug logs, Release UART-off/WFI, finite Release
+Probe, replay/capture tools, full recovery, strict1ms guard, two silences/b+2.
+No model/DSP math, gain, pins, clocks, libs or source-package changes.
+
+Verified134/134 tests, no skips. Actual C ordinary Debug/Release foreground
+harnesses each pass60005 hops; driver register model passes60000 handoffs and
+fault/rejection cases. These are host models, not hardware throughput/parity.
+Arm6.24 Debug/Release/Probe builds and9 scoped Release/Probe MVE gates PASS.
+All47 source artifact hashes and destination hashes match, array byte-exact;
+one compiled image per BIN and one interpreter/core/device implementation.
+
+Final BIN Debug643552B SHA1b7861e65c5c520d92a30ef642a5681dfdffabdc07a109bad7dd6d3f18565254;
+Release618528B SHAc124cf7b37b38c1f9c0bf4fd0ace1c75cd400c4409f7bc0127ae28d13e61a044;
+Probe625536B SHAe2c6cf28e912fdf070fee5ff57e3b624da78b2d7d6f5ce906a402775b33895a4.
+RW_RAM remains78712/77168/78216B; model516852B, arena65536B inside RW_RAM,
+DMA320B, stack8192B and heap2048B separately reserved. Static stack6656+Unknown
+is not watermark. Earlier supplied Debug allocation6976/65536B is not a new
+measurement of these images. Ordinary outputs/opt-ins OFF, editor Debug.
+
+Handoff/commands/maps/hash/acceptance: docs/verification/2026-11-09-continuous-product/.
+Local binaries/maps: diagnostics/submillisecond_runtime_20261108/fifo_build_001119/.
+Next: final-image Probe retest with BIN hash, ordinary Release30-minute soak,
+Debug boot/recovery, stack/physical audio/latency and power measurements when
+authorized. Compiled parity BLOCKED without running backend; raw replay NOT_RUN.
+Agent did not flash/reset/connect; deployment_approved=false. Light route,
+no agents/explorer. Earlier entries remain historical snapshots.
+
 ## FIFO-aware product DMA handoff — 2026-11-08
 
 New user trace: TX TD at4us and1021us, FIFO16/RXseq0 at both; software underrun

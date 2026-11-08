@@ -1,0 +1,35 @@
+{
+  "recorded_local": "2026-11-09T00:13:49.555919+07:00",
+  "tests": {
+    "status": "PASS",
+    "count": 134,
+    "skips": 0,
+    "log": "host/001119/tests.log"
+  },
+  "builds": {
+    "status": "PASS",
+    "log": "build_evidence/commands.json"
+  },
+  "mve": {
+    "status": "PASS",
+    "ranges": 9,
+    "variants": [
+      "release",
+      "release_probe"
+    ]
+  },
+  "ordinary_host_continuity": {
+    "debug_hops": 60005,
+    "release_hops": 60005,
+    "backend": "mock transport/inference, actual pipeline C"
+  },
+  "dma_handoffs": {
+    "count": 60000,
+    "backend": "actual driver C, modeled registers"
+  },
+  "target_device_operation": "NOT_RUN",
+  "raw_replay_rerun": "NOT_RUN",
+  "compiled_parity": "BLOCKED",
+  "board_timing": "User-reported previous candidate only; see ../2026-11-08-board-probe-60000/",
+  "current_binaries_board_retest": "NOT_RUN"
+}

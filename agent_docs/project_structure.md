@@ -8,7 +8,11 @@
 - `services/deepfir/deepfir_dsp.c`: sole FIR history, midpoint-Hann crossfade, MVE kernel and PCM conversion.
 - `services/deepfir/deepfir_tensor_binding.c`: strict portable tensor metadata validation.
 - `services/deepfir/deepfir_inference_service.cpp`: one interpreter/resolver/arena, lifecycle, memory snapshot and optional replay mailbox.
-- `drivers/`: audio transport, TLV320DAC3100, bounded UART and single-instance Ethos-U/cache/IRQ support.
+- `drivers/`: sequence-tagged hop16 audio transport, sole TLV320DAC3100 terminal-task
+  FIFO handoff, bounded UART and single-instance Ethos-U/cache/IRQ support. Legacy
+  32-kHz/scatter and untagged submit paths are removed.
+- Runtime telemetry is owned by the active pipeline/inference modules; the unused
+  historical `services/audio_telemetry.c/.h` was removed.
 - `board/`: custom PCB pins, common audio clock source, DMA/IRQ binding and recovery-sensitive configuration.
 - `models/deepfir/`: immutable compiled model/contract/provenance plus separate integration manifest; no DSP implementation.
 - `common/`: dependency-free portable utilities.

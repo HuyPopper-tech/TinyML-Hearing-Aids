@@ -103,7 +103,7 @@ typedef void (*audio_transport_progress_callback_t)(audio_transport_board_stage_
 
 /**
  * @brief Bind the production board and optional codec transport.
- * @param report Optional init result destination.
+ * @param report Required caller-owned init result destination.
  * @param progress_callback Optional synchronous foreground observer.
  * @param progress_context Caller-owned observer context retained only during init.
  * @return True when the transport is ready for audio_transport_start().
@@ -153,24 +153,14 @@ bool audio_transport_capture_pending(void);
 
 /** Foreground product Idle until an IRQ when capture/health have no pending work.
  * Does not consume a block or change DMA ownership. Skips ISR/masked callers.
- * Call only while the transport is running; diagnostic targets remain nonblocking.
+ * Call only while the transport is running.
  */
 void audio_transport_wait_for_work(void);
 
 /**
- * @brief Submit one playback block.
- * @param samples Exact-size caller buffer copied before return.
- * @return OK, BUSY, or ERROR.
- *
- * Foreground-only and non-blocking. The caller may reuse samples after return.
- */
-audio_transport_status_t
-audio_transport_submit(const int16_t samples[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK]);
-
-/**
  * @brief Submit playback with its prior capture source tag.
  * @param samples Copied block.
- * @param tag Optional caller-owned source metadata copied on success.
+ * @param tag Required caller-owned sequence/timestamp copied on success.
  * @return OK, BUSY, or ERROR.
  *
  * Foreground-only and non-blocking. Both inputs remain caller-owned.

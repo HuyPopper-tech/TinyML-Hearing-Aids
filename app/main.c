@@ -25,6 +25,7 @@ int main(void) {
 #if M55M1_DEEPFIR_COMPILED_REPLAY
         deepfir_inference_replay_poll();
 #else
+        // Debug/Release share continuous audio; only opt-in diagnostics stop the service.
         audio_pipeline_poll();
         audio_pipeline_wait_for_work();
 #endif

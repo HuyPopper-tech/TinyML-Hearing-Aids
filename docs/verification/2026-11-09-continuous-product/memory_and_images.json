@@ -1,0 +1,237 @@
+{
+  "debug": {
+    "regions": {
+      "ITCM": {
+        "base": "0x00000000",
+        "bytes": 436
+      },
+      "ER_ROM": {
+        "base": "0x00100000",
+        "bytes": 125472
+      },
+      "DTCM_VTOR": {
+        "base": "0x20000000",
+        "bytes": 712
+      },
+      "DTCM": {
+        "base": "0x200002c8",
+        "bytes": 2048
+      },
+      "ARM_LIB_STACK": {
+        "base": "0x2001e000",
+        "bytes": 8192
+      },
+      "U55_MODEL_RAM": {
+        "base": "0x20100000",
+        "bytes": 516852
+      },
+      "RW_NOINIT": {
+        "base": "0x201c0000",
+        "bytes": 0
+      },
+      "RW_RAM": {
+        "base": "0x201c0000",
+        "bytes": 78712
+      },
+      "ARM_LIB_HEAP": {
+        "base": "0x201d3378",
+        "bytes": 2048
+      },
+      "SRAM_NONCACHEABLE": {
+        "base": "0x20230000",
+        "bytes": 320
+      },
+      "SRAM_NONCACHEABLE_END": {
+        "base": "0x20250000",
+        "bytes": 0
+      },
+      "LPSRAM": {
+        "base": "0x20310000",
+        "bytes": 0
+      }
+    },
+    "totals": [
+      "Total RO  Size (Code + RO Data)               643472 ( 628.39kB)",
+      "Total RW  Size (RW Data + ZI Data)             91320 (  89.18kB)",
+      "Total ROM Size (Code + RO Data + RW Data)     643520 ( 628.44kB)"
+    ],
+    "images": [
+      {
+        "file": "M55M1_GestureAI.bin",
+        "bytes": 643552,
+        "sha256": "1b7861e65c5c520d92a30ef642a5681dfdffabdc07a109bad7dd6d3f18565254"
+      },
+      {
+        "file": "M55M1_GestureAI.axf",
+        "bytes": 3524256,
+        "sha256": "a503423dbe8bfc2915d67603eb239d94753593168323d1b876d688c26f44a80a"
+      },
+      {
+        "file": "M55M1_GestureAI.axf.map",
+        "bytes": 3811953,
+        "sha256": "616dfff9e24286973ab4bc12cf2a6433a2f2d6fa1658ed7618531dc5c6bc2b5c"
+      }
+    ],
+    "model_occurrences_in_bin": 1,
+    "i2s1_irq_linked": true,
+    "arena_capacity_bytes": 65536,
+    "target_allocation_and_stack_watermark": "NOT_RUN",
+    "static_stack": "Maximum Stack Usage =       6656 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>"
+  },
+  "release": {
+    "regions": {
+      "ITCM": {
+        "base": "0x00000000",
+        "bytes": 320
+      },
+      "ER_ROM": {
+        "base": "0x00100000",
+        "bytes": 100600
+      },
+      "DTCM_VTOR": {
+        "base": "0x20000000",
+        "bytes": 712
+      },
+      "DTCM": {
+        "base": "0x200002c8",
+        "bytes": 0
+      },
+      "ARM_LIB_STACK": {
+        "base": "0x2001e000",
+        "bytes": 8192
+      },
+      "U55_MODEL_RAM": {
+        "base": "0x20100000",
+        "bytes": 516852
+      },
+      "RW_NOINIT": {
+        "base": "0x201c0000",
+        "bytes": 0
+      },
+      "RW_RAM": {
+        "base": "0x201c0000",
+        "bytes": 77168
+      },
+      "ARM_LIB_HEAP": {
+        "base": "0x201d2d70",
+        "bytes": 2048
+      },
+      "SRAM_NONCACHEABLE": {
+        "base": "0x20230000",
+        "bytes": 320
+      },
+      "SRAM_NONCACHEABLE_END": {
+        "base": "0x20250000",
+        "bytes": 0
+      },
+      "LPSRAM": {
+        "base": "0x20310000",
+        "bytes": 0
+      }
+    },
+    "totals": [
+      "Total RO  Size (Code + RO Data)               618484 ( 603.99kB)",
+      "Total RW  Size (RW Data + ZI Data)             87728 (  85.67kB)",
+      "Total ROM Size (Code + RO Data + RW Data)     618516 ( 604.02kB)"
+    ],
+    "images": [
+      {
+        "file": "M55M1_GestureAI.bin",
+        "bytes": 618528,
+        "sha256": "c124cf7b37b38c1f9c0bf4fd0ace1c75cd400c4409f7bc0127ae28d13e61a044"
+      },
+      {
+        "file": "M55M1_GestureAI.axf",
+        "bytes": 622244,
+        "sha256": "31ae28e06900e2cd2efe583d0de0b27ce6376fa2e32a989f15cec72857a2e967"
+      },
+      {
+        "file": "M55M1_GestureAI.axf.map",
+        "bytes": 1233842,
+        "sha256": "ce5c2adcdf99b001beed7e31e96664a80a0d457a3949c559c22c4536747cc8ed"
+      }
+    ],
+    "model_occurrences_in_bin": 1,
+    "i2s1_irq_linked": true,
+    "arena_capacity_bytes": 65536,
+    "target_allocation_and_stack_watermark": "NOT_RUN"
+  },
+  "release_probe": {
+    "regions": {
+      "ITCM": {
+        "base": "0x00000000",
+        "bytes": 320
+      },
+      "ER_ROM": {
+        "base": "0x00100000",
+        "bytes": 107612
+      },
+      "DTCM_VTOR": {
+        "base": "0x20000000",
+        "bytes": 712
+      },
+      "DTCM": {
+        "base": "0x200002c8",
+        "bytes": 2048
+      },
+      "ARM_LIB_STACK": {
+        "base": "0x2001e000",
+        "bytes": 8192
+      },
+      "U55_MODEL_RAM": {
+        "base": "0x20100000",
+        "bytes": 516852
+      },
+      "RW_NOINIT": {
+        "base": "0x201c0000",
+        "bytes": 0
+      },
+      "RW_RAM": {
+        "base": "0x201c0000",
+        "bytes": 78216
+      },
+      "ARM_LIB_HEAP": {
+        "base": "0x201d3188",
+        "bytes": 2048
+      },
+      "SRAM_NONCACHEABLE": {
+        "base": "0x20230000",
+        "bytes": 320
+      },
+      "SRAM_NONCACHEABLE_END": {
+        "base": "0x20250000",
+        "bytes": 0
+      },
+      "LPSRAM": {
+        "base": "0x20310000",
+        "bytes": 0
+      }
+    },
+    "totals": [
+      "Total RO  Size (Code + RO Data)               625496 ( 610.84kB)",
+      "Total RW  Size (RW Data + ZI Data)             90824 (  88.70kB)",
+      "Total ROM Size (Code + RO Data + RW Data)     625528 ( 610.87kB)"
+    ],
+    "images": [
+      {
+        "file": "M55M1_GestureAI.bin",
+        "bytes": 625536,
+        "sha256": "e2c6cf28e912fdf070fee5ff57e3b624da78b2d7d6f5ce906a402775b33895a4"
+      },
+      {
+        "file": "M55M1_GestureAI.axf",
+        "bytes": 629348,
+        "sha256": "4932b9393d9d0a2797f18c94b7b4d068d459b23ee774fb35e46f4f767f4d31ed"
+      },
+      {
+        "file": "M55M1_GestureAI.axf.map",
+        "bytes": 1264651,
+        "sha256": "b6cfdeea39d4d12c0eb41915bf0947335043b14845e46fa340cbf081e9f7384d"
+      }
+    ],
+    "model_occurrences_in_bin": 1,
+    "i2s1_irq_linked": true,
+    "arena_capacity_bytes": 65536,
+    "target_allocation_and_stack_watermark": "NOT_RUN"
+  }
+}

@@ -1,0 +1,108 @@
+[rtk] /!\ No hook installed — run `rtk init -g` for automatic token savings
+-- Model package: D:/TinyML-Hearing-Aids/models/deepfir
+-- StdDriver: skipping utcpd.c (utcpdlib.h is not supplied)
+-- TensorFlow Lite Micro: D:/TinyML-Hearing-Aids/libs/tensorflow/runtime
+-- Linker scatter file: D:/TinyML-Hearing-Aids/cmake/m55m1_audio.scf
+-- M55M1_GestureAI: model package=D:/TinyML-Hearing-Aids/models/deepfir, Ethos-U runtime=ON, DAC/I2S output=ON, TensorFlow Lite Micro=ON
+-- Configuring done (1.7s)
+-- Generating done (0.1s)
+-- Build files have been written to: D:/TinyML-Hearing-Aids/build
+[0/2] Re-checking globbed directories...
+[1/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/acmp.o
+[2/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/Device/Nuvoton/M55M1/Source/startup_M55M1.o
+[3/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/awf.o
+[4/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/bpwm.o
+[5/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/ccap.o
+[6/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/Device/Nuvoton/M55M1/Source/system_M55M1.o
+[7/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/crc.o
+[8/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/clk.o
+[9/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/dac.o
+[10/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/ebi.o
+[11/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/canfd.o
+[12/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/dmic.o
+[13/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/ecap.o
+[14/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/eadc.o
+[15/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/emac/synopGMAC_network_interface.o
+[16/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/emac/synopGMAC_plat.o
+[17/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/emac/synopGMAC_Dev.o
+[18/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/gdma/dma350_ch_drv.o
+[19/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/gdma/dma350_drv.o
+[20/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/eqei.o
+[21/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/gdma/dma350_address_remap_template.o
+[22/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/epwm.o
+[23/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/fmc.o
+[24/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/gdma/dma350_lib.o
+[25/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/gpio.o
+[26/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/hsusbd.o
+[27/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/i2s.o
+[28/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/i2c.o
+[29/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/crypto.o
+[30/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/kdf.o
+[31/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/kpi.o
+[32/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/i3c.o
+[33/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/lpadc.o
+[34/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/lpgpio.o
+[35/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/ks.o
+[36/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/lppdma.o
+[37/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/lpspi.o
+[38/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/lpi2c.o
+[39/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/lptmr.o
+[40/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/lptmr_pwm.o
+[41/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/otfc.o
+[42/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/lpuart.o
+[43/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/pdma.o
+[44/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/qspi.o
+[45/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/pmc.o
+[46/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/retarget.o
+[47/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/scu/fvc.o
+[48/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/sc.o
+[49/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/rng.o
+[50/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/rtc.o
+[51/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/scu/dpm.o
+[52/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/scu/mpc_sie_drv.o
+[53/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/scuart.o
+[54/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/spi.o
+[55/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/sys.o
+[56/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/timer.o
+[57/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/timer_pwm.o
+[58/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/spim_hyper.o
+[59/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/trng.o
+[60/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/ttmr.o
+[61/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/spim.o
+[62/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/uart.o
+[63/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/npu/ethosu_driver.o
+[64/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/sdh.o
+[65/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/usci_spi.o
+[66/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/usbd.o
+[67/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/wwdt.o
+[68/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/wdt.o
+[69/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/usci_uart.o
+[70/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/usci_i2c.o
+[71/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/libs/StdDriver/src/npu/ethosu_device_u55_u65.o
+[72/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/app/main.o
+[73/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/audio_pipeline/audio_pipeline.o
+[74/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/board/m55m1_ethosu_board.o
+[75/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/board/m55m1_timebase.o
+[76/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/board/m55m1_stack_monitor.o
+[77/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/board/m55m1_power.o
+[78/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/drivers/ethosu_runtime/ethosu_runtime.o
+[79/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/board/m55m1_audio.o
+[80/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/drivers/audio_transport/audio_transport.o
+[81/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_tensor_binding.o
+[82/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_reconstruction.o
+[83/92] Building CXX object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_model_package.o
+[84/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/drivers/tlv320dac3100/tlv320dac3100.o
+[85/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_model_adapter.o
+[86/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_cmsis_fft_adapter.o
+[87/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_features.o
+[88/92] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_dsp.o
+[89/92] Building CXX object CMakeFiles/M55M1_GestureAI.axf.dir/models/deepfir/deepfir_model_data.o
+[90/92] Building CXX object CMakeFiles/M55M1_GestureAI.axf.dir/drivers/ethosu_runtime/ethosu_tflm_bridge.o
+[91/92] Building CXX object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_inference_service.o
+[92/92] Linking CXX executable M55M1_GestureAI.axf
+
+Build OK. Output in build\:
+M55M1_GestureAI.axf
+M55M1_GestureAI.axf.map
+M55M1_GestureAI.bin
+M55M1_GestureAI.htm

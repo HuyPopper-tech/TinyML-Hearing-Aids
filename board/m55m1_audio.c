@@ -9,9 +9,7 @@
 
 #include "board/m55m1_audio.h"
 #include "board/m55m1_timebase.h"
-#if M55M1_PRODUCT_AUDIO
 #include "board/m55m1_power.h"
-#endif
 #include "NuMicro.h"
 
 #ifndef M55M1_ENABLE_DAC_I2S_OUTPUT
@@ -19,22 +17,14 @@
 #endif
 
 #define M55M1_AUDIO_CORE_HZ 220000000UL
-#if M55M1_CUSTOM_DMIC_TEST && !M55M1_DMIC_PRODUCT_STARTUP
-#define M55M1_AUDIO_AUDIO_APLL_HZ DMIC_APLL1_FREQ_196608KHZ
-#else
 #define M55M1_AUDIO_AUDIO_APLL_HZ 475136006UL
-#endif
 /* TLV320DAC3100 supports I2C Fast-mode; control transfers do not gate PDMA audio. */
 #define M55M1_AUDIO_I2C_HZ 400000UL
 #define M55M1_AUDIO_PDMA_CH 0UL
 #define M55M1_AUDIO_LPPDMA_CH 0UL
 #define M55M1_AUDIO_I2C_RECOVERY_PULSES 9U
 #define M55M1_AUDIO_I2C_RECOVERY_DELAY_US 5UL
-#if M55M1_PRODUCT_AUDIO
 #define M55M1_AUDIO_MAX_SAMPLES_PER_BLOCK 16U
-#else
-#define M55M1_AUDIO_MAX_SAMPLES_PER_BLOCK 320U
-#endif
 
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
 #define M55M1_AUDIO_I2C_SDA PA4
@@ -135,9 +125,6 @@ static uint32_t m55m1_audio_profile_mclk_hz(m55m1_audio_profile_t profile) {
     if (profile == M55M1_AUDIO_PROFILE_16KHZ) {
         return 4096000UL;
     }
-    if (profile == M55M1_AUDIO_PROFILE_32KHZ) {
-        return 8192000UL;
-    }
     return 0U;
 }
 #endif
@@ -146,18 +133,12 @@ static uint32_t m55m1_audio_profile_sample_rate_hz(m55m1_audio_profile_t profile
     if (profile == M55M1_AUDIO_PROFILE_16KHZ) {
         return 16000UL;
     }
-    if (profile == M55M1_AUDIO_PROFILE_32KHZ) {
-        return 32000UL;
-    }
     return 0U;
 }
 
 static uint16_t m55m1_audio_profile_samples_per_block(m55m1_audio_profile_t profile) {
     if (profile == M55M1_AUDIO_PROFILE_16KHZ) {
         return 16U;
-    }
-    if (profile == M55M1_AUDIO_PROFILE_32KHZ) {
-        return 320U;
     }
     return 0U;
 }
@@ -344,14 +325,12 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
 #endif
     g_clock_snapshot_valid = false;
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
-    i2s_module_divider = (profile == M55M1_AUDIO_PROFILE_16KHZ) ? 58UL : 29UL;
+    i2s_module_divider = 58UL;
 #endif
     m55m1_audio_notify_progress(progress_callback, progress_context, M55M1_AUDIO_BOARD_STAGE_ENTER);
     SYS_UnlockReg();
 
-#if M55M1_PRODUCT_AUDIO
     m55m1_power_configure();
-#endif
 
     /*
      * CLK_EnableAPLL first disables its selected PLL. The BSP or a prior boot stage may
@@ -439,11 +418,7 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
     }
 #endif
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
-    if (i2s_module_divider == 58UL) {
-        CLK_SetModuleClock(I2S1_MODULE, CLK_I2SSEL_I2S1SEL_APLL1_DIV2, CLK_I2SDIV_I2S1DIV(58));
-    } else {
-        CLK_SetModuleClock(I2S1_MODULE, CLK_I2SSEL_I2S1SEL_APLL1_DIV2, CLK_I2SDIV_I2S1DIV(29));
-    }
+    CLK_SetModuleClock(I2S1_MODULE, CLK_I2SSEL_I2S1SEL_APLL1_DIV2, CLK_I2SDIV_I2S1DIV(58));
     CLK_EnableModuleClock(I2S1_MODULE);
     CLK_EnableModuleClock(I2C0_MODULE);
     CLK_EnableModuleClock(PDMA0_MODULE);
@@ -499,13 +474,11 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
     };
     g_playback_irq_callback = playback_irq_callback;
     g_playback_irq_context = playback_irq_context;
-#if M55M1_PRODUCT_AUDIO
     // A reset-less debug reload may leave an old source enabled; bind before unmasking NVIC.
     I2S_DisableInt(I2S1, I2S_IEN_TXUDFIEN_Msk);
     NVIC_ClearPendingIRQ(I2S1_IRQn);
     NVIC_SetPriority(I2S1_IRQn, 1U);
     NVIC_EnableIRQ(I2S1_IRQn);
-#endif
 #endif
     m55m1_audio_notify_progress(progress_callback, progress_context,
                                 M55M1_AUDIO_BOARD_STAGE_PERIPHERALS_READY);
@@ -555,22 +528,17 @@ bool m55m1_audio_dmic_prepare(m55m1_audio_profile_t profile) {
     CLK_EnableModuleClock(GPIOA_MODULE);
     SET_DMIC1_CLK_PA1();
     SET_DMIC1_DAT_PA2();
-#if M55M1_CUSTOM_DMIC_TEST && !M55M1_DMIC_PRODUCT_STARTUP
-    SYS_ResetModule(SYS_DMIC0RST);
-#endif
     SYS_LockReg();
 
     DMIC_Open(DMIC0);
     DMIC_SetFIFOWidth(DMIC0, DMIC_FIFOWIDTH_16);
     DMIC_SetDSPGainVolume(DMIC0, DMIC_CTL_CHEN2_Msk, M55M1_DMIC_GAIN_DB);
     /*
-     * MP34DT05 requires a 1.2..3.25 MHz PDM clock in normal operation. Both
-     * profiles retain 2.048 MHz: 16 kHz needs OSR=128, while 32 kHz needs
-     * OSR=64. Using OSR=64 at 16 kHz would generate only 1.024 MHz and can
-     * distort PCM before it ever reaches the codec.
+     * MP34DT05 requires a 1.2..3.25 MHz PDM clock in normal operation. The
+     * 16 kHz product retains 2.048 MHz with OSR=128. OSR=64 at 16 kHz
+     * would generate only 1.024 MHz and can distort PCM before it reaches the codec.
      */
-    DMIC_SET_DOWNSAMPLE(DMIC0, (profile == M55M1_AUDIO_PROFILE_16KHZ) ? DMIC_DOWNSAMPLE_128
-                                                                      : DMIC_DOWNSAMPLE_64);
+    DMIC_SET_DOWNSAMPLE(DMIC0, DMIC_DOWNSAMPLE_128);
     /*
      * MP34DT05 L/R is low, so DOUT becomes valid after CLK falls and remains
      * driven through the low phase. Channel 2 must latch on CLK rising, at
@@ -583,25 +551,6 @@ bool m55m1_audio_dmic_prepare(m55m1_audio_profile_t profile) {
         DMIC_Close(DMIC0);
         return false;
     }
-
-#if M55M1_CUSTOM_DMIC_TEST && !M55M1_DMIC_PRODUCT_STARTUP
-    /* Match the BSP startup sequence without changing the product path. */
-    DMIC_ClearFIFO(DMIC0);
-    DMIC_ResetDSP(DMIC0);
-    if ((DMIC_IS_FIFOEMPTY(DMIC0) == 0U) || ((DMIC0->CTL & DMIC_CTL_SWRST_Msk) != 0U)) {
-        DMIC_Close(DMIC0);
-        return false;
-    }
-    DMIC_EnableChMsk(DMIC0, DMIC_CTL_CHEN2_Msk);
-    /* MP34DT05 needs up to 10 ms of PDM clock before valid output. */
-    m55m1_timebase_delay_us(10000UL);
-    DMIC_ClearFIFO(DMIC0);
-    if (DMIC_IS_FIFOEMPTY(DMIC0) == 0U) {
-        DMIC_Close(DMIC0);
-        return false;
-    }
-#endif
-
     g_dmic_state = (m55m1_audio_dmic_state_t){
         .samples_per_block = samples_per_block,
     };
@@ -763,7 +712,7 @@ void PDMA0_IRQHandler(void) {
 #endif
 }
 
-#if M55M1_PRODUCT_AUDIO && M55M1_ENABLE_DAC_I2S_OUTPUT
+#if M55M1_ENABLE_DAC_I2S_OUTPUT
 /** @brief Forward real FIFO starvation to the same driver owner, including idle DMA gaps. */
 void I2S1_IRQHandler(void) {
     if (g_playback_irq_callback != NULL) {

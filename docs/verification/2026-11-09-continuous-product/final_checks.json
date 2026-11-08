@@ -1,0 +1,119 @@
+{
+  "recorded_local": "2026-11-09T00:16:26.303040+07:00",
+  "commands": [
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "C:/ST/STM32CubeCLT_1.20.0/Ninja/bin/ninja.exe",
+        "-C",
+        "build",
+        "-t",
+        "cleandead"
+      ],
+      "exit_code": 0,
+      "stdout": "Cleaning... 3 files.",
+      "stderr": "[rtk] /!\\ No hook installed \u2014 run `rtk init -g` for automatic token savings"
+    },
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "C:/ST/STM32CubeCLT_1.20.0/Ninja/bin/ninja.exe",
+        "-C",
+        "build-debug",
+        "-t",
+        "cleandead"
+      ],
+      "exit_code": 0,
+      "stdout": "Cleaning... 1 files.",
+      "stderr": "[rtk] /!\\ No hook installed \u2014 run `rtk init -g` for automatic token savings"
+    },
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "C:/Program Files/ArmCompilerforEmbedded6.24/bin/armclang.exe",
+        "--version"
+      ],
+      "exit_code": 0,
+      "stdout": "Product: Keil MDK Nuvoton Edition - Full Cortex-M\nComponent: Arm Compiler for Embedded 6.24\nTool: armclang [5f371800]\n\nTarget: unspecified-arm-none-none",
+      "stderr": "[rtk] /!\\ No hook installed \u2014 run `rtk init -g` for automatic token savings"
+    },
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "cmake",
+        "--version"
+      ],
+      "exit_code": 0,
+      "stdout": "cmake version 3.28.1\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).",
+      "stderr": "[rtk] /!\\ No hook installed \u2014 run `rtk init -g` for automatic token savings"
+    },
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "python",
+        "--version"
+      ],
+      "exit_code": 0,
+      "stdout": "Python 3.12.10",
+      "stderr": "[rtk] /!\\ No hook installed \u2014 run `rtk init -g` for automatic token savings"
+    },
+    {
+      "command": [
+        "rtk",
+        "--version"
+      ],
+      "exit_code": 0,
+      "stdout": "rtk 0.49.0",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "diagnostics/i2c_stuck_trace_20261108_162019/style_tools/clang_format/data/bin/clang-format.exe",
+        "--dry-run",
+        "--Werror",
+        "app/main.c",
+        "board/m55m1_audio.c",
+        "board/m55m1_audio.h",
+        "drivers/audio_transport/audio_transport.c",
+        "drivers/audio_transport/audio_transport.h",
+        "drivers/tlv320dac3100/tlv320dac3100.c",
+        "drivers/tlv320dac3100/tlv320dac3100.h"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "[rtk] /!\\ No hook installed \u2014 run `rtk init -g` for automatic token savings"
+    },
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "python",
+        "-X",
+        "utf8",
+        "docs/verification/2026-11-08-board-probe-60000/verify_log.py"
+      ],
+      "exit_code": 0,
+      "stdout": "PASS: 60000 supplied hops, max total863us/e2e885us, all fault counters0; image identity unattested",
+      "stderr": "[rtk] /!\\ No hook installed \u2014 run `rtk init -g` for automatic token savings"
+    },
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "[rtk] /!\\ No hook installed \u2014 run `rtk init -g` for automatic token savings\nwarning: in the working copy of 'CMakeLists.txt', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'board/m55m1_audio.c', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'board/m55m1_audio.h', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'build.bat', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'drivers/audio_transport/audio_transport.c', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'drivers/audio_transport/audio_transport.h', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'drivers/tlv320dac3100/tlv320dac3100.c', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'drivers/tlv320dac3100/tlv320dac3100.h', LF will be replaced by CRLF the next time Git touches it"
+    }
+  ]
+}

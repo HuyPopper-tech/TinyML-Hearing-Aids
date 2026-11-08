@@ -1,0 +1,73 @@
+{
+  "recorded_local": "2026-11-09T00:19:17.506102+07:00",
+  "commands": [
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "gcc",
+        "--version"
+      ],
+      "exit_code": 0,
+      "stdout": "gcc.exe (Rev6, Built by MSYS2 project) 13.2.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
+      "stderr": "[rtk] /!\\ No hook installed \u2014 run `rtk init -g` for automatic token savings"
+    },
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "g++",
+        "--version"
+      ],
+      "exit_code": 0,
+      "stdout": "g++.exe (Rev6, Built by MSYS2 project) 13.2.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
+      "stderr": "[rtk] /!\\ No hook installed \u2014 run `rtk init -g` for automatic token savings"
+    },
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "[rtk] /!\\ No hook installed \u2014 run `rtk init -g` for automatic token savings\nwarning: in the working copy of 'CMakeLists.txt', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'board/m55m1_audio.c', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'board/m55m1_audio.h', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'build.bat', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'drivers/audio_transport/audio_transport.c', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'drivers/audio_transport/audio_transport.h', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'drivers/tlv320dac3100/tlv320dac3100.c', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'drivers/tlv320dac3100/tlv320dac3100.h', LF will be replaced by CRLF the next time Git touches it"
+    }
+  ],
+  "native_compiler_runtime": "diagnostics\\i2c_stuck_trace_20261108_162019\\host_compiler_runtime",
+  "compiled_source_hashes": {
+    "CMakeLists.txt": "cd4bf845c7272b63fd5f80e872c1f86b28f656cb5f68fdd6ec908551b3744e5c",
+    "app/main.c": "b67e952a86b63e7c0c412bcc1818244150674d6324a20adf9d09be54a2b800db",
+    "board/m55m1_audio.c": "f2beb87ebe9e55d9f4a141bba6440ebf92413aa734dc87234eb43c25ca620c0a",
+    "board/m55m1_audio.h": "7116cb4b1e66cbc6101a83a5c20398ad26e1fb6b398903e5e4b750025d4af40b",
+    "build.bat": "9d2268067c5297fb587d4fc4a60317b6d646d1736e98dae81e75491bcb58ebbf",
+    "build.sh": "a1405808469d26a85b10166c151784b7d54f16d24b036d257b3aa3ad0db0a364",
+    "drivers/audio_transport/audio_transport.c": "34baeeaaaeb85cfd198e4cc4355c25492c94d881475f93f6fa1e453e8483bef9",
+    "drivers/audio_transport/audio_transport.h": "72da48fb9ead5e574c9c5e2d0d73d0ba53cc94c535a764c91ad9e5502113d0bf",
+    "drivers/tlv320dac3100/tlv320dac3100.c": "6c0fdb408c52ca2aebfe6465a919f6279f70eb0ee6850eaa542907df883daafd",
+    "drivers/tlv320dac3100/tlv320dac3100.h": "f6cc3229084b2f10de0b4103a1655f88b98906460623e2a5838c0f63b022d343",
+    "services/audio_telemetry.c": "DELETED",
+    "services/audio_telemetry.h": "DELETED",
+    "tests/test_audio_telemetry.py": "DELETED",
+    "tests/test_continuous_low_power.py": "5cacfe41589eb1201c697c79ecfb866e96697cd4b959ef2ff5c06deced39a335",
+    "tests/test_custom_dmic.py": "74e21bf3b80e6cc44d45277e8cddb536ac84a55ceb4203bc5df6aaf2721231a2",
+    "tests/test_deepfir_audio_runtime_debug.py": "8aa75518163d6647fb72f1c141283aedbcbf97f816f8f812c19a95f0a3d274fd",
+    "tests/test_model_diagnostic_contract.py": "6772d704fd3e89a360c4a2ac9acba1a56ed93b87a0e83cb264e378da31ce7336",
+    "tests/test_r2_dma_ownership.py": "a1ac57c225bc0ef9f34ef25193fa1a1520e6d02937056a4e1fcefbb4f63c6586",
+    "tests/test_r2_schedule.py": "b215f7aa94d5161694466a818a99a51eed4c779ae2ecd5a5821d41f745327ce3",
+    "tests/test_tlv320dac3100_driver.py": "a05cdf919de7a2f75c5bb1a5cd09c5769f65f0e8f1b3e7a6462e6923c1ac691c"
+  },
+  "post_docs_driver_contract_tests": {
+    "count": 15,
+    "exit_code": 0,
+    "log": "host/001759/tests.log"
+  },
+  "empty_obsolete_directories_removed": [
+    "app/npu",
+    "drivers/ethosu_u55"
+  ],
+  "review": "Scoped inline self-review; no subagents per user instruction",
+  "device_operation": "NOT_RUN"
+}

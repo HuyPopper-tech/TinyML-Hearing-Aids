@@ -1,5 +1,28 @@
 # Tích hợp DeepFIR R2 trên custom M55M1 — 2026-11-08
 
+## Current status — 2026-11-09
+
+Ordinary Debug and Release share the continuous custom-board pipeline and terminal
+FIFO-aware playback handoff. Release Probe remains an opt-in of that same build
+directory, stopping at60,000 hops and reporting after audio stops. Current guide,
+new build hashes and acceptance: [continuous product finalization](verification/2026-11-09-continuous-product/README.md).
+
+The user supplied a fault-free60,000-hop Probe run: max total863 us,
+capture-to-progress885 us and capture-to-publication884 us, with no missed
+deadline/overrun/underrun/DMA/model failures. Its flashed BIN identity was not
+supplied. [Exact snapshot/receipt](verification/2026-11-08-board-probe-60000/README.md)
+records that limitation. Earlier user Debug log reported arena use6976/65536B;
+it is not a new measurement of the final cleanup image or a stack watermark.
+
+Removed unreachable32-kHz/scatter/warmup paths, untagged submit, the old unused
+telemetry module, RTOS build block and duplicate SRAM option. Package/libs/DSP
+math, pins, clocks, gains, two silence slots, b+2 and1-ms fault guards are unchanged.
+No agent flash/device operation; deployment_approved remains false. The initial
+integration report below is a historical snapshot; its unmeasured timing/memory
+statements are superseded only to the limited extent of the supplied logs above.
+
+## Initial integration snapshot — 2026-11-08
+
 Luồng sản phẩm hiện dùng **custom PCB**, với duy nhất Debug (`build-debug/`)
 và Release (`build/`). Gói nguồn được giữ nguyên. Chưa flash; chưa phê duyệt
 triển khai (`deployment_approved=false`). Không train/PTQ/Vela lại, không sửa `libs/`.

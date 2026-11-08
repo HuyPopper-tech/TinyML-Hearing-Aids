@@ -205,7 +205,7 @@ class DeepfirAudioRuntimeDebugTests(unittest.TestCase):
                 destination[0] = 32767;
                 timing->sequence = frame;
                 timing->completed_cycle = frame * 1000U;
-                return frame <= 1001U;
+                return frame <= 60006U;
             }
             audio_transport_status_t audio_transport_submit_tagged(
                 const int16_t samples[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
@@ -337,6 +337,16 @@ class DeepfirAudioRuntimeDebugTests(unittest.TestCase):
                     fprintf(stderr, "%s", last_log);
                     return 3;
                 }
+                // Ordinary Debug must pass the finite Probe limit without stopping.
+                for (uint32_t index = 1000U; index < 60005U; ++index) {
+                    audio_pipeline_poll();
+                }
+                if (!audio_running || stops || submissions != 60005U ||
+                    blocking_flushes != boot_flushes || !strstr(last_log, "frame=60000")) {
+                    return 22;
+                }
+                // Keep the fault output in the bounded test capture after the long run.
+                all_logs[0] = '\0';
                 // The next failed invocation triggers full reset/restart, never submission.
                 fail_model = true;
                 unsigned before = submissions;
