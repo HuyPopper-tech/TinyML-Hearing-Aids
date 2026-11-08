@@ -1,5 +1,19 @@
 # Tối ưu audio/inference liên tục — 2026-11-08
 
+## FIFO-aware startup repair — 2026-11-08
+
+User trace shows FIFO-transfer TD at4us and1021us before capture1; the old
+driver's next-descriptor guard stops while FIFO still contains16 words. Product
+now CPU-prefills silence0, DMA-transfers silence1 as a terminal task, then arms
+only published audio. Two startup silences/b+2/1ms guard remain; real I2S1 FIFO
+underflow now has IRQ fail-stop handling. No DSP/model/pin/clock/RX DMA changes.
+
+134/134 native tests and Debug/Release/Probe builds pass; source-level ownership
+is verified, hardware startup/timing remains NOT_RUN. `mve_test_us=38076` in the
+user log is boot testing, not per-hop inference. Same Release Probe profile is
+ready for the next run; preserve all startup and result lines with image hash.
+Details: [FIFO handoff evidence](verification/2026-11-08-fifo-dma-handoff/README.md).
+
 ## Submillisecond implementation update — 2026-11-08
 
 Implemented exact MVE Q31 state feedback, guarded batched feature quantization

@@ -89,6 +89,9 @@ typedef struct {
     tlv320dac3100_audio_completion_t latest_completion;
     bool completion_ready;
     bool has_queued_audio;
+#if M55M1_PRODUCT_AUDIO
+    bool dma_active;
+#endif
     uint8_t completed_slot;
 } tlv320dac3100_context_t;
 
@@ -315,14 +318,24 @@ static uint32_t tlv320dac3100_get_pdma_request(const I2S_T *i2s) {
 }
 
 static void tlv320dac3100_configure_descriptor(uint8_t slot, const uint32_t *source) {
+#if M55M1_PRODUCT_AUDIO
+    // A terminal task cannot prefetch the next source before foreground publication.
+    const uint32_t operation = PDMA_OP_BASIC;
+#else
+    const uint32_t operation = PDMA_OP_SCATTER;
     const uint8_t next_slot = (uint8_t)(slot ^ 1U);
+#endif
 
     g_pdma_descriptors[slot].CTL =
-        PDMA_OP_SCATTER | PDMA_REQ_SINGLE | PDMA_WIDTH_32 | PDMA_SAR_INC | PDMA_DAR_FIX |
+        operation | PDMA_REQ_SINGLE | PDMA_WIDTH_32 | PDMA_SAR_INC | PDMA_DAR_FIX |
         (((uint32_t)g_context.profile->samples_per_block - 1UL) << PDMA_DSCT_CTL_TXCNT_Pos);
     g_pdma_descriptors[slot].SA = (uint32_t)(uintptr_t)source;
     g_pdma_descriptors[slot].DA = (uint32_t)(uintptr_t)&g_context.config.i2s->TXFIFO;
+#if M55M1_PRODUCT_AUDIO
+    g_pdma_descriptors[slot].NEXT = 0U;
+#else
     g_pdma_descriptors[slot].NEXT = (uint32_t)(uintptr_t)&g_pdma_descriptors[next_slot];
+#endif
 }
 
 /** @brief Encode one valid signed whole-dB DAC attenuation value for page-0 volume registers. */
@@ -484,6 +497,9 @@ tlv320dac3100_status_t tlv320dac3100_init(const tlv320dac3100_config_t *config) 
     g_context.slot_has_tag[1] = false;
     g_context.completion_ready = false;
     g_context.has_queued_audio = false;
+#if M55M1_PRODUCT_AUDIO
+    g_context.dma_active = false;
+#endif
     g_context.completed_slot = 0U;
 
     actual_rate = I2S_Open(config->i2s, I2S_MODE_MASTER, profile->sample_rate_hz, I2S_DATABIT_16,
@@ -521,6 +537,47 @@ tlv320dac3100_status_t tlv320dac3100_init(const tlv320dac3100_config_t *config) 
     return TLV320DAC3100_STATUS_OK;
 }
 
+// Product FIFO handoff helpers.
+#if M55M1_PRODUCT_AUDIO
+/** @brief Fault path only; foreground recovery must reset the paused PDMA channel. */
+static void tlv320dac3100_halt_transfer(void) {
+    I2S_DISABLE_TXDMA(g_context.config.i2s);
+    I2S_DisableInt(g_context.config.i2s, I2S_IEN_TXUDFIEN_Msk);
+    I2S_DISABLE_TX(g_context.config.i2s);
+    PDMA_STOP(g_context.config.pdma, g_context.config.pdma_channel);
+    PDMA_DisableInt(g_context.config.pdma, g_context.config.pdma_channel, PDMA_INT_TRANS_DONE);
+    PDMA_CLR_TD_FLAG(g_context.config.pdma, 1UL << g_context.config.pdma_channel);
+    PDMA_CLR_ABORT_FLAG(g_context.config.pdma, 1UL << g_context.config.pdma_channel);
+    g_context.dma_active = false;
+}
+
+/** @brief Observe hardware FIFO starvation, including while a terminal task is idle. */
+static bool tlv320dac3100_tx_faulted(void) {
+    if (g_context.status.running && (g_context.config.i2s->STATUS0 & I2S_STATUS0_TXUDIF_Msk)) {
+        I2S_CLR_INT_FLAG(g_context.config.i2s, I2S_STATUS0_TXUDIF_Msk);
+        if (g_context.status.underrun_blocks == 0U) {
+            ++g_context.status.underrun_blocks;
+        }
+    }
+    const bool faulted =
+        g_context.status.underrun_blocks != 0U || g_context.status.dma_errors != 0U;
+    if (faulted && g_context.status.running) {
+        tlv320dac3100_halt_transfer();
+    }
+    return faulted;
+}
+
+/** @brief Publish one immutable terminal task while IRQs are excluded or in the IRQ. */
+static void tlv320dac3100_arm_descriptor(uint8_t slot) {
+    __DMB();
+    PDMA_SetTransferMode(g_context.config.pdma, g_context.config.pdma_channel,
+                         tlv320dac3100_get_pdma_request(g_context.config.i2s), PDMA_OP_SCATTER,
+                         (uint32_t)(uintptr_t)&g_pdma_descriptors[slot]);
+    g_context.dma_active = true;
+    I2S_ENABLE_TXDMA(g_context.config.i2s);
+}
+#endif
+
 tlv320dac3100_status_t tlv320dac3100_start(void) {
     uint32_t primask;
 
@@ -528,22 +585,54 @@ tlv320dac3100_status_t tlv320dac3100_start(void) {
         return TLV320DAC3100_STATUS_INVALID_STATE;
     }
 
-    /* Once TX starts, both descriptors are owned by PDMA until their IRQ completes. */
+    /* Establish ownership before enabling requests or their completion interrupt. */
     primask = __get_PRIMASK();
     __disable_irq();
     g_context.slot_available[0] = false;
     g_context.slot_available[1] = false;
+#if !M55M1_PRODUCT_AUDIO
     __set_PRIMASK(primask);
+#endif
 
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     m55m1_audio_record_startup_event(AUDIO_STARTUP_TX_ARM, m55m1_timebase_cycles_now());
 #endif
+#if M55M1_PRODUCT_AUDIO
+    // Silence0 is already in FIFO; the first terminal DMA task supplies silence1.
+    g_context.slot_available[0] = true;
+    g_context.completed_slot = 1U;
+    I2S_CLR_INT_FLAG(g_context.config.i2s, I2S_STATUS0_TXUDIF_Msk);
+    PDMA_CLR_TD_FLAG(g_context.config.pdma, 1UL << g_context.config.pdma_channel);
+    PDMA_CLR_ABORT_FLAG(g_context.config.pdma, 1UL << g_context.config.pdma_channel);
+    for (unsigned frame = 0; frame < 16U; ++frame) {
+        I2S_WRITE_TX_FIFO(g_context.config.i2s, 0U);
+    }
+    __DSB();
+    // Wait only for the CPU writes to appear; DMA requests need not work with TX disabled.
+    uint32_t wait = 4096U;
+    while (I2S_GET_TX_FIFO_LEVEL(g_context.config.i2s) < 16U && --wait != 0U) {
+    }
+    if (wait == 0U) {
+        ++g_context.status.dma_errors;
+        tlv320dac3100_halt_transfer();
+        g_context.status.running = false;
+        __set_PRIMASK(primask);
+        return TLV320DAC3100_STATUS_DMA_ERROR;
+    }
+    g_context.status.running = true;
+    tlv320dac3100_arm_descriptor(1U);
+    I2S_EnableInt(g_context.config.i2s, I2S_IEN_TXUDFIEN_Msk);
+#else
     I2S_ENABLE_TXDMA(g_context.config.i2s);
+#endif
     I2S_ENABLE_TX(g_context.config.i2s);
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     m55m1_audio_record_startup_event(AUDIO_STARTUP_TX_ENABLED, m55m1_timebase_cycles_now());
 #endif
     g_context.status.running = true;
+#if M55M1_PRODUCT_AUDIO
+    __set_PRIMASK(primask);
+#endif
     return TLV320DAC3100_STATUS_OK;
 }
 
@@ -570,6 +659,10 @@ tlv320dac3100_status_t tlv320dac3100_stop(void) {
         return TLV320DAC3100_STATUS_INVALID_STATE;
     }
 
+#if M55M1_PRODUCT_AUDIO
+    I2S_DisableInt(g_context.config.i2s, I2S_IEN_TXUDFIEN_Msk);
+    g_context.dma_active = false;
+#endif
     I2S_DISABLE_TXDMA(g_context.config.i2s);
     PDMA_STOP(g_context.config.pdma, g_context.config.pdma_channel);
     /* STOP only pauses this BSP's channel; RESET clears that pause before a later init. */
@@ -614,8 +707,15 @@ tlv320dac3100_submit_mono_block_tagged(const int16_t *samples, uint16_t sample_c
 
     primask = __get_PRIMASK();
     __disable_irq();
+#if M55M1_PRODUCT_AUDIO
+    if (tlv320dac3100_tx_faulted()) {
+        __set_PRIMASK(primask);
+        return TLV320DAC3100_STATUS_BUSY;
+    }
+#endif
+    const uint32_t required_completed = tag != NULL ? tag->sequence : 0U;
     if ((tag != NULL) && (!g_context.status.running || tag->sequence == 0U ||
-                          g_context.status.completed_blocks != tag->sequence ||
+                          g_context.status.completed_blocks != required_completed ||
                           !g_context.slot_available[(tag->sequence - 1U) & 1U])) {
         ++g_context.status.underrun_blocks;
         __set_PRIMASK(primask);
@@ -659,6 +759,13 @@ tlv320dac3100_submit_mono_block_tagged(const int16_t *samples, uint16_t sample_c
         g_stereo_buffers[slot][index] = mono_sample | (mono_sample << 16U);
     }
 
+#if M55M1_PRODUCT_AUDIO
+    // IRQs are masked while copying; reject a FIFO fault that arrived during that copy.
+    if (tlv320dac3100_tx_faulted()) {
+        __set_PRIMASK(primask);
+        return TLV320DAC3100_STATUS_BUSY;
+    }
+#endif
     __DMB();
     g_pdma_descriptors[slot].SA = (uint32_t)(uintptr_t)g_stereo_buffers[slot];
     if (tag != NULL) {
@@ -672,7 +779,15 @@ tlv320dac3100_submit_mono_block_tagged(const int16_t *samples, uint16_t sample_c
     ++g_context.status.queued_blocks;
     __DMB();
     if (running) {
+#if M55M1_PRODUCT_AUDIO
+        if (!g_context.dma_active && slot == g_context.completed_slot) {
+            tlv320dac3100_arm_descriptor(slot);
+        } else if (g_context.dma_active) {
+            I2S_ENABLE_TXDMA(g_context.config.i2s);
+        }
+#else
         I2S_ENABLE_TXDMA(g_context.config.i2s);
+#endif
     }
     __set_PRIMASK(primask);
     return TLV320DAC3100_STATUS_OK;
@@ -734,6 +849,9 @@ void tlv320dac3100_get_status(tlv320dac3100_driver_status_t *status) {
          */
         primask = __get_PRIMASK();
         __disable_irq();
+#if M55M1_PRODUCT_AUDIO
+        (void)tlv320dac3100_tx_faulted();
+#endif
         *status = g_context.status;
         status->available_slot_mask = 0U;
         status->audio_slot_mask = 0U;
@@ -765,30 +883,54 @@ tlv320dac3100_status_t tlv320dac3100_recover(void) {
 void tlv320dac3100_handle_pdma_irq(uint32_t completed_cycle) {
     const uint32_t channel_mask = 1UL << g_context.config.pdma_channel;
     const uint8_t slot = g_context.completed_slot;
+#if M55M1_PRODUCT_AUDIO
+    const uint32_t startup_dma_tasks = 1U;
+#else
+    const uint32_t startup_dma_tasks = 2U;
+#endif
 
     if (!g_context.status.initialized) {
         return;
     }
+#if M55M1_PRODUCT_AUDIO
+    if (tlv320dac3100_tx_faulted()) {
+        return;
+    }
+#endif
 
     if ((PDMA_GET_ABORT_STS(g_context.config.pdma) & channel_mask) != 0U) {
         PDMA_CLR_ABORT_FLAG(g_context.config.pdma, channel_mask);
         ++g_context.status.dma_errors;
+#if M55M1_PRODUCT_AUDIO
+        tlv320dac3100_halt_transfer();
+        return;
+#endif
     }
 
     if ((PDMA_GET_TD_STS(g_context.config.pdma) & channel_mask) != 0U) {
         PDMA_CLR_TD_FLAG(g_context.config.pdma, channel_mask);
+#if M55M1_PRODUCT_AUDIO
+        I2S_DISABLE_TXDMA(g_context.config.i2s);
+        g_context.dma_active = false;
+#endif
         ++g_context.status.completed_blocks;
-        if ((g_context.status.completed_blocks > 2U) && !g_context.slot_contains_audio[slot]) {
+        if ((g_context.status.completed_blocks > startup_dma_tasks) &&
+            !g_context.slot_contains_audio[slot]) {
             ++g_context.status.underrun_blocks;
+#if M55M1_PRODUCT_AUDIO
+            tlv320dac3100_halt_transfer();
+            return;
+#else
             I2S_DISABLE_TXDMA(g_context.config.i2s);
             I2S_DISABLE_TX(g_context.config.i2s);
+#endif
         }
         if (g_context.slot_has_tag[slot]) {
             g_context.latest_completion = (tlv320dac3100_audio_completion_t){
                 .sequence = g_context.slot_tags[slot].sequence,
                 .capture_completed_cycle = g_context.slot_tags[slot].capture_completed_cycle,
                 .dac_completed_cycle = completed_cycle,
-                .playback_slot = g_context.status.completed_blocks - 1U,
+                .playback_slot = g_context.slot_tags[slot].sequence + 1U,
             };
             g_context.completion_ready = true;
             g_context.slot_has_tag[slot] = false;
@@ -799,12 +941,19 @@ void tlv320dac3100_handle_pdma_irq(uint32_t completed_cycle) {
         g_context.slot_contains_audio[slot] = false;
         g_context.slot_available[slot] = true;
         g_context.completed_slot ^= 1U;
+#if M55M1_PRODUCT_AUDIO
+        // FIFO still owns this whole block; the next task needs published audio.
+        if (g_context.slot_contains_audio[g_context.completed_slot]) {
+            tlv320dac3100_arm_descriptor(g_context.completed_slot);
+        }
+#else
         if ((g_context.status.completed_blocks >= 2U) &&
             !g_context.slot_contains_audio[g_context.completed_slot]) {
             ++g_context.status.underrun_blocks;
             I2S_DISABLE_TXDMA(g_context.config.i2s);
             I2S_DISABLE_TX(g_context.config.i2s);
         }
+#endif
 
         if (g_context.config.block_callback != NULL) {
             g_context.config.block_callback(g_context.config.callback_context);

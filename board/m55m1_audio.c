@@ -499,6 +499,13 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
     };
     g_playback_irq_callback = playback_irq_callback;
     g_playback_irq_context = playback_irq_context;
+#if M55M1_PRODUCT_AUDIO
+    // A reset-less debug reload may leave an old source enabled; bind before unmasking NVIC.
+    I2S_DisableInt(I2S1, I2S_IEN_TXUDFIEN_Msk);
+    NVIC_ClearPendingIRQ(I2S1_IRQn);
+    NVIC_SetPriority(I2S1_IRQn, 1U);
+    NVIC_EnableIRQ(I2S1_IRQn);
+#endif
 #endif
     m55m1_audio_notify_progress(progress_callback, progress_context,
                                 M55M1_AUDIO_BOARD_STAGE_PERIPHERALS_READY);
@@ -755,6 +762,15 @@ void PDMA0_IRQHandler(void) {
     }
 #endif
 }
+
+#if M55M1_PRODUCT_AUDIO && M55M1_ENABLE_DAC_I2S_OUTPUT
+/** @brief Forward real FIFO starvation to the same driver owner, including idle DMA gaps. */
+void I2S1_IRQHandler(void) {
+    if (g_playback_irq_callback != NULL) {
+        g_playback_irq_callback(m55m1_timebase_cycles_now(), g_playback_irq_context);
+    }
+}
+#endif
 
 void LPPDMA_IRQHandler(void) {
     const uint32_t channel_mask = 1UL << M55M1_AUDIO_LPPDMA_CH;

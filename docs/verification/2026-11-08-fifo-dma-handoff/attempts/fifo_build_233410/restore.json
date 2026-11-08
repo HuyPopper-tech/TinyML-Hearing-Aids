@@ -1,0 +1,10 @@
+{
+  "flags": {
+    "M55M1_AUDIO_RELEASE_PROBE": "OFF",
+    "M55M1_DEEPFIR_COMPILED_REPLAY": "OFF",
+    "M55M1_AUDIO_UART_PCM_CAPTURE": "OFF"
+  },
+  "bytes": 618688,
+  "sha256": "6be144e428ba916b9852f51e4b574deb4f61bdce630be4fa71753c73b7a126d4",
+  "editor_directory": "D:/TinyML-Hearing-Aids/build-debug"
+}

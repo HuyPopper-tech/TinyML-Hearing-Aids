@@ -1,0 +1,32 @@
+test_product_fifo_prefetch_preserves_two_silences_and_full_processing_slot (test_r2_dma_ownership.DmaOwnershipTests.test_product_fifo_prefetch_preserves_two_silences_and_full_processing_slot) ... FAIL
+test_two_silence_slots_sequence_packing_pending_boundary_and_underrun (test_r2_dma_ownership.DmaOwnershipTests.test_two_silence_slots_sequence_packing_pending_boundary_and_underrun) ... ok
+
+======================================================================
+FAIL: test_product_fifo_prefetch_preserves_two_silences_and_full_processing_slot (test_r2_dma_ownership.DmaOwnershipTests.test_product_fifo_prefetch_preserves_two_silences_and_full_processing_slot)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\TinyML-Hearing-Aids\tests\test_r2_dma_ownership.py", line 142, in test_product_fifo_prefetch_preserves_two_silences_and_full_processing_slot
+    self.assertEqual(build.returncode,0,build.stderr)
+AssertionError: 1 != 0 : C:\Users\proha\AppData\Local\Temp\tmpb9azp0y4\fifo.c: In function 'tlv320dac3100_arm_descriptor':
+C:\Users\proha\AppData\Local\Temp\tmpb9azp0y4\fifo.c:85:50: error: unused parameter 'slot' [-Werror=unused-parameter]
+   85 | static void tlv320dac3100_arm_descriptor(uint8_t slot) {
+      |                                          ~~~~~~~~^~~~
+C:\Users\proha\AppData\Local\Temp\tmpb9azp0y4\fifo.c:89:46: error: 'slot' is used uninitialized [-Werror=uninitialized]
+   89 |                         (uint32_t)(uintptr_t)&g_pdma_descriptors[slot]);
+      |                                              ^~~~~~~~~~~~~~~~~~~~~~~~~
+C:\Users\proha\AppData\Local\Temp\tmpb9azp0y4\fifo.c:57:28: note: in definition of macro 'PDMA_SetTransferMode'
+   57 |             unsigned slot=(a)==(uint32_t)(uintptr_t)&g_pdma_descriptors[0]?0:1; \
+      |                            ^
+C:\Users\proha\AppData\Local\Temp\tmpb9azp0y4\fifo.c:57:22: note: 'slot' was declared here
+   57 |             unsigned slot=(a)==(uint32_t)(uintptr_t)&g_pdma_descriptors[0]?0:1; \
+      |                      ^~~~
+C:\Users\proha\AppData\Local\Temp\tmpb9azp0y4\fifo.c:87:5: note: in expansion of macro 'PDMA_SetTransferMode'
+   87 |     PDMA_SetTransferMode(g_context.config.pdma, g_context.config.pdma_channel,
+      |     ^~~~~~~~~~~~~~~~~~~~
+cc1.exe: all warnings being treated as errors
+
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.353s
+
+FAILED (failures=1)

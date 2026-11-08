@@ -123,13 +123,15 @@ typedef struct {
 } tlv320dac3100_audio_block_tag_t;
 
 /**
- * @brief Foreground-readable completion record for one tagged DAC DMA block.
+ * @brief Foreground-readable FIFO-transfer record for one tagged DAC DMA block.
+ * @note DMA completion releases source memory; samples may still be in FIFO.
+ * It is not the physical end of playback or an acoustic latency measurement.
  */
 typedef struct {
     uint32_t sequence;
     uint32_t capture_completed_cycle;
     uint32_t dac_completed_cycle;
-    /** Zero-based TX DMA slot since stream start; expected sequence + 1. */
+    /** Zero-based stream block identity; expected sequence + 1 (two initial silences). */
     uint32_t playback_slot;
 } tlv320dac3100_audio_completion_t;
 
@@ -143,7 +145,8 @@ typedef struct {
  */
 typedef struct {
     /**
-     * @brief Number of PDMA descriptors completed since the current init.
+     * @brief Number of PDMA tasks transferred into FIFO since the current init.
+     * Product silence0 is CPU-prefilled, TD1 transfers silence1; not a serial playback clock.
      */
     uint32_t completed_blocks;
     /**
@@ -151,7 +154,7 @@ typedef struct {
      */
     uint32_t queued_blocks;
     /**
-     * @brief Number of completed slots that played silence after a missed refill.
+     * @brief Number of refill ownership/sequence faults or hardware FIFO underflows.
      */
     uint32_t underrun_blocks;
     /**

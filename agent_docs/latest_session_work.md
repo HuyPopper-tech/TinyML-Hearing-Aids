@@ -1,5 +1,39 @@
 # Latest Session Work
 
+## FIFO-aware product DMA handoff — 2026-11-08
+
+New user trace: TX TD at4us and1021us, FIFO16/RXseq0 at both; software underrun
+stops at1026us. TXUDIF bit16 clear. Driver incorrectly treats FIFO-transfer TD
+as serial completion and requires audio before the first capture. No inference
+timing in this log;38076us is boot self-test duration, not hop runtime. User BIN
+identity not supplied. Archived exact trace with this limitation.
+
+Product fix: CPU-prefill silence0 before TX, terminal BASIC DMA silence1, then
+explicitly arm published audio2 for capture1; keep two silences/b+2/1ms guard.
+No automatic silence prefetch after startup. Real I2S1 underflow IRQ uses the
+existing driver callback, latches/counts/stops; health/publish also check flags.
+DMA abort, pending/busy/wrong tags and copy-time underflow remain fail-stop.
+Full reset required, no context retry. Legacy large diagnostic path retained.
+Pins, clocks, RX DMA, model/package/libs/DSP unchanged; no device operation.
+
+134/134 tests PASS, no skips, including actual C driver with60000 modeled
+handoffs (not board hops). Old TD2-before-RX test reproduced FAIL before fix.
+Arm6.24 Debug/Release/Probe builds and optimized nine-range MVE gates PASS.
+RW_RAM Debug78712/Release77168/Probe78216B unchanged; arena65536/DMA320/stack8192.
+Debug static stack6656B+Unknown, not watermark. Root outputs ordinary, opt-ins OFF,
+editor Debug. Images/maps diagnostics/submillisecond_runtime_20261108/fifo_build_233653/.
+Final BIN Debug643744 SHA a8888468ca85ca832581f69ed24aa6b11046a352eedb2783fb2f5f7e132c806e;
+Release618688 SHA 6be144e428ba916b9852f51e4b574deb4f61bdce630be4fa71753c73b7a126d4;
+Probe625696 SHA b6ead4bfeb58b033d6f7eff15a3bca35e7ed9bed30d0ee124c7f916fa4a165d6.
+
+Evidence/reproduction: docs/verification/2026-11-08-fifo-dma-handoff/.
+No claim of physical startup fix, continuous timing or b+2 alignment yet. Next:
+same Release Probe profile F5/Continue, save BIN hash and every startup/summary/
+result line. Expect no immediate4us TD; first DMA task transfers silence1 near
+1ms. Require60000 fault-free real hops,<1000us,target <=900us; RX/serial phase
+still needs measurement. Compiled parity BLOCKED, raw replay not rerun; new board
+allocation/stack/audio/latency/power NOT_RUN. Light route, no agents/explorer.
+
 ## Submillisecond runtime implementation — 2026-11-08
 
 User approved implementation after6967118. Added exact MVE Q31 h/c feedback,

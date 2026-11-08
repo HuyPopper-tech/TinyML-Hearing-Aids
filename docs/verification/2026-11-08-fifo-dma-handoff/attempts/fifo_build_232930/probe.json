@@ -1,0 +1,10 @@
+{
+  "flags": {
+    "M55M1_AUDIO_RELEASE_PROBE": "ON",
+    "M55M1_DEEPFIR_COMPILED_REPLAY": "OFF",
+    "M55M1_AUDIO_UART_PCM_CAPTURE": "OFF"
+  },
+  "bytes": 625664,
+  "sha256": "1b276bb1f2075b264280e12a0c059d1fe4a39ad8dbe5d4f6786a45e1d8e1d675",
+  "device_execution": "NOT_RUN"
+}

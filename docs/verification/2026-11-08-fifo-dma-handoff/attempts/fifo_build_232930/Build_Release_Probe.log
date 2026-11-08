@@ -1,0 +1,12 @@
+[rtk] /!\ No hook installed — run `rtk init -g` for automatic token savings
+[0/2] Re-checking globbed directories...
+[1/4] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/drivers/audio_transport/audio_transport.o
+[2/4] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/board/m55m1_audio.o
+[3/4] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/drivers/tlv320dac3100/tlv320dac3100.o
+[4/4] Linking CXX executable M55M1_GestureAI.axf
+
+Build OK. Output in build\:
+M55M1_GestureAI.axf
+M55M1_GestureAI.axf.map
+M55M1_GestureAI.bin
+M55M1_GestureAI.htm

@@ -1,0 +1,178 @@
+{
+  "debug": {
+    "regions": {
+      "ITCM": {
+        "base": "0x00000000",
+        "bytes": 436
+      },
+      "ER_ROM": {
+        "base": "0x00100000",
+        "bytes": 125624
+      },
+      "DTCM_VTOR": {
+        "base": "0x20000000",
+        "bytes": 712
+      },
+      "DTCM": {
+        "base": "0x200002c8",
+        "bytes": 2048
+      },
+      "ARM_LIB_STACK": {
+        "base": "0x2001e000",
+        "bytes": 8192
+      },
+      "U55_MODEL_RAM": {
+        "base": "0x20100000",
+        "bytes": 516852
+      },
+      "RW_NOINIT": {
+        "base": "0x201c0000",
+        "bytes": 0
+      },
+      "RW_RAM": {
+        "base": "0x201c0000",
+        "bytes": 78712
+      },
+      "ARM_LIB_HEAP": {
+        "base": "0x201d3378",
+        "bytes": 2048
+      },
+      "SRAM_NONCACHEABLE": {
+        "base": "0x20230000",
+        "bytes": 320
+      },
+      "SRAM_NONCACHEABLE_END": {
+        "base": "0x20250000",
+        "bytes": 0
+      },
+      "LPSRAM": {
+        "base": "0x20310000",
+        "bytes": 0
+      }
+    },
+    "totals": [
+      "Total RO  Size (Code + RO Data)               643624 ( 628.54kB)",
+      "Total RW  Size (RW Data + ZI Data)             91320 (  89.18kB)",
+      "Total ROM Size (Code + RO Data + RW Data)     643672 ( 628.59kB)"
+    ],
+    "i2s1_irq_linked": true,
+    "static_stack": "Maximum Stack Usage =       6656 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3>"
+  },
+  "release": {
+    "regions": {
+      "ITCM": {
+        "base": "0x00000000",
+        "bytes": 320
+      },
+      "ER_ROM": {
+        "base": "0x00100000",
+        "bytes": 100736
+      },
+      "DTCM_VTOR": {
+        "base": "0x20000000",
+        "bytes": 712
+      },
+      "DTCM": {
+        "base": "0x200002c8",
+        "bytes": 0
+      },
+      "ARM_LIB_STACK": {
+        "base": "0x2001e000",
+        "bytes": 8192
+      },
+      "U55_MODEL_RAM": {
+        "base": "0x20100000",
+        "bytes": 516852
+      },
+      "RW_NOINIT": {
+        "base": "0x201c0000",
+        "bytes": 0
+      },
+      "RW_RAM": {
+        "base": "0x201c0000",
+        "bytes": 77168
+      },
+      "ARM_LIB_HEAP": {
+        "base": "0x201d2d70",
+        "bytes": 2048
+      },
+      "SRAM_NONCACHEABLE": {
+        "base": "0x20230000",
+        "bytes": 320
+      },
+      "SRAM_NONCACHEABLE_END": {
+        "base": "0x20250000",
+        "bytes": 0
+      },
+      "LPSRAM": {
+        "base": "0x20310000",
+        "bytes": 0
+      }
+    },
+    "totals": [
+      "Total RO  Size (Code + RO Data)               618620 ( 604.12kB)",
+      "Total RW  Size (RW Data + ZI Data)             87728 (  85.67kB)",
+      "Total ROM Size (Code + RO Data + RW Data)     618652 ( 604.15kB)"
+    ],
+    "i2s1_irq_linked": true,
+    "static_stack": "Maximum Stack Usage =          0 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3>"
+  },
+  "release_probe": {
+    "regions": {
+      "ITCM": {
+        "base": "0x00000000",
+        "bytes": 320
+      },
+      "ER_ROM": {
+        "base": "0x00100000",
+        "bytes": 107740
+      },
+      "DTCM_VTOR": {
+        "base": "0x20000000",
+        "bytes": 712
+      },
+      "DTCM": {
+        "base": "0x200002c8",
+        "bytes": 2048
+      },
+      "ARM_LIB_STACK": {
+        "base": "0x2001e000",
+        "bytes": 8192
+      },
+      "U55_MODEL_RAM": {
+        "base": "0x20100000",
+        "bytes": 516852
+      },
+      "RW_NOINIT": {
+        "base": "0x201c0000",
+        "bytes": 0
+      },
+      "RW_RAM": {
+        "base": "0x201c0000",
+        "bytes": 78216
+      },
+      "ARM_LIB_HEAP": {
+        "base": "0x201d3188",
+        "bytes": 2048
+      },
+      "SRAM_NONCACHEABLE": {
+        "base": "0x20230000",
+        "bytes": 320
+      },
+      "SRAM_NONCACHEABLE_END": {
+        "base": "0x20250000",
+        "bytes": 0
+      },
+      "LPSRAM": {
+        "base": "0x20310000",
+        "bytes": 0
+      }
+    },
+    "totals": [
+      "Total RO  Size (Code + RO Data)               625624 ( 610.96kB)",
+      "Total RW  Size (RW Data + ZI Data)             90824 (  88.70kB)",
+      "Total ROM Size (Code + RO Data + RW Data)     625656 ( 610.99kB)"
+    ],
+    "i2s1_irq_linked": true
+  }
+}

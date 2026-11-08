@@ -1,0 +1,7 @@
+test_product_fifo_prefetch_preserves_two_silences_and_full_processing_slot (test_r2_dma_ownership.DmaOwnershipTests.test_product_fifo_prefetch_preserves_two_silences_and_full_processing_slot) ... ok
+test_two_silence_slots_sequence_packing_pending_boundary_and_underrun (test_r2_dma_ownership.DmaOwnershipTests.test_two_silence_slots_sequence_packing_pending_boundary_and_underrun) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.679s
+
+OK

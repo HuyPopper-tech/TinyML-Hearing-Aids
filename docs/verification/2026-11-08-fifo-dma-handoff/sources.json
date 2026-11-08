@@ -1,0 +1,21 @@
+{
+  "base_commit": "1c9b950",
+  "created_local": "2026-11-08T23:38:30.275353",
+  "source_sha256": {
+    "drivers/tlv320dac3100/tlv320dac3100.c": "b78f9deb344d1cd9169f07d0eb41e95a9c952084595c49e5924b8b787ccd0896",
+    "drivers/tlv320dac3100/tlv320dac3100.h": "f34ae937b24426beda23a2430a7165cfd666abf8c5981f2bdc4e37e7204e2bfd",
+    "board/m55m1_audio.c": "100ee4d332e989ea5418baf637cba4bfaaa03fc47829a031943ddb39a41bd3e8",
+    "tests/test_r2_dma_ownership.py": "1eaa1ea99f30fca60fd68acff8ddfa45a171d3af276f609c15a582f81c43eca4"
+  },
+  "vendor_reference_sha256": {
+    "libs/Device/Nuvoton/M55M1/Include/pdma_reg.h": "e271af0669a3c8e554dafe1a986c9accaa548fd10d02935df49b670e60b4b3ab",
+    "libs/Device/Nuvoton/M55M1/Include/i2s_reg.h": "a6ad04d7f85fd697ff2e539415416a5f9ce6e597b7ffd080e8078052e16fea0b",
+    "libs/StdDriver/src/pdma.c": "87362283d1274a3c64784fd0535a42181475b50ed50b2547a9eee6ce2ff80cbb",
+    "libs/StdDriver/inc/i2s.h": "280e04cd02a6e54af79a68edde6abe354682e983a9cb414f5d7c43bddf574199"
+  },
+  "user_log_sha256": "aea3d3cc90ea24d709473ca67182a64185f2e4297762c4a6c814b41495bf8b35",
+  "user_image_identity": "NOT_SUPPLIED",
+  "device_execution": "NOT_RUN",
+  "compiled_replay": "NOT_RUN",
+  "flash": "NOT_RUN"
+}

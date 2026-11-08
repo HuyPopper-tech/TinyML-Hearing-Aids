@@ -1,0 +1,55 @@
+{
+  "created_local": "2026-11-08T23:40:17.362437",
+  "commands": [
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "diagnostics/i2c_stuck_trace_20261108_162019/style_tools/clang_format/data/bin/clang-format.exe",
+        "--dry-run",
+        "--Werror",
+        "board/m55m1_audio.c",
+        "drivers/tlv320dac3100/tlv320dac3100.c",
+        "drivers/tlv320dac3100/tlv320dac3100.h"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "[rtk] /!\\ No hook installed \u2014 run `rtk init -g` for automatic token savings\n"
+    },
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "[rtk] /!\\ No hook installed \u2014 run `rtk init -g` for automatic token savings\n"
+    },
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "git",
+        "diff",
+        "--name-only",
+        "--",
+        "models",
+        "libs",
+        "app",
+        "services"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "[rtk] /!\\ No hook installed \u2014 run `rtk init -g` for automatic token savings\n"
+    }
+  ],
+  "root_images_match": true,
+  "i2s1_irq_strong_board_symbol": true,
+  "ordinary_optins": "OFF",
+  "editor": "Debug",
+  "self_review": "Inline self-review, no agents: confirmed CPU silence0 + terminal DMA silence1\nbefore audio2; no free-running next-source fetch; uncached source/template lifetime,\ntag/index/counter mapping, slot release on FIFO transfer, both pending/busy gates,\npre-publish sticky-fault recheck, no DMA rearm after a fault, IRQ source disable/ack\nbefore foreground reset, IRQ binding masks stale source before NVIC enable. Original\nnumeric sources/one interpreter/state owner unchanged. Real FIFO/serial/RX phase,\nIRQ jitter and stack watermark remain unmeasured. No claim of target1ms or parity.",
+  "device_operation": "NOT_RUN"
+}
