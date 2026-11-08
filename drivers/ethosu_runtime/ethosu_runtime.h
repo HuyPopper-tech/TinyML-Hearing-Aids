@@ -9,10 +9,13 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define ETHOSU_RUNTIME_MAX_BASE_ADDRESSES 8U
 
 typedef enum {
     ETHOSU_RUNTIME_OK = 0,
@@ -36,6 +39,8 @@ typedef enum {
 typedef struct {
     const void *fast_memory;
     size_t fast_memory_size;
+    const void *immutable_memory;
+    size_t immutable_memory_size;
     bool secure_enable;
     bool privilege_enable;
 } ethosu_runtime_config_t;
@@ -45,7 +50,8 @@ typedef struct {
  *
  * The payload and arrays must remain valid and unchanged until wait() returns.
  * base_addresses is writable because the core driver may install its fast
- * memory address at the reserved base index.
+ * memory address at the reserved base index. base_count must not exceed
+ * ETHOSU_RUNTIME_MAX_BASE_ADDRESSES.
  */
 typedef struct {
     const void *custom_operator_payload;
@@ -91,8 +97,7 @@ typedef struct {
  * Foreground-only and must complete before audio starts. A second call while
  * initialized returns ETHOSU_RUNTIME_ALREADY_INITIALIZED.
  */
-ethosu_runtime_status_t ethosu_runtime_init(
-    const ethosu_runtime_config_t *config);
+ethosu_runtime_status_t ethosu_runtime_init(const ethosu_runtime_config_t *config);
 
 /**
  * @brief Deinitialize the singleton driver after it is idle.
@@ -115,42 +120,36 @@ ethosu_runtime_state_t ethosu_runtime_get_state(void);
  * @param patch Destination for patch version.
  * @return Runtime status.
  */
-ethosu_runtime_status_t ethosu_runtime_get_driver_version(
-    uint8_t *major,
-    uint8_t *minor,
-    uint8_t *patch);
+ethosu_runtime_status_t ethosu_runtime_get_driver_version(uint8_t *major, uint8_t *minor,
+                                                          uint8_t *patch);
 
 /**
  * @brief Read hardware identification/configuration after initialization.
  * @param info Destination hardware information.
  * @return Runtime status.
  */
-ethosu_runtime_status_t ethosu_runtime_get_hw_info(
-    ethosu_runtime_hw_info_t *info);
+ethosu_runtime_status_t ethosu_runtime_get_hw_info(ethosu_runtime_hw_info_t *info);
 
 /**
  * @brief Start one non-blocking invocation.
  * @param invocation Caller-owned payload and base arrays.
  * @return OK when the NPU job was submitted, otherwise an error status.
  */
-ethosu_runtime_status_t ethosu_runtime_start(
-    const ethosu_runtime_invocation_t *invocation);
+ethosu_runtime_status_t ethosu_runtime_start(const ethosu_runtime_invocation_t *invocation);
 
 /**
  * @brief Poll one active invocation without blocking.
  * @param result Destination result structure.
  * @return BUSY while running, OK when complete, or a terminal error.
  */
-ethosu_runtime_status_t ethosu_runtime_poll(
-    ethosu_runtime_result_t *result);
+ethosu_runtime_status_t ethosu_runtime_poll(ethosu_runtime_result_t *result);
 
 /**
  * @brief Wait for one active invocation in the foreground.
  * @param result Destination result structure.
  * @return OK when complete or a terminal error.
  */
-ethosu_runtime_status_t ethosu_runtime_wait(
-    ethosu_runtime_result_t *result);
+ethosu_runtime_status_t ethosu_runtime_wait(ethosu_runtime_result_t *result);
 
 /**
  * @brief Submit and wait for one invocation.
@@ -158,9 +157,8 @@ ethosu_runtime_status_t ethosu_runtime_wait(
  * @param result Destination result structure.
  * @return Invocation result.
  */
-ethosu_runtime_status_t ethosu_runtime_invoke(
-    const ethosu_runtime_invocation_t *invocation,
-    ethosu_runtime_result_t *result);
+ethosu_runtime_status_t ethosu_runtime_invoke(const ethosu_runtime_invocation_t *invocation,
+                                              ethosu_runtime_result_t *result);
 
 /**
  * @brief Reset an idle or faulted NPU job and return to READY.
@@ -173,8 +171,10 @@ ethosu_runtime_status_t ethosu_runtime_soft_reset(void);
  * @param stats Destination statistics structure.
  * @return Runtime status.
  */
-ethosu_runtime_status_t ethosu_runtime_get_stats(
-    ethosu_runtime_stats_t *stats);
+ethosu_runtime_status_t ethosu_runtime_get_stats(ethosu_runtime_stats_t *stats);
+
+/** Foreground validation of an entire NPU-accessible SRAM range; no ownership transfer. */
+bool ethosu_runtime_memory_is_accessible(const void *data, size_t bytes);
 
 #ifdef __cplusplus
 }

@@ -12,6 +12,10 @@ class RepositoryHygieneTests(unittest.TestCase):
         text = (ROOT / ".gitignore").read_text(encoding="utf-8")
         for rule in ("/build*/", "/out/", "/tmp/", "/compile_commands.json"):
             self.assertIn(rule, text)
+        for package in ("deepfir_r2_scratch_ptq_20261107_151431_366715",
+                        "deepfir_ptq_20260921_033946",
+                        "firmware_complex3_conv5_906b1d163f534778ba737eed737cab41"):
+            self.assertIn(f"/{package}/", text)
 
     def test_no_model_binary_is_checked_into_clean_tree(self):
         forbidden = {".tflite", ".npy", ".npz", ".axf", ".bin", ".map"}
@@ -22,11 +26,16 @@ class RepositoryHygieneTests(unittest.TestCase):
         ]
         self.assertEqual([], found)
 
-    def test_only_documented_future_model_roots_remain(self):
+    def test_immutable_imports_preserve_bytes_on_windows_checkout(self):
+        attributes = (ROOT / ".gitattributes").read_text(encoding="utf-8")
+        self.assertIn("models/deepfir/** -text", attributes)
+        self.assertIn("tests/fixtures/r2/verify_raw_replay.py -text", attributes)
+
+    def test_only_the_active_model_root_remains(self):
         directories = {
             path.name for path in (ROOT / "models").iterdir() if path.is_dir()
         }
-        self.assertEqual({"deepfir", "wave_unet"}, directories)
+        self.assertEqual({"deepfir"}, directories)
 
 
 if __name__ == "__main__":

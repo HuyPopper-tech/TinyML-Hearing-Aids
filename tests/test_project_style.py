@@ -1,13 +1,13 @@
 """Focused style gates for project-owned C and C++ sources."""
 
 from pathlib import Path
+import re
 import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOTS = ("app", "board", "common", "drivers", "services")
 ARCHIVED_FAMILIES = (
-    "deepfir",
     "speech_boosting",
     "neuralaid",
     "deepfilternet",
@@ -27,6 +27,18 @@ def project_files():
 
 
 class ProjectStyleTests(unittest.TestCase):
+    def test_project_files_document_identity_and_use_attached_function_braces(self):
+        violations = []
+        for path in project_files():
+            text = path.read_text(encoding="utf-8")
+            header = text[:650]
+            if not all(marker in header for marker in
+                       ("@file", "@brief", "@author Bui Minh Huy", "@date")):
+                violations.append(f"{path.relative_to(ROOT)}: file documentation")
+            if re.search(r"\)\s*\n\s*\{", text):
+                violations.append(f"{path.relative_to(ROOT)}: detached function brace")
+        self.assertEqual([], violations)
+
     def test_project_sources_have_no_tabs_or_trailing_whitespace(self):
         violations = []
         for path in project_files():

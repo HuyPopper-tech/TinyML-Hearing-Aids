@@ -1,0 +1,156 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "M55M1: Configure Debug",
+            "type": "process",
+            "command": "cmd.exe",
+            "args": [
+                "/d",
+                "/c",
+                "build.bat debug config"
+            ],
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "M55M1: Build Debug",
+            "type": "process",
+            "command": "cmd.exe",
+            "args": [
+                "/d",
+                "/c",
+                "build.bat debug build"
+            ],
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "M55M1: Configure Release",
+            "type": "process",
+            "command": "cmd.exe",
+            "args": [
+                "/d",
+                "/c",
+                "build.bat release config"
+            ],
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "M55M1: Build Release",
+            "type": "process",
+            "command": "cmd.exe",
+            "args": [
+                "/d",
+                "/c",
+                "build.bat release build"
+            ],
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "M55M1: Install OpenOCD Nuvoton",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/tools/openocd/install.ps1"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "M55M1: OpenOCD version",
+            "type": "process",
+            "command": "${workspaceFolder}/tools/openocd/.runtime/bin/openocd.exe",
+            "args": [
+                "--version"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "M55M1: OpenOCD gdbserver",
+            "type": "process",
+            "command": "${workspaceFolder}/tools/openocd/.runtime/bin/openocd.exe",
+            "args": [
+                "-s",
+                "${workspaceFolder}/tools/openocd",
+                "-s",
+                "${workspaceFolder}/tools/openocd/.runtime/share/openocd/scripts",
+                "-f",
+                "${workspaceFolder}/tools/openocd/m55m1-ch549.cfg"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "M55M1: Flash Debug (APROM, verify)",
+            "type": "process",
+            "command": "${workspaceFolder}/tools/openocd/.runtime/bin/openocd.exe",
+            "args": [
+                "-s",
+                "${workspaceFolder}/tools/openocd",
+                "-s",
+                "${workspaceFolder}/tools/openocd/.runtime/share/openocd/scripts",
+                "-f",
+                "${workspaceFolder}/tools/openocd/m55m1-ch549.cfg",
+                "-c",
+                "init",
+                "-c",
+                "poll off",
+                "-c",
+                "m55m1_program {${workspaceFolder}/build-debug/M55M1_GestureAI.bin}",
+                "-c",
+                "shutdown"
+            ],
+            "dependsOn": "M55M1: Build Debug",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "M55M1: Flash Release (APROM, verify)",
+            "type": "process",
+            "command": "${workspaceFolder}/tools/openocd/.runtime/bin/openocd.exe",
+            "args": [
+                "-s",
+                "${workspaceFolder}/tools/openocd",
+                "-s",
+                "${workspaceFolder}/tools/openocd/.runtime/share/openocd/scripts",
+                "-f",
+                "${workspaceFolder}/tools/openocd/m55m1-ch549.cfg",
+                "-c",
+                "init",
+                "-c",
+                "poll off",
+                "-c",
+                "m55m1_program {${workspaceFolder}/build/M55M1_GestureAI.bin}",
+                "-c",
+                "shutdown"
+            ],
+            "dependsOn": "M55M1: Build Release",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

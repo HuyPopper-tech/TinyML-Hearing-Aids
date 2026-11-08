@@ -1,0 +1,252 @@
+{
+  "formatter": "clang-format 18.1.8",
+  "files": [
+    {
+      "file": "app/main.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "board/m55m1_audio.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "board/m55m1_audio.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "board/m55m1_debug_uart.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "board/m55m1_debug_uart.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "board/m55m1_ethosu_board.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "board/m55m1_ethosu_board.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "board/m55m1_power.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "board/m55m1_power.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "board/m55m1_stack_monitor.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "board/m55m1_stack_monitor.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "board/m55m1_timebase.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "board/m55m1_timebase.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "drivers/audio_transport/audio_transport.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "drivers/audio_transport/audio_transport.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "drivers/debug_uart_tx/debug_uart_tx.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "drivers/debug_uart_tx/debug_uart_tx.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "drivers/ethosu_runtime/ethosu_runtime.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "drivers/ethosu_runtime/ethosu_runtime.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "drivers/ethosu_runtime/ethosu_tflm_bridge.cpp",
+      "equivalent": true,
+      "identifier_renames": {
+        "kCoTypeEthosU": "ETHOSU_BRIDGE_CO_TYPE_ETHOSU"
+      }
+    },
+    {
+      "file": "drivers/tlv320dac3100/tlv320dac3100.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "drivers/tlv320dac3100/tlv320dac3100.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "services/audio_telemetry.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "services/audio_telemetry.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "services/audio_pipeline/audio_pipeline.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "services/audio_pipeline/audio_pipeline.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "services/deepfir/deepfir_cmsis_fft_adapter.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "services/deepfir/deepfir_cmsis_fft_adapter.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "services/deepfir/deepfir_dsp.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "services/deepfir/deepfir_dsp.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "services/deepfir/deepfir_features.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "services/deepfir/deepfir_inference_service.cpp",
+      "equivalent": true,
+      "identifier_renames": {
+        "kTensorArenaBytes": "DEEPFIR_TENSOR_ARENA_BYTES"
+      }
+    },
+    {
+      "file": "services/deepfir/deepfir_inference_service.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "services/deepfir/deepfir_model_adapter.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "services/deepfir/deepfir_model_adapter.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "services/deepfir/deepfir_model_binding.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "services/deepfir/deepfir_model_package.cc",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "services/deepfir/deepfir_model_package.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "services/deepfir/deepfir_reconstruction.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "services/deepfir/deepfir_reconstruction.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "services/deepfir/deepfir_tensor_binding.c",
+      "equivalent": true,
+      "identifier_renames": {
+        "inputs": "DEEPFIR_INPUT_DESCRIPTORS",
+        "outputs": "DEEPFIR_OUTPUT_DESCRIPTORS"
+      }
+    },
+    {
+      "file": "services/deepfir/deepfir_tensor_binding.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "common/fixed_byte_ring.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "common/fixed_byte_ring.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "common/sha256.c",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "common/sha256.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    },
+    {
+      "file": "common/wrapping_counter.h",
+      "equivalent": true,
+      "identifier_renames": {}
+    }
+  ],
+  "notes": [
+    "Identifier renames reversed for comparison",
+    "Preprocessor physical line splices may be joined by the formatter",
+    "Duplicate string.h include removed; separate pipeline token proof retained"
+  ]
+}

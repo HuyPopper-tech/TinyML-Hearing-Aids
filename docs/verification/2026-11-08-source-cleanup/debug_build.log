@@ -1,0 +1,54 @@
+[rtk] /!\ No hook installed — run `rtk init -g` for automatic token savings
+-- Model package: D:/TinyML-Hearing-Aids/models/deepfir
+-- StdDriver: skipping utcpd.c (utcpdlib.h is not supplied)
+-- TensorFlow Lite Micro: D:/TinyML-Hearing-Aids/libs/tensorflow/runtime
+-- Linker scatter file: D:/TinyML-Hearing-Aids/cmake/m55m1_audio.scf
+-- M55M1_GestureAI: model package=D:/TinyML-Hearing-Aids/models/deepfir, Ethos-U runtime=ON, DAC/I2S output=ON, TensorFlow Lite Micro=ON
+-- Configuring done (2.5s)
+-- Generating done (0.1s)
+-- Build files have been written to: D:/TinyML-Hearing-Aids/build-debug
+[0/2] Re-checking globbed directories...
+[1/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/app/main.o
+[2/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/audio_pipeline/audio_pipeline.o
+[3/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/board/m55m1_timebase.o
+[4/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/board/m55m1_power.o
+[5/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/drivers/ethosu_runtime/ethosu_runtime.o
+[6/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/board/m55m1_audio.o
+[7/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/board/m55m1_stack_monitor.o
+[8/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/board/m55m1_ethosu_board.o
+[9/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/drivers/audio_transport/audio_transport.o
+[10/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_reconstruction.o
+[11/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/drivers/tlv320dac3100/tlv320dac3100.o
+[12/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_tensor_binding.o
+[13/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_dsp.o
+[14/25] Building CXX object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_model_package.o
+[15/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_features.o
+[16/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_model_adapter.o
+[17/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_cmsis_fft_adapter.o
+[18/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/common/fixed_byte_ring.o
+[19/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/audio_telemetry.o
+[20/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/drivers/debug_uart_tx/debug_uart_tx.o
+[21/25] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/board/m55m1_debug_uart.o
+[22/25] Building CXX object CMakeFiles/M55M1_GestureAI.axf.dir/drivers/ethosu_runtime/ethosu_tflm_bridge.o
+[23/25] Building CXX object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_inference_service.o
+[24/25] Linking CXX executable M55M1_GestureAI.axf
+[25/25] C:\Windows\system32\cmd.exe /C "cd /D D:\TinyML-Hearing-Aids\build-debug && C:\Users\proha\AppData\Local\Programs\Python\Python312\python.exe D:/TinyML-Hearing-Aids/tools/report_model_sram.py D:/TinyML-Hearing-Aids/build-debug/M55M1_GestureAI.axf.map"
+[MODEL SRAM] D:\TinyML-Hearing-Aids\build-debug\M55M1_GestureAI.axf.map
+  model image and metadata :   516,852 B
+  region alignment/padding :         0 B
+  U55_MODEL_RAM linked      :   516,852 B / 786,432 B reserved (65.7%); free 269,580 B
+  tensor arena            :    65,536 B
+  recurrent/FIR adapter   :     6,056 B
+  feature and FFT state   :     2,072 B
+  interpreter storage     :       208 B
+  other DeepFIR statics    :     3,471 B
+  model-owned SRAM linked  :   594,195 B
+  RW_RAM all firmware      :    78,168 B
+  Tensor arena is allocated capacity; runtime peak use is not in the map.
+
+Build OK. Output in build-debug\:
+M55M1_GestureAI.axf
+M55M1_GestureAI.axf.bin
+M55M1_GestureAI.axf.map
+M55M1_GestureAI.bin
+M55M1_GestureAI.htm

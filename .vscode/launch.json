@@ -1,0 +1,52 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "M55M1: Flash + Debug (OpenOCD Nuvoton)",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build-debug/M55M1_GestureAI.axf",
+            "serverpath": "${workspaceFolder}/tools/openocd/.runtime/bin/openocd.exe",
+            "searchDir": [
+                "${workspaceFolder}/tools/openocd",
+                "${workspaceFolder}/tools/openocd/.runtime/share/openocd/scripts"
+            ],
+            "configFiles": [
+                "${workspaceFolder}/tools/openocd/m55m1-ch549.cfg"
+            ],
+            "showDevDebugOutput": "raw",
+            "preLaunchTask": "M55M1: Build Debug",
+            "loadFiles": [],
+            "preLaunchCommands": [
+                "set remotetimeout 60"
+            ],
+            "overrideLaunchCommands": [
+                "monitor m55m1_program {build-debug/M55M1_GestureAI.bin}",
+                "monitor reset halt"
+            ],
+            "runToEntryPoint": "main"
+        },
+        {
+            "name": "M55M1: Attach (OpenOCD Nuvoton)",
+            "request": "attach",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build-debug/M55M1_GestureAI.axf",
+            "serverpath": "${workspaceFolder}/tools/openocd/.runtime/bin/openocd.exe",
+            "searchDir": [
+                "${workspaceFolder}/tools/openocd",
+                "${workspaceFolder}/tools/openocd/.runtime/share/openocd/scripts"
+            ],
+            "configFiles": [
+                "${workspaceFolder}/tools/openocd/m55m1-ch549.cfg"
+            ],
+            "showDevDebugOutput": "raw",
+            "overrideAttachCommands": [
+                "monitor halt 1000"
+            ]
+        }
+    ]
+}

@@ -8,6 +8,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,9 +57,10 @@ uint32_t m55m1_ethosu_board_cycles_now(void);
  * @param end_cycle Later sample.
  * @return Unsigned wrap-safe cycle delta.
  */
-uint32_t m55m1_ethosu_board_cycles_elapsed(
-    uint32_t start_cycle,
-    uint32_t end_cycle);
+uint32_t m55m1_ethosu_board_cycles_elapsed(uint32_t start_cycle, uint32_t end_cycle);
+
+/** Foreground validation of an entire NPU-accessible SRAM range; no ownership transfer. */
+bool m55m1_ethosu_board_memory_is_accessible(const void *data, size_t bytes);
 
 #ifdef __cplusplus
 }

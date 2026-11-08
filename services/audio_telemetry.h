@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-/*
+/**
  * Diagnostic-only counters shared by the DFN service and the foreground
  * formatter.  The shape intentionally stays POD so callers can snapshot it
  * without pulling model or DSP headers into the telemetry service.
@@ -196,18 +196,47 @@ void audio_telemetry_record_invoke_us(uint32_t elapsed_us);
  * @param sequence Source capture ordinal used for gap detection.
  * @return None.
  *
- * Foreground-only. The source sequence must follow WOLA one-hop attribution.
+ * Foreground-only. The source sequence identifies the captured block, independent of DSP group delay.
  */
 void audio_telemetry_record_e2e_us(uint32_t elapsed_us, uint32_t sequence);
 
+/**
+ * @brief Record FFT duration for foreground diagnostic telemetry.
+ * @param elapsed_us Elapsed microseconds; no logging or allocation occurs here.
+ */
 void audio_telemetry_record_fft_us(uint32_t elapsed_us);
+/**
+ * @brief Record frontend duration for foreground diagnostic telemetry.
+ * @param elapsed_us Elapsed microseconds; no logging or allocation occurs here.
+ */
 void audio_telemetry_record_feature_us(uint32_t elapsed_us);
+/**
+ * @brief Record FIR duration for foreground diagnostic telemetry.
+ * @param elapsed_us Elapsed microseconds; no logging or allocation occurs here.
+ */
 void audio_telemetry_record_df_us(uint32_t elapsed_us);
+/**
+ * @brief Record legacy overlap/add diagnostic duration for foreground diagnostic telemetry.
+ * @param elapsed_us Elapsed microseconds; no logging or allocation occurs here.
+ */
 void audio_telemetry_record_wola_us(uint32_t elapsed_us);
+/**
+ * @brief Record tagged capture-to-playback transport timing in foreground.
+ * @param elapsed_us Elapsed microseconds.
+ * @param sequence Capture sequence associated with this completion.
+ */
 void audio_telemetry_record_transport_us(uint32_t elapsed_us, uint32_t sequence);
-void audio_telemetry_record_audio_stats(
-    const audio_telemetry_audio_stats_t *stats);
+/**
+ * @brief Copy the current foreground audio statistics into the diagnostic snapshot.
+ * @param stats Caller-owned snapshot; ignored when NULL, not retained.
+ */
+void audio_telemetry_record_audio_stats(const audio_telemetry_audio_stats_t *stats);
 
+/**
+ * @brief Format the boot-only configuration report before audio begins.
+ * @param info Caller-owned boot metadata; not retained, ignored when NULL.
+ * @pre Foreground startup only; audio must be stopped.
+ */
 void audio_telemetry_boot(const audio_telemetry_boot_info_t *info);
 
 /**
@@ -219,8 +248,7 @@ void audio_telemetry_boot(const audio_telemetry_boot_info_t *info);
  * Foreground-only and non-blocking. Formatting is deferred while audio is
  * pending, and a full UART queue drops the whole message.
  */
-void audio_telemetry_poll(
-    const audio_telemetry_snapshot_t *snapshot, bool dmic_block_pending);
+void audio_telemetry_poll(const audio_telemetry_snapshot_t *snapshot, bool dmic_block_pending);
 
 /**
  * @brief Emit a terminal diagnostic failure report.

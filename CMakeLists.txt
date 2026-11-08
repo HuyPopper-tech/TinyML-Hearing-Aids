@@ -1,4 +1,4 @@
-# NuMaker-GestureAI-M55M1 (M55M1R2LJAE) / Arm Compiler 6
+# Custom hearing-aid PCB M55M1 (M55M1R2LJAE) / Arm Compiler 6
 cmake_minimum_required(VERSION 3.20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -9,21 +9,69 @@ endif()
 set(PROJ_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 project(M55M1_GestureAI VERSION 1.0.0 LANGUAGES C CXX ASM)
 
-set(M55M1_DEBUG_UART_IDX 1 CACHE STRING "Debug UART index (0, 1, 5, or 6)")
+set(M55M1_DEBUG_UART_IDX 2 CACHE STRING "Custom PCB debug UART (PC4 RX / PC5 TX)")
+if(NOT M55M1_DEBUG_UART_IDX STREQUAL "2")
+    message(FATAL_ERROR "The custom PCB requires UART2; UART1 conflicts with DMIC PA2")
+endif()
 set(M55_CPU "cortex-m55" CACHE STRING "-mcpu value")
 set(M55M1_STACK_SIZE "0x2000" CACHE STRING "Stack size in bytes")
 set(M55M1_HEAP_SIZE "" CACHE STRING "Heap size override, e.g. 0x1000")
 option(M55M1_ENABLE_DSP "Build and link CMSIS-DSP" ON)
 option(M55M1_ENABLE_NN "Build and link CMSIS-NN (requires DSP)" ON)
 option(M55M1_ENABLE_RTOS2 "Build and link CMSIS-RTOS2/RTX" OFF)
-option(M55M1_ENABLE_ETHOSU_RUNTIME "Build the model-neutral Ethos-U runtime" OFF)
-option(M55M1_BUILD_ETHOSU_SMOKE "Build the standalone Ethos-U board smoke image" OFF)
-option(M55M1_ENABLE_TFLM "Build and link TensorFlow Lite Micro with Ethos-U" OFF)
+option(M55M1_ENABLE_ETHOSU_RUNTIME "Build the Ethos-U runtime" ON)
+option(M55M1_ENABLE_TFLM "Build and link TensorFlow Lite Micro with Ethos-U" ON)
 option(M55M1_ENABLE_DCACHE "Enable M55M1 data cache maintenance" ON)
-option(M55M1_ENABLE_DAC_I2S_OUTPUT "Initialize TLV320DAC3100, I2S0, and playback DMA" ON)
-set(M55M1_DMIC_GAIN_DB 30 CACHE STRING "DMIC hardware DSP gain in dB")
+option(M55M1_ENABLE_DAC_I2S_OUTPUT "Initialize TLV320DAC3100, I2S1, and playback DMA" ON)
+option(M55M1_AUDIO_RELEASE_PROBE "Finite Release audio timing probe; UART only after DMA stops" OFF)
+option(M55M1_AUDIO_UART_PCM_CAPTURE "One-shot paired DeepFIR PCM capture over UART" OFF)
+option(M55M1_DEEPFIR_COMPILED_REPLAY "Foreground debugger mailbox replay; audio stays stopped" OFF)
+if(M55M1_DEEPFIR_COMPILED_REPLAY AND (M55M1_AUDIO_UART_PCM_CAPTURE OR M55M1_AUDIO_RELEASE_PROBE))
+    message(FATAL_ERROR "Compiled replay and audio diagnostics are mutually exclusive")
+endif()
+option(M55M1_DEEPFIR_MVE "Use Cortex-M55 Helium kernels on the DeepFIR DSP path" ON)
+if(M55M1_AUDIO_RELEASE_PROBE)
+    if(NOT CMAKE_BUILD_TYPE STREQUAL "Release" OR NOT M55M1_ENABLE_DAC_I2S_OUTPUT)
+        message(FATAL_ERROR "M55M1_AUDIO_RELEASE_PROBE requires Release and DAC/I2S output")
+    endif()
+    set(M55M1_AUDIO_RELEASE_PROBE_VALUE 1)
+else()
+    set(M55M1_AUDIO_RELEASE_PROBE_VALUE 0)
+endif()
+if(M55M1_AUDIO_UART_PCM_CAPTURE)
+    if(NOT CMAKE_BUILD_TYPE STREQUAL "Release" OR
+       NOT M55M1_ENABLE_DAC_I2S_OUTPUT OR
+       NOT M55M1_ENABLE_ETHOSU_RUNTIME OR
+       NOT M55M1_ENABLE_TFLM OR
+       M55M1_AUDIO_RELEASE_PROBE OR
+       NOT M55M1_DEBUG_UART_IDX STREQUAL "2")
+        message(FATAL_ERROR
+            "M55M1_AUDIO_UART_PCM_CAPTURE requires Release, UART2, DAC/I2S, Ethos-U/TFLM, and AUDIO_RELEASE_PROBE=OFF")
+    endif()
+    set(M55M1_AUDIO_UART_PCM_CAPTURE_VALUE 1)
+else()
+    set(M55M1_AUDIO_UART_PCM_CAPTURE_VALUE 0)
+endif()
+set(M55M1_MODEL_SRAM_PARTS M55M1_DEEP FIR_MODEL_IN_SRAM)
+list(JOIN M55M1_MODEL_SRAM_PARTS "" M55M1_MODEL_SRAM_ALIAS_NAME)
+if(DEFINED ${M55M1_MODEL_SRAM_ALIAS_NAME})
+    set(M55M1_MODEL_IN_SRAM "${${M55M1_MODEL_SRAM_ALIAS_NAME}}" CACHE BOOL
+        "Place the model image in SRAM at runtime" FORCE)
+else()
+    option(M55M1_MODEL_IN_SRAM "Place the model image in SRAM at runtime" ON)
+endif()
 
 include(${PROJ_ROOT}/cmake/model_package.cmake)
+
+set(M55M1_DMIC_GAIN_DB 30 CACHE STRING "DMIC hardware DSP gain in dB")
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(M55M1_RUNTIME_TELEMETRY_VALUE 1)
+    set(M55M1_DEEPFIR_MVE_SELF_TEST_VALUE 1)
+else()
+    set(M55M1_RUNTIME_TELEMETRY_VALUE 0)
+    set(M55M1_DEEPFIR_MVE_SELF_TEST_VALUE 1)
+endif()
 
 set(M55_CPU "${M55_CPU}" CACHE STRING "-mcpu value" FORCE)
 
@@ -49,9 +97,12 @@ else()
 endif()
 
 set(M55M1_DEFS
+    M55M1_PRODUCT_AUDIO=1
     NVT_DCACHE_ON=${M55M1_ENABLE_DCACHE_VALUE}
     DEBUG_PORT_UART_IDX=${M55M1_DEBUG_UART_IDX}
     AUDIO_TRANSPORT_MIC_GAIN_DB=${M55M1_DMIC_GAIN_DB}
+    M55M1_DMIC_GAIN_DB=${M55M1_DMIC_GAIN_DB}
+    M55M1_RUNTIME_TELEMETRY=${M55M1_RUNTIME_TELEMETRY_VALUE}
     ETHOSU_LOG_SEVERITY=-1)
 
 set(M55M1_DEVICE_SOURCES
@@ -148,11 +199,11 @@ endif()
 set(M55M1_APP_SOURCES
     ${PROJ_ROOT}/app/main.c
     ${PROJ_ROOT}/board/m55m1_audio.c
+    ${PROJ_ROOT}/board/m55m1_power.c
     ${PROJ_ROOT}/board/m55m1_timebase.c
     ${PROJ_ROOT}/board/m55m1_stack_monitor.c
     ${PROJ_ROOT}/drivers/audio_transport/audio_transport.c
-    ${PROJ_ROOT}/services/audio_pipeline/audio_pipeline.c
-    ${PROJ_ROOT}/services/enhancement_passthrough/enhancement_passthrough.c)
+    ${PROJ_ROOT}/services/audio_pipeline/audio_pipeline.c)
 
 if(M55M1_ENABLE_DAC_I2S_OUTPUT)
     list(APPEND M55M1_APP_SOURCES
@@ -163,7 +214,28 @@ else()
 endif()
 
 list(APPEND M55M1_APP_SOURCES ${M55M1_MODEL_SOURCES})
-
+set_source_files_properties(
+    ${PROJ_ROOT}/services/deepfir/deepfir_features.c
+    ${PROJ_ROOT}/services/deepfir/deepfir_dsp.c
+    ${PROJ_ROOT}/services/deepfir/deepfir_model_adapter.c
+    ${PROJ_ROOT}/services/deepfir/deepfir_reconstruction.c
+    ${PROJ_ROOT}/services/deepfir/deepfir_tensor_binding.c
+    ${PROJ_ROOT}/services/deepfir/deepfir_inference_service.cpp
+    PROPERTIES COMPILE_OPTIONS "-fno-finite-math-only")
+if(M55M1_RUNTIME_TELEMETRY_VALUE OR M55M1_AUDIO_RELEASE_PROBE_VALUE OR
+   M55M1_AUDIO_UART_PCM_CAPTURE_VALUE)
+    set(M55M1_DEBUG_UART_ENABLED_VALUE 1)
+    list(APPEND M55M1_APP_SOURCES
+        ${PROJ_ROOT}/board/m55m1_debug_uart.c
+        ${PROJ_ROOT}/drivers/debug_uart_tx/debug_uart_tx.c
+        ${PROJ_ROOT}/common/fixed_byte_ring.c)
+else()
+    set(M55M1_DEBUG_UART_ENABLED_VALUE 0)
+endif()
+if(M55M1_RUNTIME_TELEMETRY_VALUE)
+    list(APPEND M55M1_APP_SOURCES
+        ${PROJ_ROOT}/services/audio_telemetry.c)
+endif()
 set(ELF_NAME M55M1_GestureAI.axf)
 add_executable(${ELF_NAME}
     ${M55M1_DEVICE_SOURCES}
@@ -173,10 +245,18 @@ add_executable(${ELF_NAME}
 
 target_compile_definitions(${ELF_NAME} PRIVATE
     ${M55M1_DEFS}
+    NVT_DBG_UART_OFF=1
+    M55M1_DEBUG_UART_ENABLED=${M55M1_DEBUG_UART_ENABLED_VALUE}
     M55M1_ENABLE_DAC_I2S_OUTPUT=${M55M1_ENABLE_DAC_I2S_OUTPUT_VALUE}
+    M55M1_AUDIO_RELEASE_PROBE=${M55M1_AUDIO_RELEASE_PROBE_VALUE}
+    M55M1_AUDIO_UART_PCM_CAPTURE=${M55M1_AUDIO_UART_PCM_CAPTURE_VALUE}
+    M55M1_DEEPFIR_COMPILED_REPLAY=$<BOOL:${M55M1_DEEPFIR_COMPILED_REPLAY}>
+    M55M1_DEEPFIR_MVE=$<BOOL:${M55M1_DEEPFIR_MVE}>
+    M55M1_DEEPFIR_MVE_SELF_TEST=${M55M1_DEEPFIR_MVE_SELF_TEST_VALUE}
     M55M1_STACK_SIZE_BYTES=${M55M1_STACK_SIZE}
     ${M55M1_MODEL_DEFINITIONS})
 
+target_compile_definitions(${ELF_NAME} PRIVATE M55M1_MODEL_IN_SRAM=1)
 set_target_properties(${ELF_NAME} PROPERTIES SUFFIX "")
 target_include_directories(${ELF_NAME} PRIVATE
     ${M55M1_INC_DIRS}
@@ -210,54 +290,25 @@ if(M55M1_HEAP_SIZE)
     target_link_options(${ELF_NAME} PRIVATE
         "--predefine=\"-DHEAP_SIZE=${M55M1_HEAP_SIZE}\"")
 endif()
+if(M55M1_MODEL_IN_SRAM)
+    target_link_options(${ELF_NAME} PRIVATE
+        "--predefine=\"-DM55M1_MODEL_IN_SRAM=1\""
+        )
+endif()
 
 add_linker_script(${ELF_NAME}
     "${PROJ_ROOT}/cmake/m55m1_audio.scf")
 add_target_map_file(${ELF_NAME} "${CMAKE_BINARY_DIR}/${ELF_NAME}.map")
 add_bin_generation_command(
     TARGET ${ELF_NAME}
-    OUTPUT_BIN "${CMAKE_BINARY_DIR}/${ELF_NAME}.bin")
-
-if(M55M1_BUILD_ETHOSU_SMOKE)
-    if(NOT M55M1_ENABLE_ETHOSU_RUNTIME)
-        message(FATAL_ERROR "M55M1_BUILD_ETHOSU_SMOKE=ON requires M55M1_ENABLE_ETHOSU_RUNTIME=ON")
-    endif()
-    if(NOT "${M55M1_MODEL_PACKAGE_DIR}" STREQUAL "")
-        message(FATAL_ERROR "M55M1_BUILD_ETHOSU_SMOKE cannot include a model package")
-    endif()
-
-    set(M55M1_ETHOSU_SMOKE_ELF_NAME M55M1_EthosUSmoke.axf)
-    add_executable(${M55M1_ETHOSU_SMOKE_ELF_NAME}
-        ${M55M1_DEVICE_SOURCES}
-        ${M55M1_STDDRIVER_SOURCES}
-        ${PROJ_ROOT}/board/m55m1_timebase.c
-        ${PROJ_ROOT}/board/m55m1_ethosu_board.c
-        ${PROJ_ROOT}/board/m55m1_debug_uart.c
-        ${PROJ_ROOT}/common/fixed_byte_ring.c
-        ${PROJ_ROOT}/drivers/debug_uart_tx/debug_uart_tx.c
-        ${PROJ_ROOT}/drivers/ethosu_runtime/ethosu_runtime.c
-        ${PROJ_ROOT}/app/test_ethosu_runtime_smoke_main.c)
-    target_compile_definitions(${M55M1_ETHOSU_SMOKE_ELF_NAME} PRIVATE
-        ${M55M1_DEFS}
-        M55M1_ENABLE_DAC_I2S_OUTPUT=0
-        M55M1_STACK_SIZE_BYTES=${M55M1_STACK_SIZE})
-    set_target_properties(${M55M1_ETHOSU_SMOKE_ELF_NAME} PROPERTIES SUFFIX "")
-    target_include_directories(${M55M1_ETHOSU_SMOKE_ELF_NAME} PRIVATE
-        ${M55M1_INC_DIRS})
-    if(M55M1_STACK_SIZE)
-        target_link_options(${M55M1_ETHOSU_SMOKE_ELF_NAME} PRIVATE
-            "--predefine=\"-DSTACK_SIZE=${M55M1_STACK_SIZE}\"")
-    endif()
-    if(M55M1_HEAP_SIZE)
-        target_link_options(${M55M1_ETHOSU_SMOKE_ELF_NAME} PRIVATE
-            "--predefine=\"-DHEAP_SIZE=${M55M1_HEAP_SIZE}\"")
-    endif()
-    add_linker_script(${M55M1_ETHOSU_SMOKE_ELF_NAME}
-        "${PROJ_ROOT}/cmake/m55m1_audio.scf")
-    add_target_map_file(${M55M1_ETHOSU_SMOKE_ELF_NAME}
-        "${CMAKE_BINARY_DIR}/${M55M1_ETHOSU_SMOKE_ELF_NAME}.map")
-    add_bin_generation_command(
-        TARGET ${M55M1_ETHOSU_SMOKE_ELF_NAME}
-        OUTPUT_BIN "${CMAKE_BINARY_DIR}/${M55M1_ETHOSU_SMOKE_ELF_NAME}.bin")
+    OUTPUT_BIN "${CMAKE_BINARY_DIR}/M55M1_GestureAI.bin")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND M55M1_MODEL_IN_SRAM)
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    add_custom_target(model_sram_report ALL
+        COMMAND ${Python3_EXECUTABLE} "${PROJ_ROOT}/tools/report_model_sram.py"
+                "${CMAKE_BINARY_DIR}/${ELF_NAME}.map"
+        DEPENDS ${ELF_NAME}
+        VERBATIM)
 endif()
+
 message(STATUS "M55M1_GestureAI: model package=${M55M1_MODEL_PACKAGE_STATUS}, Ethos-U runtime=${M55M1_ENABLE_ETHOSU_RUNTIME}, DAC/I2S output=${M55M1_ENABLE_DAC_I2S_OUTPUT}, TensorFlow Lite Micro=${M55M1_ENABLE_TFLM}")

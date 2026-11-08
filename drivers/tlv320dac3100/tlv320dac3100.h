@@ -19,45 +19,45 @@ extern "C" {
 /**
  * @brief TLV320DAC3100 7-bit I2C address.
  */
-#define TLV320DAC3100_I2C_ADDRESS                 0x18U
+#define TLV320DAC3100_I2C_ADDRESS 0x18U
 /**
- * @brief Fixed duration of each real-time PCM/DMA block.
+ * @brief Duration of the production 16 kHz PCM/DMA hop.
  */
-#define TLV320DAC3100_BLOCK_DURATION_MS            6U
+#define TLV320DAC3100_BLOCK_DURATION_MS 1U
 /**
  * @brief 16 kHz profile PCM rate.
  */
-#define TLV320DAC3100_16KHZ_SAMPLE_RATE_HZ         16000UL
+#define TLV320DAC3100_16KHZ_SAMPLE_RATE_HZ 16000UL
 /**
  * @brief 16 kHz profile direct codec MCLK, 256 times the PCM rate.
  */
-#define TLV320DAC3100_16KHZ_MCLK_HZ                4096000UL
+#define TLV320DAC3100_16KHZ_MCLK_HZ 4096000UL
 /**
- * @brief 16 kHz profile mono samples in one 10 ms block.
+ * @brief 16 kHz profile mono samples in one 1 ms hop.
  */
-#define TLV320DAC3100_16KHZ_SAMPLES_PER_BLOCK      96U
+#define TLV320DAC3100_16KHZ_SAMPLES_PER_BLOCK 16U
 /**
  * @brief 32 kHz profile PCM rate.
  */
-#define TLV320DAC3100_32KHZ_SAMPLE_RATE_HZ         32000UL
+#define TLV320DAC3100_32KHZ_SAMPLE_RATE_HZ 32000UL
 /**
  * @brief 32 kHz profile direct codec MCLK, 256 times the PCM rate.
  */
-#define TLV320DAC3100_32KHZ_MCLK_HZ                8192000UL
+#define TLV320DAC3100_32KHZ_MCLK_HZ 8192000UL
 /**
  * @brief 32 kHz profile mono samples in one 10 ms block.
  */
-#define TLV320DAC3100_32KHZ_SAMPLES_PER_BLOCK      320U
+#define TLV320DAC3100_32KHZ_SAMPLES_PER_BLOCK 320U
 /**
  * @brief Maximum foreground PCM storage required by either supported profile.
  */
-#define TLV320DAC3100_MAX_SAMPLES_PER_BLOCK        TLV320DAC3100_32KHZ_SAMPLES_PER_BLOCK
+#define TLV320DAC3100_MAX_SAMPLES_PER_BLOCK TLV320DAC3100_32KHZ_SAMPLES_PER_BLOCK
 /**
  * @brief Compatibility aliases for existing fixed-16-kHz applications.
  */
-#define TLV320DAC3100_SAMPLE_RATE_HZ               TLV320DAC3100_16KHZ_SAMPLE_RATE_HZ
-#define TLV320DAC3100_MCLK_HZ                      TLV320DAC3100_16KHZ_MCLK_HZ
-#define TLV320DAC3100_MONO_SAMPLES_PER_BLOCK       TLV320DAC3100_16KHZ_SAMPLES_PER_BLOCK
+#define TLV320DAC3100_SAMPLE_RATE_HZ TLV320DAC3100_16KHZ_SAMPLE_RATE_HZ
+#define TLV320DAC3100_MCLK_HZ TLV320DAC3100_16KHZ_MCLK_HZ
+#define TLV320DAC3100_MONO_SAMPLES_PER_BLOCK TLV320DAC3100_16KHZ_SAMPLES_PER_BLOCK
 
 /**
  * @brief Supported PCM and codec-clock profiles.
@@ -129,6 +129,8 @@ typedef struct {
     uint32_t sequence;
     uint32_t capture_completed_cycle;
     uint32_t dac_completed_cycle;
+    /** Zero-based TX DMA slot since stream start; expected sequence + 1. */
+    uint32_t playback_slot;
 } tlv320dac3100_audio_completion_t;
 
 /**
@@ -225,7 +227,7 @@ uint32_t tlv320dac3100_profile_sample_rate_hz(tlv320dac3100_audio_profile_t prof
 uint32_t tlv320dac3100_profile_mclk_hz(tlv320dac3100_audio_profile_t profile);
 
 /**
- * @brief Return the mono sample count for one 10 ms block.
+ * @brief Return the mono sample count for one selected-profile DMA descriptor.
  * @param profile Audio profile to query.
  * @return Signed-16 sample count, or zero when profile is invalid.
  */
@@ -256,14 +258,14 @@ tlv320dac3100_status_t tlv320dac3100_stop(void);
 /**
  * @brief Copy one profile-sized mono PCM block into the next available stereo DMA slot.
  * @param samples Caller-owned signed-16 samples; copied before this call returns.
- * @param sample_count Number of samples at `samples`; must match the selected 10 ms profile.
+ * @param sample_count Number of samples at `samples`; must match the selected profile.
  * @return `OK`, `BUSY`, or `INVALID_ARGUMENT` for a null or wrong-sized block.
  *
  * Ownership remains with the caller: the input is copied before this function
  * returns and may be reused immediately.
  */
-tlv320dac3100_status_t tlv320dac3100_submit_mono_block(
-    const int16_t *samples, uint16_t sample_count);
+tlv320dac3100_status_t tlv320dac3100_submit_mono_block(const int16_t *samples,
+                                                       uint16_t sample_count);
 
 /**
  * @brief Submit PCM with a capture timestamp for end-to-end latency tracking.
@@ -275,8 +277,9 @@ tlv320dac3100_status_t tlv320dac3100_submit_mono_block(
  * The tag is copied into the released PDMA slot and returned by
  * `tlv320dac3100_take_audio_completion` after that slot is played.
  */
-tlv320dac3100_status_t tlv320dac3100_submit_mono_block_tagged(
-    const int16_t *samples, uint16_t sample_count, const tlv320dac3100_audio_block_tag_t *tag);
+tlv320dac3100_status_t
+tlv320dac3100_submit_mono_block_tagged(const int16_t *samples, uint16_t sample_count,
+                                       const tlv320dac3100_audio_block_tag_t *tag);
 
 /**
  * @brief Copy and consume the newest completed tagged DAC block.
@@ -293,8 +296,8 @@ bool tlv320dac3100_take_audio_completion(tlv320dac3100_audio_completion_t *compl
  * @param right_gain_db Requested right-channel gain in dB.
  * @return `OK`, `INVALID_ARGUMENT`, `INVALID_STATE`, or `I2C_ERROR`.
  */
-tlv320dac3100_status_t tlv320dac3100_set_channel_digital_gain_db(
-    int8_t left_gain_db, int8_t right_gain_db);
+tlv320dac3100_status_t tlv320dac3100_set_channel_digital_gain_db(int8_t left_gain_db,
+                                                                 int8_t right_gain_db);
 
 /**
  * @brief Set equal left/right DAC digital gain under the configured safety ceiling.

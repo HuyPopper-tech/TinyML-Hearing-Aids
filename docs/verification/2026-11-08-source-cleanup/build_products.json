@@ -1,0 +1,44 @@
+[
+  {
+    "profile": "debug",
+    "path": "build-debug/M55M1_GestureAI.bin",
+    "bytes": 627360,
+    "sha256": "ff17c85a796cd42d846f255738885bcae36122c527527300f1786cdd5636e335",
+    "same_bin_as_before_cleanup": false
+  },
+  {
+    "profile": "debug",
+    "path": "build-debug/M55M1_GestureAI.axf",
+    "bytes": 3479364,
+    "sha256": "f3c06e63a54ff807c05dede8808963f730a49df6910b82b1b08cc3865a08d569",
+    "same_bin_as_before_cleanup": null
+  },
+  {
+    "profile": "debug",
+    "path": "build-debug/M55M1_GestureAI.axf.map",
+    "bytes": 3768975,
+    "sha256": "39eda99cd618e25fb0733492b2f25acacd5b7ba225530f4e65275004c13afed7",
+    "same_bin_as_before_cleanup": null
+  },
+  {
+    "profile": "release",
+    "path": "build/M55M1_GestureAI.bin",
+    "bytes": 612736,
+    "sha256": "a5351b32f367c8c1f4e42ad8dac921778693d8d5cb4bdfee220f96e583fe7828",
+    "same_bin_as_before_cleanup": false
+  },
+  {
+    "profile": "release",
+    "path": "build/M55M1_GestureAI.axf",
+    "bytes": 616436,
+    "sha256": "a38b2bebbee755a2af514f5897fe00b7b6e47b5a8b17002b54aa31d887d2ff2e",
+    "same_bin_as_before_cleanup": null
+  },
+  {
+    "profile": "release",
+    "path": "build/M55M1_GestureAI.axf.map",
+    "bytes": 1222754,
+    "sha256": "9dfcf09a34484fc0ae052da2f21d1428bb3dbfc0529cbfa417ffb490f95e7035",
+    "same_bin_as_before_cleanup": null
+  }
+]

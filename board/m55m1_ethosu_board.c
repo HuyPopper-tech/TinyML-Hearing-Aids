@@ -15,8 +15,7 @@
 
 static bool g_board_ready;
 
-bool m55m1_ethosu_board_init(void)
-{
+bool m55m1_ethosu_board_init(void) {
     if (g_board_ready) {
         return true;
     }
@@ -33,31 +32,29 @@ bool m55m1_ethosu_board_init(void)
     return true;
 }
 
-void m55m1_ethosu_board_enable_irq(void)
-{
+void m55m1_ethosu_board_enable_irq(void) {
     NVIC_SetPriority(NPU_IRQn, M55M1_ETHOSU_IRQ_PRIORITY);
     NVIC_EnableIRQ(NPU_IRQn);
 }
 
-void m55m1_ethosu_board_disable_irq(void)
-{
+void m55m1_ethosu_board_disable_irq(void) {
     NVIC_DisableIRQ(NPU_IRQn);
     NVIC_ClearPendingIRQ(NPU_IRQn);
 }
 
-const void *m55m1_ethosu_board_get_base_address(void)
-{
+const void *m55m1_ethosu_board_get_base_address(void) {
     return (const void *)(uintptr_t)NPU_BASE;
 }
 
-uint32_t m55m1_ethosu_board_cycles_now(void)
-{
+uint32_t m55m1_ethosu_board_cycles_now(void) {
     return m55m1_timebase_cycles_now();
 }
 
-uint32_t m55m1_ethosu_board_cycles_elapsed(
-    uint32_t start_cycle,
-    uint32_t end_cycle)
-{
+uint32_t m55m1_ethosu_board_cycles_elapsed(uint32_t start_cycle, uint32_t end_cycle) {
     return m55m1_timebase_cycles_elapsed(start_cycle, end_cycle);
+}
+bool m55m1_ethosu_board_memory_is_accessible(const void *data, size_t bytes) {
+    const uintptr_t begin = (uintptr_t)data;
+    return data != NULL && bytes != 0u && begin >= 0x20100000u && begin < 0x20230000u &&
+           bytes <= 0x20230000u - begin;
 }

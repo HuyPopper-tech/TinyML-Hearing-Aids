@@ -4,7 +4,5 @@
 
 # Model packages and generated assets are hash-verified byte streams. Never
 # rewrite their line endings when checking them out on Windows.
-models/erb_gru/packages/** -text
-models/erb_gru/generated/** -text
-models/deepfilternet/packages/** -text
-models/deepfilternet/generated/** -text
+models/deepfir/** -text whitespace=cr-at-eol
+tests/fixtures/r2/verify_raw_replay.py -text whitespace=cr-at-eol

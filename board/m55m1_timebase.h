@@ -23,9 +23,9 @@ void m55m1_timebase_init(void);
 
 /**
  * @brief Read the free-running counter.
- * @return Current cycle value; wrap is expected.
+ * @return Core-cycle units, 2-cycle resolution, wrapping at 2^25 units.
  *
- * Safe for foreground timing snapshots.
+ * ACLK/2 SysTick keeps counting through CPU Idle. Safe in foreground and ISR.
  */
 uint32_t m55m1_timebase_cycles_now(void);
 
@@ -37,9 +37,7 @@ uint32_t m55m1_timebase_cycles_now(void);
  *
  * The calculation is valid across one counter wrap.
  */
-uint32_t m55m1_timebase_cycles_elapsed(
-    uint32_t start_cycle,
-    uint32_t end_cycle);
+uint32_t m55m1_timebase_cycles_elapsed(uint32_t start_cycle, uint32_t end_cycle);
 
 /**
  * @brief Convert cycles at the configured core clock.
@@ -49,6 +47,12 @@ uint32_t m55m1_timebase_cycles_elapsed(
  * Uses the board clock configured by m55m1_timebase_init().
  */
 uint32_t m55m1_timebase_cycles_to_us(uint32_t cycles);
+
+/** Foreground-only startup/control delay in microseconds. Preserves the shared
+ * counter; vendor SysTick delay APIs must not reprogram it after initialization.
+ * Not for the realtime path. Long delays are split across counter wraps.
+ */
+void m55m1_timebase_delay_us(uint32_t microseconds);
 
 #ifdef __cplusplus
 }

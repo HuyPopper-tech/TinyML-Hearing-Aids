@@ -1,8 +1,8 @@
 # Ethos-U55 runtime foundation
 
 This repository now has a reusable, model-neutral Ethos-U55 runtime for the
-M55M1. It is deliberately opt-in; the shipped firmware remains the PCM16
-passthrough baseline.
+M55M1. The main NuMaker DeepFIR image enables it; the separate custom-PCB
+DMIC/UART2 diagnostic does not link the runtime or model.
 
 ## Ownership and build switches
 
@@ -23,14 +23,15 @@ app -> services/model adapter -> drivers/ethosu_runtime
   API.
 - `libs/` is vendored and unchanged.
 
-The safe defaults are:
+The main product defaults and presets are:
 
 ```text
-M55M1_ENABLE_ETHOSU_RUNTIME=OFF
-M55M1_ENABLE_TFLM=OFF
-M55M1_MODEL_PACKAGE_DIR=""
-M55M1_BUILD_ETHOSU_SMOKE=OFF
+M55M1_ENABLE_ETHOSU_RUNTIME=ON
+M55M1_ENABLE_TFLM=ON
+M55M1_MODEL_PACKAGE_DIR="models/deepfir"
 ```
+
+The former standalone runtime smoke image and its build option have been removed.
 
 TFLM cannot be enabled without the runtime. The default CMake glob excludes all
 BSP NPU sources; runtime opt-in adds only `ethosu_driver.c` and
@@ -90,8 +91,7 @@ A future package must be an explicit directory containing
 `integration_manifest.json` and `m55m1_model_package.cmake`. It may contribute
 only package/services sources, includes, and definitions. It may not add a
 second Ethos-U core or `NPU_IRQHandler`. A valid custom-operator payload must
-come from Vela/model integration; the smoke image intentionally does not submit
-an empty command stream.
+come from Vela/model integration; empty command streams are rejected.
 
 ## BSP provenance
 
@@ -111,11 +111,10 @@ files byte-for-byte unchanged and re-check these hashes when updating it.
 
 ## Gates and limits
 
-The host runtime contract and CMake policy tests are required before model work.
-Armclang Debug/Release runtime-enabled builds and the standalone smoke image
-prove compilation/linkage only. Board execution is still `BLOCKED_BOARD_ACCESS`
-until a physical M55M1 board is available. There is currently no valid command
-stream, model parity result, realtime/soak result, capture-to-DAC result, or
-deployment approval. Every future DeepFIR/Wave-U-Net package must pass its own
-manifest, FP32/INT8 parity, Vela, board cold-boot parity, realtime, soak, and
-capture-to-DAC gates.
+The host runtime contract and CMake policy tests remain required. Successful
+Armclang Debug/Release builds establish compilation and linkage. The active
+`models/deepfir/` package still declares
+`EXPORTED_REQUIRES_COMPILED_PARITY_AND_BOARD_VALIDATION`; a build alone does
+not establish compiled parity, realtime performance, capture-to-DAC quality,
+soak reliability or deployment approval. Retaining the runtime does not waive
+the package's board-validation gates.

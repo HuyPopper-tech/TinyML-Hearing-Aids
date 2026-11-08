@@ -1,0 +1,16 @@
+{
+  "same_product_bin_size": true,
+  "binary_byte_identity": false,
+  "debug_const_tables": {
+    "before": {
+      "inputs": "0x00116d78",
+      "outputs": "0x00117074"
+    },
+    "after": {
+      "DEEPFIR_INPUT_DESCRIPTORS": "0x00116334",
+      "DEEPFIR_OUTPUT_DESCRIPTORS": "0x001163c4"
+    }
+  },
+  "evidence": "Debug ELF nm output retained locally in source_cleanup_20261108_143748",
+  "numerical_claim": "Host numeric tests and source token equivalence; no compiled replay or board timing claim"
+}

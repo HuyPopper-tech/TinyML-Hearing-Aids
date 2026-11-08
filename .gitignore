@@ -16,8 +16,14 @@ compile_commands.json
 /tmp/
 
 # IDE
-.vscode/
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
 .cache/
+
+# Official OpenOCD distribution is installed locally, not committed.
+/tools/openocd/.runtime/
+/tools/openocd/*.tar.gz
 
 build_codex/
 __pycache__/
@@ -26,3 +32,11 @@ __pycache__/
 .worktrees/
 .superpowers/sdd/
 .claude/
+# Local training/provenance packages are never firmware repository inputs to Git.
+/deepfir_r2_scratch_ptq_20261107_151431_366715/
+/deepfir_ptq_20260921_033946/
+/firmware_complex3_conv5_906b1d163f534778ba737eed737cab41/
+
+# Local run evidence, archives and scratch files; curated receipts live in docs/verification.
+/diagnostics/
+/tmpljfu6f0z

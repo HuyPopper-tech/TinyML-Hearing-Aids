@@ -8,10 +8,32 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct {
+    uint32_t sequence_faults;
+    uint32_t deadline_misses;
+    uint32_t model_faults;
+    uint32_t transport_faults;
+    uint32_t restarts;
+    uint32_t restart_failures;
+    uint32_t max_capture_to_publish_us;
+    uint32_t last_sequence;
+    /** Logical PCM positions reset with the stream; physical alignment needs measurement. */
+    uint64_t capture_sample_position;
+    uint32_t scheduled_playback_slot;
+    uint32_t capture_completed_cycle;
+    uint32_t process_start_cycle;
+    uint32_t process_end_cycle;
+    uint32_t published_cycle;
+} audio_pipeline_stats_t;
+
+/** Foreground cumulative counters survive automatic stream restarts. */
+void audio_pipeline_get_stats(audio_pipeline_stats_t *stats);
 
 /**
  * @brief Compose the static audio transport, enhancer, and telemetry services.
@@ -38,6 +60,11 @@ bool audio_pipeline_start(void);
  * non-reentrant and does not block waiting for audio or telemetry.
  */
 void audio_pipeline_poll(void);
+
+/** Foreground event-loop idle after poll; skipped when the stream is stopped.
+ * Capture/playback clocks continue; each captured hop still invokes the model.
+ */
+void audio_pipeline_wait_for_work(void);
 
 /**
  * @brief Quiesce capture and playback and terminate the current lifecycle.

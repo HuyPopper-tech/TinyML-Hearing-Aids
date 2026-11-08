@@ -1,0 +1,36 @@
+[rtk] /!\ No hook installed — run `rtk init -g` for automatic token savings
+-- Model package: D:/TinyML-Hearing-Aids/models/deepfir
+-- StdDriver: skipping utcpd.c (utcpdlib.h is not supplied)
+-- TensorFlow Lite Micro: D:/TinyML-Hearing-Aids/libs/tensorflow/runtime
+-- Linker scatter file: D:/TinyML-Hearing-Aids/cmake/m55m1_audio.scf
+-- M55M1_GestureAI: model package=D:/TinyML-Hearing-Aids/models/deepfir, Ethos-U runtime=ON, DAC/I2S output=ON, TensorFlow Lite Micro=ON
+-- Configuring done (2.0s)
+-- Generating done (0.1s)
+-- Build files have been written to: D:/TinyML-Hearing-Aids/build
+[0/2] Re-checking globbed directories...
+[1/20] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/app/main.o
+[2/20] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/audio_pipeline/audio_pipeline.o
+[3/20] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/board/m55m1_ethosu_board.o
+[4/20] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/board/m55m1_power.o
+[5/20] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/board/m55m1_stack_monitor.o
+[6/20] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/board/m55m1_timebase.o
+[7/20] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/drivers/audio_transport/audio_transport.o
+[8/20] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/drivers/ethosu_runtime/ethosu_runtime.o
+[9/20] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/board/m55m1_audio.o
+[10/20] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_reconstruction.o
+[11/20] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_tensor_binding.o
+[12/20] Building CXX object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_model_package.o
+[13/20] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_dsp.o
+[14/20] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_features.o
+[15/20] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/drivers/tlv320dac3100/tlv320dac3100.o
+[16/20] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_cmsis_fft_adapter.o
+[17/20] Building C object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_model_adapter.o
+[18/20] Building CXX object CMakeFiles/M55M1_GestureAI.axf.dir/drivers/ethosu_runtime/ethosu_tflm_bridge.o
+[19/20] Building CXX object CMakeFiles/M55M1_GestureAI.axf.dir/services/deepfir/deepfir_inference_service.o
+[20/20] Linking CXX executable M55M1_GestureAI.axf
+
+Build OK. Output in build\:
+M55M1_GestureAI.axf
+M55M1_GestureAI.axf.map
+M55M1_GestureAI.bin
+M55M1_GestureAI.htm

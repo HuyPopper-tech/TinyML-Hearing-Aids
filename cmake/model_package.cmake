@@ -1,13 +1,12 @@
-# Explicit opt-in integration boundary for a validated model package.
+# The checked-in DeepFIR package is the only model selected by the product build.
 
-set(M55M1_MODEL_PACKAGE_DIR "" CACHE PATH
-    "Validated model package directory; empty selects PCM passthrough")
-set(M55M1_MODEL_PACKAGE_STATUS "NONE (PCM passthrough)")
-
+set(M55M1_MODEL_PACKAGE_DIR "${PROJ_ROOT}/models/deepfir" CACHE PATH
+    "Project-owned DeepFIR model package directory")
 if("${M55M1_MODEL_PACKAGE_DIR}" STREQUAL "")
-    message(STATUS "Model package: NONE (PCM passthrough)")
-    return()
+    set(M55M1_MODEL_PACKAGE_DIR "${PROJ_ROOT}/models/deepfir" CACHE PATH
+        "Project-owned DeepFIR model package directory" FORCE)
 endif()
+set(M55M1_MODEL_PACKAGE_STATUS "NONE")
 
 get_filename_component(M55M1_MODEL_PACKAGE_DIR
     "${M55M1_MODEL_PACKAGE_DIR}" ABSOLUTE BASE_DIR "${PROJ_ROOT}")
@@ -53,11 +52,16 @@ function(m55m1_model_package_path_allowed path label)
     foreach(M55M1_ROOT IN ITEMS "${M55M1_PACKAGE_ROOT}" "${M55M1_SERVICES_ROOT}")
         string(LENGTH "${M55M1_ROOT}/" M55M1_ROOT_LENGTH)
         string(LENGTH "${M55M1_RESOLVED_PATH}" M55M1_PATH_LENGTH)
-        if(M55M1_PATH_LENGTH GREATER_EQUAL M55M1_ROOT_LENGTH)
-            string(SUBSTRING "${M55M1_RESOLVED_PATH}" 0 ${M55M1_ROOT_LENGTH}
-                M55M1_ROOT_PREFIX)
-            if(M55M1_ROOT_PREFIX STREQUAL "${M55M1_ROOT}/")
+        if(M55M1_RESOLVED_PATH STREQUAL M55M1_ROOT OR
+           M55M1_PATH_LENGTH GREATER_EQUAL M55M1_ROOT_LENGTH)
+            if(M55M1_RESOLVED_PATH STREQUAL M55M1_ROOT)
                 set(M55M1_ALLOWED TRUE)
+            else()
+                string(SUBSTRING "${M55M1_RESOLVED_PATH}" 0 ${M55M1_ROOT_LENGTH}
+                    M55M1_ROOT_PREFIX)
+                if(M55M1_ROOT_PREFIX STREQUAL "${M55M1_ROOT}/")
+                    set(M55M1_ALLOWED TRUE)
+                endif()
             endif()
         endif()
     endforeach()

@@ -42,8 +42,7 @@ void fixed_byte_ring_init(fixed_byte_ring_t *ring, uint8_t *storage, size_t capa
  * Non-blocking and non-reentrant for the producer. The caller retains message
  * ownership; the bytes are copied before the release publication of head.
  */
-bool fixed_byte_ring_try_enqueue(
-    fixed_byte_ring_t *ring, const uint8_t *message, size_t length);
+bool fixed_byte_ring_try_enqueue(fixed_byte_ring_t *ring, const uint8_t *message, size_t length);
 
 /**
  * @brief Pop one byte from the ISR consumer side of the ring.
@@ -55,6 +54,22 @@ bool fixed_byte_ring_try_enqueue(
  * tail follows the read, so foreground may reuse the slot only afterward.
  */
 bool fixed_byte_ring_try_pop(fixed_byte_ring_t *ring, uint8_t *value);
+
+/**
+ * @brief Borrow the next contiguous consumer span without releasing its bytes.
+ * @param length Receives the span size in bytes, or zero for empty/invalid input.
+ * @return Borrowed storage, valid until this consumer calls consume or pop.
+ *
+ * A DMA consumer must wait for transfer completion before consuming the span.
+ * The caller owns DMA visibility/cache maintenance. Do not mix consumers.
+ */
+const uint8_t *fixed_byte_ring_peek(const fixed_byte_ring_t *ring, size_t *length);
+
+/**
+ * @brief Release length bytes only after the consumer has finished reading them.
+ * @return False for invalid input or a length greater than the queued byte count.
+ */
+bool fixed_byte_ring_consume(fixed_byte_ring_t *ring, size_t length);
 
 /**
  * @brief Return a snapshot of queued bytes.

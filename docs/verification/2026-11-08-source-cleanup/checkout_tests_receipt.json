@@ -1,0 +1,17 @@
+{
+  "command": [
+    "rtk",
+    "python",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "tests",
+    "-v"
+  ],
+  "cwd": "D:\\TinyML-Hearing-Aids\\tmp\\source_cleanup_checkout",
+  "exit_code": 0,
+  "elapsed_s": 22.92050790786743,
+  "excluded_training_packages": true,
+  "openocd": "Pinned installed runtime copied as tooling only"
+}

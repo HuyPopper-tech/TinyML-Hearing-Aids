@@ -1,0 +1,103 @@
+{
+  "compiled_sha256": "69c1c3d2f2491df24a66c2190f266091bf8c192fcbce6724ee430d5cf28b1c27",
+  "inputs": [
+    {
+      "dtype": "int16",
+      "name": "serving_default_feature_context:0",
+      "port": 0,
+      "scale": 9.672559826867655e-05,
+      "semantic": "feature_context",
+      "shape": [
+        1,
+        2,
+        129,
+        3
+      ],
+      "tensor_index": 9,
+      "zero_point": 0
+    },
+    {
+      "dtype": "int16",
+      "name": "serving_default_c:0",
+      "port": 1,
+      "scale": 2.9065247872495092e-05,
+      "semantic": "c",
+      "shape": [
+        1,
+        200
+      ],
+      "tensor_index": 8,
+      "zero_point": 0
+    },
+    {
+      "dtype": "int16",
+      "name": "serving_default_h:0",
+      "port": 2,
+      "scale": 3.0516976039507426e-05,
+      "semantic": "h",
+      "shape": [
+        1,
+        200
+      ],
+      "tensor_index": 10,
+      "zero_point": 0
+    }
+  ],
+  "outputs": [
+    {
+      "dtype": "int16",
+      "name": "PartitionedCall:2",
+      "port": 0,
+      "scale": 3.051537714782171e-05,
+      "semantic": "h_next",
+      "shape": [
+        1,
+        200
+      ],
+      "tensor_index": 2,
+      "zero_point": 0
+    },
+    {
+      "dtype": "int16",
+      "name": "PartitionedCall:0",
+      "port": 1,
+      "scale": 2.9116219593561254e-05,
+      "semantic": "c_next",
+      "shape": [
+        1,
+        200
+      ],
+      "tensor_index": 0,
+      "zero_point": 0
+    },
+    {
+      "dtype": "int16",
+      "name": "PartitionedCall:3",
+      "port": 2,
+      "scale": 7.72049679653719e-05,
+      "semantic": "phase",
+      "shape": [
+        1,
+        65
+      ],
+      "tensor_index": 3,
+      "zero_point": 0
+    },
+    {
+      "dtype": "int16",
+      "name": "PartitionedCall:1",
+      "port": 3,
+      "scale": 5.657631845679134e-05,
+      "semantic": "gain",
+      "shape": [
+        1,
+        65
+      ],
+      "tensor_index": 1,
+      "zero_point": 0
+    }
+  ],
+  "raw_sha256": "9d11584db9ce1223eb26be1ab2b5f1493ff0c3c92ba3e2757a6063bd279d38ac",
+  "runtime_operator": "ethos-u",
+  "schema": "deepfir.r2.compiled_tensor_binding.v1"
+}

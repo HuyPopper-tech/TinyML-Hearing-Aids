@@ -10,6 +10,9 @@
 #include "board/m55m1_audio.h"
 #include "board/m55m1_stack_monitor.h"
 #include "board/m55m1_timebase.h"
+#if M55M1_PRODUCT_AUDIO
+#include "board/m55m1_power.h"
+#endif
 #ifndef M55M1_ENABLE_DAC_I2S_OUTPUT
 #define M55M1_ENABLE_DAC_I2S_OUTPUT 0
 #endif
@@ -17,6 +20,9 @@
 #include "drivers/audio_transport/audio_transport.h"
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
 #include "drivers/tlv320dac3100/tlv320dac3100.h"
+#endif
+#if M55M1_PRODUCT_AUDIO
+#include "NuMicro.h"
 #endif
 
 typedef struct {
@@ -31,18 +37,14 @@ static void audio_transport_playback_irq(uint32_t completed_cycle, void *context
 }
 #endif
 
-static void audio_transport_board_progress(
-    m55m1_audio_board_stage_t stage,
-    void *context) {
-    audio_transport_progress_context_t *progress =
-        (audio_transport_progress_context_t *)context;
+static void audio_transport_board_progress(m55m1_audio_board_stage_t stage, void *context) {
+    audio_transport_progress_context_t *progress = (audio_transport_progress_context_t *)context;
 
     progress->callback((audio_transport_board_stage_t)stage, progress->context);
 }
 
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
-static audio_transport_status_t audio_transport_map_status(
-    tlv320dac3100_status_t status) {
+static audio_transport_status_t audio_transport_map_status(tlv320dac3100_status_t status) {
     if (status == TLV320DAC3100_STATUS_OK) {
         return AUDIO_TRANSPORT_STATUS_OK;
     }
@@ -53,10 +55,9 @@ static audio_transport_status_t audio_transport_map_status(
 }
 #endif
 
-bool audio_transport_init(
-    audio_transport_init_report_t *report,
-    audio_transport_progress_callback_t progress_callback,
-    void *progress_context) {
+bool audio_transport_init(audio_transport_init_report_t *report,
+                          audio_transport_progress_callback_t progress_callback,
+                          void *progress_context) {
     m55m1_audio_clock_snapshot_t clocks;
     m55m1_audio_board_init_result_t board_status;
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
@@ -76,14 +77,11 @@ bool audio_transport_init(
     board_status = m55m1_audio_board_init(
         M55M1_AUDIO_PROFILE_16KHZ,
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
-        &binding,
-        audio_transport_playback_irq,
+        &binding, audio_transport_playback_irq,
 #else
-        NULL,
-        NULL,
+        NULL, NULL,
 #endif
-        NULL,
-        (progress_callback != NULL) ? audio_transport_board_progress : NULL,
+        NULL, (progress_callback != NULL) ? audio_transport_board_progress : NULL,
         (progress_callback != NULL) ? &progress : NULL);
     report->board_status = (int)board_status;
     if (board_status != M55M1_AUDIO_BOARD_INIT_OK) {
@@ -121,19 +119,19 @@ bool audio_transport_init(
 }
 
 audio_transport_status_t audio_transport_start(void) {
+    if (!m55m1_audio_dmic_prepare(M55M1_AUDIO_PROFILE_16KHZ)) {
+        m55m1_audio_dmic_stop();
+        return AUDIO_TRANSPORT_STATUS_ERROR;
+    }
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
     const tlv320dac3100_status_t status = tlv320dac3100_start();
 
     if (status != TLV320DAC3100_STATUS_OK) {
+        m55m1_audio_dmic_stop();
         return audio_transport_map_status(status);
     }
 #endif
-    if (!m55m1_audio_dmic_start(M55M1_AUDIO_PROFILE_16KHZ)) {
-#if M55M1_ENABLE_DAC_I2S_OUTPUT
-        (void)tlv320dac3100_stop();
-#endif
-        return AUDIO_TRANSPORT_STATUS_ERROR;
-    }
+    m55m1_audio_dmic_enable();
     return AUDIO_TRANSPORT_STATUS_OK;
 }
 
@@ -144,13 +142,12 @@ void audio_transport_stop_safe(void) {
 #endif
 }
 
-bool audio_transport_take_capture(
-    int16_t destination[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
-    audio_transport_capture_timing_t *timing) {
+bool audio_transport_take_capture(int16_t destination[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
+                                  audio_transport_capture_timing_t *timing) {
     m55m1_audio_dmic_block_timing_t board_timing;
 
-    if (!m55m1_audio_dmic_take_block_timed(
-            destination, AUDIO_TRANSPORT_SAMPLES_PER_BLOCK, &board_timing)) {
+    if (!m55m1_audio_dmic_take_block_timed(destination, AUDIO_TRANSPORT_SAMPLES_PER_BLOCK,
+                                           &board_timing)) {
         return false;
     }
     if (timing != NULL) {
@@ -164,27 +161,47 @@ bool audio_transport_capture_pending(void) {
     return m55m1_audio_dmic_block_pending();
 }
 
-audio_transport_status_t audio_transport_submit(
-    const int16_t samples[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK]) {
+void audio_transport_wait_for_work(void) {
+#if M55M1_PRODUCT_AUDIO
+    const uint32_t primask = __get_PRIMASK();
+    audio_transport_health_t health;
+
+    if ((primask != 0U) || (__get_IPSR() != 0U) || (__get_BASEPRI() != 0U) ||
+        (__get_FAULTMASK() != 0U)) {
+        return;
+    }
+    __disable_irq();
+    audio_transport_get_health(&health);
+    if (!audio_transport_capture_pending() && (health.dmic_overrun_blocks == 0U) &&
+        (health.dmic_dma_errors == 0U) && (health.dac_underrun_blocks == 0U) &&
+        (health.dac_dma_errors == 0U)) {
+        /* PRIMASK keeps an arriving IRQ pending until after WFI, avoiding lost wake. */
+        m55m1_power_idle();
+    }
+    __set_PRIMASK(primask);
+#endif
+}
+
+audio_transport_status_t
+audio_transport_submit(const int16_t samples[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK]) {
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
-    return audio_transport_map_status(tlv320dac3100_submit_mono_block(
-        samples, AUDIO_TRANSPORT_SAMPLES_PER_BLOCK));
+    return audio_transport_map_status(
+        tlv320dac3100_submit_mono_block(samples, AUDIO_TRANSPORT_SAMPLES_PER_BLOCK));
 #else
     (void)samples;
     return AUDIO_TRANSPORT_STATUS_ERROR;
 #endif
 }
 
-audio_transport_status_t audio_transport_submit_tagged(
-    const int16_t samples[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
-    const audio_transport_block_tag_t *tag) {
+audio_transport_status_t
+audio_transport_submit_tagged(const int16_t samples[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
+                              const audio_transport_block_tag_t *tag) {
     if (tag == NULL) {
         return AUDIO_TRANSPORT_STATUS_ERROR;
     }
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
     return audio_transport_map_status(tlv320dac3100_submit_mono_block_tagged(
-        samples,
-        AUDIO_TRANSPORT_SAMPLES_PER_BLOCK,
+        samples, AUDIO_TRANSPORT_SAMPLES_PER_BLOCK,
         &(tlv320dac3100_audio_block_tag_t){
             .sequence = tag->sequence,
             .capture_completed_cycle = tag->capture_completed_cycle,
@@ -199,14 +216,13 @@ bool audio_transport_take_completion(audio_transport_completion_t *completion) {
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
     tlv320dac3100_audio_completion_t driver_completion;
 
-    if ((completion == NULL) ||
-        !tlv320dac3100_take_audio_completion(&driver_completion)) {
+    if ((completion == NULL) || !tlv320dac3100_take_audio_completion(&driver_completion)) {
         return false;
     }
     completion->sequence = driver_completion.sequence;
-    completion->capture_completed_cycle =
-        driver_completion.capture_completed_cycle;
+    completion->capture_completed_cycle = driver_completion.capture_completed_cycle;
     completion->dac_completed_cycle = driver_completion.dac_completed_cycle;
+    completion->playback_slot = driver_completion.playback_slot;
     return true;
 #else
     (void)completion;
@@ -244,9 +260,7 @@ uint32_t audio_transport_cycles_now(void) {
     return m55m1_timebase_cycles_now();
 }
 
-uint32_t audio_transport_cycles_elapsed(
-    uint32_t start_cycle,
-    uint32_t end_cycle) {
+uint32_t audio_transport_cycles_elapsed(uint32_t start_cycle, uint32_t end_cycle) {
     return m55m1_timebase_cycles_elapsed(start_cycle, end_cycle);
 }
 

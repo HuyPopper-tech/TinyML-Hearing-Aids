@@ -1,0 +1,17 @@
+{
+  "artifact_integrity": "PASS: compiled SHA256 69c1c3d2f2491df24a66c2190f266091bf8c192fcbce6724ee430d5cf28b1c27; source/destination hashes retained",
+  "source_cleanup": "PASS: only app/main.c; diagnostic apps/exclusive modules/build roots/scripts and unused model slot removed",
+  "style_doxygen": "PASS: clang-format 18.1.8, 48 files; Bui Minh Huy; source token equivalence",
+  "host_regression": "PASS: 120/120 local with full source package",
+  "candidate_checkout_regression": "PASS: 119 passed, 1 explicitly skipped local-source/golden audit; no training packages",
+  "debug_release_build": "PASS: four configure/build commands exit 0, Arm Compiler 6.24",
+  "staged_model_hashes": "PASS: staged bytes match imported hashes; byte-preserving attributes",
+  "staged_scope": "PASS: no train package, binary, build, raw diagnostics, vendor or unrelated user data staged",
+  "raw_replay_rerun": "NOT_RUN: historical Linux receipt only",
+  "compiled_replay": "BLOCKED: no authorized running backend supplied",
+  "board_memory_timing_power_audio": "NOT_RUN: no hardware evidence",
+  "flash": "NOT_RUN: no board manipulation",
+  "deployment_approved": false,
+  "candidate_source_tree_tested": "32fa58070320807b0b75705e992a609ecb430798",
+  "source_archive_local": "diagnostics/source_cleanup_20261108_143748/removed_diagnostics.zip"
+}

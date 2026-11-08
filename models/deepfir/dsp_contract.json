@@ -1,0 +1,81 @@
+{
+  "schema": "deepfir.r2.streaming.v1",
+  "document": "DSP_CONTRACT.md",
+  "pcm": {
+    "sample_rate_hz": 16000,
+    "channels": 1,
+    "format": "signed_PCM16",
+    "byte_order": "little_endian",
+    "normalization_divisor": 32768,
+    "hop_samples": 16,
+    "hop_us": 1000
+  },
+  "analysis": {
+    "samples": 256,
+    "history_samples": 240,
+    "step_samples": 16,
+    "window": "symmetric_Hamming_0.54-0.46*cos(2*pi*n/255)",
+    "fft": "forward_unscaled_256",
+    "bins": 129,
+    "features": [
+      "abs(X)^0.3",
+      "real(X)*(real(X)^2+imag(X)^2+1e-16)^-0.35",
+      "imag(X)*(real(X)^2+imag(X)^2+1e-16)^-0.35"
+    ],
+    "feature_context_order": [
+      "previous",
+      "current"
+    ],
+    "future_hops": 0,
+    "per_utterance_normalization": false
+  },
+  "fir": {
+    "taps": 128,
+    "history_samples": 127,
+    "gain_phase_bins": 65,
+    "idft": "positive_exponent_normalized_by_128_Hermitian_spectrum",
+    "circular_shift_samples": 64,
+    "tap_window": "0.5+0.5*(1-abs(k-64)/64)",
+    "crossfade_samples": 16,
+    "crossfade_alpha": "0.5-0.5*cos(pi*(i+0.5)/16)",
+    "reset_taps": "delta_at_index_64",
+    "minimum_phase": false,
+    "loss_target_alignment_samples": 64,
+    "alignment_is_extra_fifo": false
+  },
+  "state": {
+    "order": [
+      "h",
+      "c"
+    ],
+    "width_each": 200,
+    "feedback": "actual_tensor_qparams_direct_copy_or_Q31",
+    "coordinates": "firmware_manifest.json:state_coordinates",
+    "hidden_coordinates": "permuted_unscaled",
+    "cell_coordinates": "permuted_radius_scaled",
+    "candidate_abi": "deepfir_ablation_r2_ac_v1_gain_phase_split_range_hc_v2",
+    "grouped_c_transform_location": "inside_model_do_not_apply_twice"
+  },
+  "timing": {
+    "capture_slot": "b",
+    "process_slot": "b+1",
+    "playback_slot": "b+2",
+    "playback_slot_offset_hops": 2,
+    "startup_silence_slots": 2,
+    "processing_budget_us": 1000,
+    "deadline_is_strict": true,
+    "scheduled_shift_samples": 32,
+    "scheduled_shift_us": 2000,
+    "group_delay_us": null,
+    "codec_transport_delay_us": null,
+    "measured_microphone_to_output_us": null,
+    "overrun_policy": "mute_and_restart_at_boundary_reset_all_stream_state",
+    "extra_queue_hops_allowed": 0
+  },
+  "ownership": {
+    "adapter": "DSP_and_model_state_only",
+    "board": "PDM_decimation_DMA_I2S_DAC_clock_cache_and_schedule",
+    "input_output_aliasing_allowed": false,
+    "single_stream_single_executor": true
+  }
+}

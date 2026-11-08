@@ -1,0 +1,138 @@
+[
+  {
+    "path": "app/custom_clock/main.c",
+    "sha256": "e1207b5875949aa99b5be0b11eed132b7647d7859e5841d8536a93f3656c2262"
+  },
+  {
+    "path": "app/custom_i2s/main.c",
+    "sha256": "7d80d002010bafab4a83e35e96ecc29478b7fe3ed0adde174d5a1a574d454e0e"
+  },
+  {
+    "path": "app/custom_passthrough/main.c",
+    "sha256": "acac0b84106bd59f1ef06fe527fa990b3038238e9f423b9c7613d7a6dcbf9b03"
+  },
+  {
+    "path": "app/test_custom_dmic_main.c",
+    "sha256": "200e710fb6718db7c068b7d355f21d42dd882bec9d0b4157932377f4311602f5"
+  },
+  {
+    "path": "cmake/custom_clock/CMakeLists.txt",
+    "sha256": "b90b1f2a515037907225dae7f482acbbd0f5a0b774c8d285ce14573e1d22841b"
+  },
+  {
+    "path": "cmake/custom_i2s/CMakeLists.txt",
+    "sha256": "a20f34497ca11b47a475d0cda0891ed9db60583fca3819e2506d44f13a430202"
+  },
+  {
+    "path": "cmake/custom_passthrough/CMakeLists.txt",
+    "sha256": "316241a9383bd26d91bc1e45eb3e143bdc4da200df6785d4e68652461967cf9a"
+  },
+  {
+    "path": "cmake/custom_dmic_test.cmake",
+    "sha256": "3fbbd8a1ac3f642a490ba6776370532182cc7659eddce64fed44846af573270d"
+  },
+  {
+    "path": "board/m55m1_custom_clock.c",
+    "sha256": "0d2a6568174c6fd1f29bf8103300e13bcf402feb5865fbd5372f64cd9d1badfe"
+  },
+  {
+    "path": "board/m55m1_custom_clock.h",
+    "sha256": "d4ad39727a11550beb4c0be857314a729273d477eeac8148f8e73d77a6020d5c"
+  },
+  {
+    "path": "board/m55m1_custom_clock_replay.c",
+    "sha256": "d1d44b9dfc2b85be0fbc8190e54a793387f924371e2e35827f1fbb8a497c98ef"
+  },
+  {
+    "path": "board/m55m1_custom_i2s.c",
+    "sha256": "263d254ac25a323088043691f33a298bbd4b7186262feb872e485d9adf5858ce"
+  },
+  {
+    "path": "common/clock_diagnostic_types.h",
+    "sha256": "6f5cb5e3b1e65235a97b83a2dd4dfb815566f282f547e375f64310413e139f9b"
+  },
+  {
+    "path": "drivers/custom_i2s_output/custom_i2s_output.c",
+    "sha256": "4856026959b58a64a2f8f61cca2bf9b0ab4f09a43ad78a26d7430695bba48c8c"
+  },
+  {
+    "path": "drivers/custom_i2s_output/custom_i2s_output.h",
+    "sha256": "557421e38a955b25b8419d5383c31be815775f895fdb8e2a6ccc65de8c93a6aa"
+  },
+  {
+    "path": "services/clock_diagnostic/clock_diagnostic.c",
+    "sha256": "f4acbfa08e20b6166b93f1f3d86a551bc20fdc264b15299081e59da33cb15129"
+  },
+  {
+    "path": "services/clock_diagnostic/clock_diagnostic.h",
+    "sha256": "d370e1eaddf35252dc79056cd3cfd5f2e8a167bd804136248da9f4b353f6e1bc"
+  },
+  {
+    "path": "services/clock_diagnostic/clock_diagnostic_replay.c",
+    "sha256": "c2f65d469ad00df3a95d07d8a0c31953e312b85d7709963772c455547d2ba704"
+  },
+  {
+    "path": "services/custom_passthrough/custom_passthrough.c",
+    "sha256": "96a497da1691c9b5a6cb5384056bd580342d4b7bfff442de86121534c6170517"
+  },
+  {
+    "path": "services/custom_passthrough/custom_passthrough.h",
+    "sha256": "934496ae12063df057298fe31b199fbe05eb4ef9d373782d925ea1dcb49b30ea"
+  },
+  {
+    "path": "services/dmic_diagnostic/dmic_diagnostic.c",
+    "sha256": "d947a7e417a3a08602b9762410a3c0dd2a9c64a4cdcde2b77d66d0f3ed923c62"
+  },
+  {
+    "path": "services/dmic_diagnostic/dmic_diagnostic.h",
+    "sha256": "e9f251be66063fe01d9a47cf0f2746a66a30b7ca098ec246a0fe94c29d72153c"
+  },
+  {
+    "path": "services/i2s_sweep/i2s_sweep.c",
+    "sha256": "f8da0bf8643779f928ac0a26e020fe6354ccfea981315e000766f98301c2c610"
+  },
+  {
+    "path": "services/i2s_sweep/i2s_sweep.h",
+    "sha256": "e70e1af9329dd7ac4effdd45b98e8b3bab8e778c2d76ed7548e210db000aed02"
+  },
+  {
+    "path": "services/enhancement_passthrough/enhancement_passthrough.c",
+    "sha256": "bf563fb463a4a3dee9930e62f39d66ada4fb8c9a90bc467b7233ad567cc0df0a"
+  },
+  {
+    "path": "services/enhancement_passthrough/enhancement_passthrough.h",
+    "sha256": "a2e8aed1a244f883c80a5e0921e404adbcaadfdd36610bdfa6cc6096d214f2c5"
+  },
+  {
+    "path": "services/deepfir/deepfir_stream_adapter.c",
+    "sha256": "9c47a4ba697a12292d99ad0267328bef4c729b8775c66e630c0f5a6cfd8a05a0"
+  },
+  {
+    "path": "services/deepfir/deepfir_stream_adapter.h",
+    "sha256": "69749df0df889c5e98badd486f78aadd79e2b897573b4f9a5d8bc1bfedbf40ab"
+  },
+  {
+    "path": "tests/test_custom_clock.py",
+    "sha256": "e85df82058b5da41767a982eff9e2380317403a65aa8fd95c2a57f91da93c8e7"
+  },
+  {
+    "path": "tests/test_custom_clock_replay.py",
+    "sha256": "e93f0980d0696bdde083952676c1d59d7b02ab2454e7d3fe9a4b38d1c462cf76"
+  },
+  {
+    "path": "tests/test_custom_i2s_sweep.py",
+    "sha256": "6b7393eb276efdb8b49bf850d72616b1ef5d52ec1db48724f7436c59798e5d9c"
+  },
+  {
+    "path": "tests/test_custom_passthrough.py",
+    "sha256": "a59667cf53401eb6ecbaf509a595752c623a7dc0340c174726d0f86b973f7771"
+  },
+  {
+    "path": "tests/test_model_free_audio_pipeline.py",
+    "sha256": "162906e55907e1b7611e5d622fcc59011fe37bb3f7fc857e3fde2907018d071b"
+  },
+  {
+    "path": "tests/test_custom_dmic.py",
+    "sha256": "72cc7cc945e6bae0c76cde71c199e8962bef4990b05967114ba2892a8b7de4d5"
+  }
+]

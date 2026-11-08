@@ -1,0 +1,236 @@
+{
+  "status": "PASS",
+  "external_dtype": "int16",
+  "quantized_weight_dtype": "int8",
+  "tensor_dtype_counts": {
+    "int16": 210,
+    "int64": 7,
+    "int8": 9,
+    "int32": 3
+  },
+  "float_tensor_counts": {},
+  "quantize_fallback_ops": [],
+  "integer_requantize_ops": [
+    {
+      "input": 192,
+      "output": 225,
+      "input_scale": 2.9065247872495092e-05,
+      "output_scale": 2.9116219593561254e-05,
+      "input_dtype": "int16",
+      "output_dtype": "int16"
+    },
+    {
+      "input": 187,
+      "output": 224,
+      "input_scale": 2.889560164476279e-05,
+      "output_scale": 2.9116219593561254e-05,
+      "input_dtype": "int16",
+      "output_dtype": "int16"
+    },
+    {
+      "input": 177,
+      "output": 223,
+      "input_scale": 2.734353802225087e-05,
+      "output_scale": 2.9116219593561254e-05,
+      "input_dtype": "int16",
+      "output_dtype": "int16"
+    },
+    {
+      "input": 172,
+      "output": 222,
+      "input_scale": 2.85086061921902e-05,
+      "output_scale": 2.9116219593561254e-05,
+      "input_dtype": "int16",
+      "output_dtype": "int16"
+    },
+    {
+      "input": 167,
+      "output": 221,
+      "input_scale": 2.9032986276433803e-05,
+      "output_scale": 2.9116219593561254e-05,
+      "input_dtype": "int16",
+      "output_dtype": "int16"
+    },
+    {
+      "input": 162,
+      "output": 220,
+      "input_scale": 2.890187897719443e-05,
+      "output_scale": 2.9116219593561254e-05,
+      "input_dtype": "int16",
+      "output_dtype": "int16"
+    },
+    {
+      "input": 197,
+      "output": 219,
+      "input_scale": 2.890061296056956e-05,
+      "output_scale": 2.9116219593561254e-05,
+      "input_dtype": "int16",
+      "output_dtype": "int16"
+    },
+    {
+      "input": 157,
+      "output": 218,
+      "input_scale": 2.852588841051329e-05,
+      "output_scale": 2.9116219593561254e-05,
+      "input_dtype": "int16",
+      "output_dtype": "int16"
+    },
+    {
+      "input": 195,
+      "output": 217,
+      "input_scale": 2.7857435270561837e-05,
+      "output_scale": 3.051537714782171e-05,
+      "input_dtype": "int16",
+      "output_dtype": "int16"
+    },
+    {
+      "input": 190,
+      "output": 216,
+      "input_scale": 2.763023439911194e-05,
+      "output_scale": 3.051537714782171e-05,
+      "input_dtype": "int16",
+      "output_dtype": "int16"
+    },
+    {
+      "input": 185,
+      "output": 215,
+      "input_scale": 3.02982753055403e-05,
+      "output_scale": 3.051537714782171e-05,
+      "input_dtype": "int16",
+      "output_dtype": "int16"
+    },
+    {
+      "input": 180,
+      "output": 214,
+      "input_scale": 3.0264831366366707e-05,
+      "output_scale": 3.051537714782171e-05,
+      "input_dtype": "int16",
+      "output_dtype": "int16"
+    },
+    {
+      "input": 175,
+      "output": 213,
+      "input_scale": 3.051038038393017e-05,
+      "output_scale": 3.051537714782171e-05,
+      "input_dtype": "int16",
+      "output_dtype": "int16"
+    },
+    {
+      "input": 170,
+      "output": 212,
+      "input_scale": 3.048384314752184e-05,
+      "output_scale": 3.051537714782171e-05,
+      "input_dtype": "int16",
+      "output_dtype": "int16"
+    },
+    {
+      "input": 201,
+      "output": 211,
+      "input_scale": 3.045431549253408e-05,
+      "output_scale": 3.051537714782171e-05,
+      "input_dtype": "int16",
+      "output_dtype": "int16"
+    },
+    {
+      "input": 160,
+      "output": 210,
+      "input_scale": 3.0162907933117822e-05,
+      "output_scale": 3.051537714782171e-05,
+      "input_dtype": "int16",
+      "output_dtype": "int16"
+    }
+  ],
+  "int64_biases": [
+    {
+      "index": 3,
+      "min": -1365510,
+      "max": 1448343,
+      "role": "constant_bias",
+      "storage_dtype": "int64",
+      "hardware_encoding": "signed40_bias"
+    },
+    {
+      "index": 4,
+      "min": -858162,
+      "max": 652105,
+      "role": "constant_bias",
+      "storage_dtype": "int64",
+      "hardware_encoding": "signed40_bias"
+    },
+    {
+      "index": 5,
+      "min": -1330846,
+      "max": 939595,
+      "role": "constant_bias",
+      "storage_dtype": "int64",
+      "hardware_encoding": "signed40_bias"
+    },
+    {
+      "index": 6,
+      "min": -74488,
+      "max": 108176,
+      "role": "constant_bias",
+      "storage_dtype": "int64",
+      "hardware_encoding": "signed40_bias"
+    },
+    {
+      "index": 7,
+      "min": -311427,
+      "max": 69286,
+      "role": "constant_bias",
+      "storage_dtype": "int64",
+      "hardware_encoding": "signed40_bias"
+    },
+    {
+      "index": 40,
+      "min": 0,
+      "max": 0,
+      "role": "constant_bias",
+      "storage_dtype": "int64",
+      "hardware_encoding": "signed40_bias"
+    },
+    {
+      "index": 42,
+      "min": -687497,
+      "max": -62841,
+      "role": "constant_bias",
+      "storage_dtype": "int64",
+      "hardware_encoding": "signed40_bias"
+    }
+  ],
+  "weighted_operator_count": 9,
+  "npu_placement": "REQUIRES_PINNED_VELA_COMPILATION",
+  "host_q31_int64": "CPU_feedback_outside_controller_graph",
+  "input_qparams": {
+    "c": {
+      "scale": 2.9065247872495092e-05,
+      "zero": 0
+    },
+    "feature_context": {
+      "scale": 9.672559826867655e-05,
+      "zero": 0
+    },
+    "h": {
+      "scale": 3.0516976039507426e-05,
+      "zero": 0
+    }
+  },
+  "output_qparams": {
+    "c_next": {
+      "scale": 2.9116219593561254e-05,
+      "zero": 0
+    },
+    "gain": {
+      "scale": 5.657631845679134e-05,
+      "zero": 0
+    },
+    "h_next": {
+      "scale": 3.051537714782171e-05,
+      "zero": 0
+    },
+    "phase": {
+      "scale": 7.72049679653719e-05,
+      "zero": 0
+    }
+  }
+}

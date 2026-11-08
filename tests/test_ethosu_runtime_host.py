@@ -64,7 +64,12 @@ int ethosu_wait(struct ethosu_driver *driver, bool block);
 
 NU_MICRO_HEADER = r'''
 #pragma once
+#include <stddef.h>
 #include <stdint.h>
+extern uint32_t mock_clean_all_calls;
+extern uint32_t mock_invalidate_all_calls;
+extern uint32_t mock_clean_range_calls;
+extern uint32_t mock_invalidate_range_calls;
 static inline uint32_t __get_PRIMASK(void) { return 0U; }
 static inline void __disable_irq(void) {}
 static inline void __set_PRIMASK(uint32_t value) { (void)value; }
@@ -73,6 +78,18 @@ static inline void __SEV(void) {}
 static inline void __DMB(void) {}
 static inline void __DSB(void) {}
 static inline void __ISB(void) {}
+static inline void SCB_CleanDCache(void) { ++mock_clean_all_calls; }
+static inline void SCB_InvalidateDCache(void) { ++mock_invalidate_all_calls; }
+static inline void SCB_CleanDCache_by_Addr(void *address, int32_t bytes) {
+    (void)address;
+    (void)bytes;
+    ++mock_clean_range_calls;
+}
+static inline void SCB_InvalidateDCache_by_Addr(void *address, int32_t bytes) {
+    (void)address;
+    (void)bytes;
+    ++mock_invalidate_range_calls;
+}
 '''
 
 BOARD_MOCK = r'''
@@ -82,6 +99,7 @@ BOARD_MOCK = r'''
 
 static uint32_t g_cycles;
 
+bool m55m1_ethosu_board_memory_is_accessible(const void *data, size_t bytes) { return data != NULL && bytes != 0; }
 bool m55m1_ethosu_board_init(void) { return true; }
 void m55m1_ethosu_board_enable_irq(void) {}
 void m55m1_ethosu_board_disable_irq(void) {}
@@ -101,6 +119,10 @@ CORE_MOCK = r'''
 static bool g_running;
 static bool g_polled;
 static bool g_fail_wait;
+uint32_t mock_clean_all_calls;
+uint32_t mock_invalidate_all_calls;
+uint32_t mock_clean_range_calls;
+uint32_t mock_invalidate_range_calls;
 
 extern void ethosu_inference_begin(struct ethosu_driver *driver, void *user_arg);
 extern void ethosu_inference_end(struct ethosu_driver *driver, void *user_arg);
@@ -195,14 +217,20 @@ HARNESS = r'''
 #include "drivers/ethosu_runtime/ethosu_runtime.h"
 
 extern void mock_set_wait_error(_Bool enabled);
+extern uint32_t mock_clean_range_calls;
+extern uint32_t mock_invalidate_range_calls;
+extern void ethosu_flush_dcache(uint32_t *address, size_t bytes);
+extern void ethosu_invalidate_dcache(uint32_t *address, size_t bytes);
 
 #define CHECK(condition) do { if (!(condition)) return __LINE__; } while (0)
 
 int main(void) {
     static uint8_t payload[16] __attribute__((aligned(16)));
     static uint8_t base_storage[16] __attribute__((aligned(16)));
-    uint64_t base_addresses[1];
-    size_t base_sizes[1];
+    static uint8_t immutable_storage[64] __attribute__((aligned(32)));
+    static uint8_t mutable_storage[32] __attribute__((aligned(32)));
+    uint64_t base_addresses[ETHOSU_RUNTIME_MAX_BASE_ADDRESSES + 1U];
+    size_t base_sizes[ETHOSU_RUNTIME_MAX_BASE_ADDRESSES + 1U];
     ethosu_runtime_config_t config = {0};
     ethosu_runtime_invocation_t invocation = {0};
     ethosu_runtime_result_t result = {0};
@@ -210,7 +238,22 @@ int main(void) {
 
     CHECK(ethosu_runtime_init(NULL) == ETHOSU_RUNTIME_INVALID_ARGUMENT);
     CHECK(ethosu_runtime_start(NULL) == ETHOSU_RUNTIME_NOT_INITIALIZED);
+    config.immutable_memory = immutable_storage;
+    CHECK(ethosu_runtime_init(&config) == ETHOSU_RUNTIME_INVALID_ARGUMENT);
+    config.immutable_memory_size = sizeof(immutable_storage);
     CHECK(ethosu_runtime_init(&config) == ETHOSU_RUNTIME_OK);
+    CHECK(mock_clean_range_calls == 1U);
+    ethosu_flush_dcache((uint32_t *)immutable_storage,
+                        sizeof(immutable_storage));
+    ethosu_invalidate_dcache((uint32_t *)immutable_storage,
+                             sizeof(immutable_storage));
+    CHECK(mock_clean_range_calls == 1U);
+    CHECK(mock_invalidate_range_calls == 0U);
+    ethosu_flush_dcache((uint32_t *)mutable_storage, sizeof(mutable_storage));
+    ethosu_invalidate_dcache((uint32_t *)mutable_storage,
+                             sizeof(mutable_storage));
+    CHECK(mock_clean_range_calls == 2U);
+    CHECK(mock_invalidate_range_calls == 1U);
     CHECK(ethosu_runtime_init(&config) == ETHOSU_RUNTIME_ALREADY_INITIALIZED);
 
     invocation.custom_operator_payload = NULL;
@@ -233,6 +276,14 @@ int main(void) {
     invocation.base_sizes = base_sizes;
     CHECK(ethosu_runtime_start(&invocation) == ETHOSU_RUNTIME_ALIGNMENT_ERROR);
     base_addresses[0] = (uint64_t)(uintptr_t)base_storage;
+    for (size_t index = 1U;
+         index < ETHOSU_RUNTIME_MAX_BASE_ADDRESSES + 1U; ++index) {
+        base_addresses[index] = (uint64_t)(uintptr_t)base_storage;
+        base_sizes[index] = sizeof(base_storage);
+    }
+    invocation.base_count = ETHOSU_RUNTIME_MAX_BASE_ADDRESSES + 1U;
+    CHECK(ethosu_runtime_start(&invocation) == ETHOSU_RUNTIME_INVALID_ARGUMENT);
+    invocation.base_count = 1U;
 
     CHECK(ethosu_runtime_invoke(&invocation, NULL) ==
           ETHOSU_RUNTIME_INVALID_ARGUMENT);
@@ -280,7 +331,7 @@ class EthosURuntimeHostTests(unittest.TestCase):
                 "-Wall",
                 "-Wextra",
                 "-Werror",
-                "-DNVT_DCACHE_ON=0",
+                "-DNVT_DCACHE_ON=1",
                 "-I",
                 str(temp),
                 "-I",

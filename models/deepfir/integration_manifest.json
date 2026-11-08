@@ -1,0 +1,36 @@
+{
+  "schema": "m55m1.r2.integration.v1",
+  "source_package": "deepfir_r2_scratch_ptq_20261107_151431_366715/firmware_deepfir_r2_C_34c5bd074ae6_69c1c3d2",
+  "source_manifest_sha256": "caefa8239c579282a917c59292c41a2cff8fff1b76bf25ddc17bfb9baa12aeab",
+  "checkpoint_sha256": "34c5bd074ae63c57fd0df28c3a0a63e32dfd63be9be84fabc467823b70ccd0af",
+  "candidate_abi": "deepfir_ablation_r2_ac_v1_gain_phase_split_range_hc_v2",
+  "raw_sha256": "9d11584db9ce1223eb26be1ab2b5f1493ff0c3c92ba3e2757a6063bd279d38ac",
+  "compiled_sha256": "69c1c3d2f2491df24a66c2190f266091bf8c192fcbce6724ee430d5cf28b1c27",
+  "compiled_bytes": 516848,
+  "deployment_approved": false,
+  "changes": [
+    "Runtime remains in services/deepfir",
+    "C++ array alignment 32"
+  ],
+  "files": {
+    "compiled_tensor_binding.json": "68c7367ec7b094f63ad1cc89581233843578fb5a6953b4ab01f3431b2c3a3be8",
+    "deepfir_contract.h": "e76a1baae47b8eccc4db08f8565154184de9b01d95f6d38d262bf355433822f6",
+    "deepfir_model_data.cc": "0a5ad23b501e8d12e4d07cc76857545363da21c6bcda74c41bf4aa0e2cb7bee4",
+    "deepfir_model_data.h": "7a3a17c56c73c9ea98b933b7ee0966d322b1f8e77712728e259b0a3d32bd7221",
+    "deepfir_model_qparams.h": "4256f54d11151720534f0104ca1f1faa87883cc7429d619808a8292a80c0df4a",
+    "deepfir_r2_contract.h": "97428b40e380cfb1b83565d1563dd6f29d2a005d8262087ac26a0b25fddbcbc5",
+    "deepfir_r2_state_coordinates.h": "cd557d830aa232ce13292c0d5646038a6c9e426d42fc918ef9ed9c8b6c2f8359",
+    "dsp_contract.json": "d0bf112f21a38b107b6a8f95aa88d85ef6504091ac6095decf8279314eead18b",
+    "DSP_CONTRACT.md": "7b92a6ee80d4c4b0dc0d714dffe32d02a60085a9bb414afab5d4d55bb4ddc50d",
+    "integer_dtype_audit.json": "16c7fcbaefde96126118cb604f79f5855399c030ba16bec0ff8e12be9262f97d",
+    "m55m1_model_package.cmake": "9bde97e2eff336f6b1eb779011c42831b2f8b56ef48cd92a88346f12c50984a9",
+    "native_raw_replay_receipt.json": "fed962f11b4c3d47dc6e7f26839b48d9b7ecbe1813782a14ae25be38357c722e",
+    "ptq_quality.json": "7c34c1d73ba54d0e8cc4f2fbb31a218511b4f4d30cf2dc8e891ca43f49266c9b",
+    "ptq_selection_lock.json": "b36efa56d9e9d8e8d8c23b8e5ea38d4364c4508ae7da575fe8ba18f2c5b2b0f7",
+    "README.md": "7cfc38cf3c0db2495bd2922ddab7c25391fc2a073c6eb336dd673bb91fa1fdf3",
+    "source_integration_manifest.json": "caefa8239c579282a917c59292c41a2cff8fff1b76bf25ddc17bfb9baa12aeab",
+    "state_coordinates.json": "8402c987782e576b473e62e07bdf5a0841d7b1a4bbde62de5a5a2edb52dd181c",
+    "vela_manifest.json": "c583220d9913a7ff18a462257379e3754a66d250feded286d2c245f9406a88a2",
+    "vela_patch_manifest.json": "98b0ba5ac30852562a56451c038c31dace3c6e52d799d4da510e8d2f1b77ec95"
+  }
+}

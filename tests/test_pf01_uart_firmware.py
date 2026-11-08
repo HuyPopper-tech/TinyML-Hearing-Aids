@@ -22,11 +22,11 @@ class PF01I2SFirmwareTests(unittest.TestCase):
 
         self.assertIn("drivers/tlv320dac3100/tlv320dac3100.c", cmake)
         self.assertIn("board/m55m1_audio.c", cmake)
-        self.assertIn("SET_I2S0_DO_PF0();", board)
-        self.assertIn("SET_I2S0_LRCK_PF1();", board)
+        self.assertIn("SET_I2S1_DO_PA8();", board)
+        self.assertIn("SET_I2S1_LRCK_PB0();", board)
         self.assertIn("audio_transport_submit", pipeline)
 
-        for forbidden in ("UART0PF01_Init", "SET_UART0_TXD_PF0", "SET_UART0_RXD_PF1", "UART_Open(UART0"):
+        for forbidden in ("SET_I2S0_DO_PF0", "SET_I2S0_LRCK_PF1", "UART0PF01_Init", "SET_UART0_TXD_PF0", "SET_UART0_RXD_PF1", "UART_Open(UART0"):
             self.assertNotIn(forbidden, app + board + pipeline)
 
 

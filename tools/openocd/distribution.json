@@ -1,0 +1,11 @@
+{
+    "repository": "https://github.com/OpenNuvoton/OpenOCD-Nuvoton-CMSIS-DAP",
+    "version": "0.12.0.024.1+dev-gad7b6fa",
+    "archive": "openocd-ad7b6fa-i686-w64-mingw32.tar.gz",
+    "url": "https://github.com/OpenNuvoton/OpenOCD-Nuvoton-CMSIS-DAP/releases/download/latest/openocd-ad7b6fa-i686-w64-mingw32.tar.gz",
+    "sha256": "d0a9b685866c4ccc71966dbc6363bd455bb69fbd07915407233627fea0f03935",
+    "files": {
+        "bin/openocd.exe": "fc42241396e0bb1df9c6da607094cf6911c7c1cfda6902bfeb0168d65a9f8639",
+        "share/openocd/scripts/target/numicroM55.cfg": "12abdda818f7a3feea10fb18696647baf8cbaeea8e0fb0a0d210dbc8009f2f43"
+    }
+}

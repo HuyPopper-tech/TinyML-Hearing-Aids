@@ -1,5 +1,15 @@
 # MP34DT05 DMIC Capture Notes
 
+## Current custom binding — 2026-11-08
+
+Custom product: PA1 DMIC clock / PA2 data, DMIC0 channel2, rising edge, OSR=128 at 16 kHz; RX LPPDMA0 channel0. The product hop is16 samples.
+
+See [R2 integration](../r2_custom_integration.md) for current ownership/recovery and evidence limits.
+
+## Historical transport/reference notes
+
+The following notes preserve earlier hardware observations; old NuMaker pin mappings and large diagnostic blocks are not the current product configuration.
+
 ## Purpose and Fixed Transport Rules
 
 This document records the NuMaker GestureAI-M55M1 onboard MP34DT05 capture
@@ -73,3 +83,10 @@ the matching I2S clocks, and run both profiles for 30 minutes while tracking
 LPPDMA overrun/error and DAC queue/underrun counters. TinyML models, AGC,
 feedback cancellation, and user gain policy belong between capture and DAC
 submit; DeepFilterNet PCM-to-output-ready time must fit the 16 ms hop.
+## Continuous-audio power boundary — 2026-11-08
+
+DMIC capture already uses LPPDMA0 ch0. Product CPU Idle retains APLL/PDM and the
+LPPDMA capture clock; it does not cycle microphone power between hops. MP34DT05
+normal clock is1.2-3.25MHz and startup can take10ms (Rev1 pp6-7); retain2.048MHz
+for continuous16kHz audio. I2S1 TX is not a LPPDMA request and stays on PDMA0 ch0.
+See [power policy and unmeasured board gates](../continuous_low_power.md).

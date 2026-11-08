@@ -94,7 +94,7 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
             self.assertIn(required, board_header + board_source)
         for required in (
             "m55m1_timebase_cycles_to_us",
-            "SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk",
+            "CLK_STSEL_ST0SEL_ACLK_DIV2",
             "M55M1_TIMEBASE_SYSTICK_MASK",
         ):
             self.assertIn(required, timebase)
@@ -131,8 +131,8 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
         for required in (
             "m55m1_audio_profile_t profile",
             "M55M1_AUDIO_SAFE_MAX_GAIN_DB",
-            "CLK_I2SDIV_I2S0DIV(58)",
-            "CLK_I2SDIV_I2S0DIV(29)",
+            "CLK_I2SDIV_I2S1DIV(58)",
+            "CLK_I2SDIV_I2S1DIV(29)",
             "DMIC_DOWNSAMPLE_128",
             "DMIC_DOWNSAMPLE_64",
             "m55m1_audio_profile_samples_per_block",
@@ -146,7 +146,7 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
         ):
             self.assertIn(required, transport)
         for required in (
-            "enhancement_passthrough_process(",
+            "deepfir_inference_process(",
             "audio_transport_submit_tagged(",
         ):
             self.assertIn(required, pipeline)
@@ -166,7 +166,7 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
             "CLK_APLL1_SELECT",
             "CLK_STATUS_APLL1STB_Msk",
             "CLK_SET_SCLKDIV(1UL)",
-            "CLK_I2SSEL_I2S0SEL_APLL1_DIV2",
+            "CLK_I2SSEL_I2S1SEL_APLL1_DIV2",
             "M55M1_AUDIO_BOARD_INIT_APLL1_TIMEOUT",
             "M55M1_AUDIO_BOARD_INIT_CLOCK_MISMATCH",
             "M55M1_AUDIO_BOARD_STAGE_APLL1_WAIT",
@@ -174,10 +174,10 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
             "m55m1_audio_clock_snapshot_t",
             "m55m1_audio_get_clock_snapshot",
         ):
-            self.assertIn(required, board)
+            self.assertIn(" ".join(required.split()), " ".join(board.split()))
         self.assertNotIn("CLK_I2SSEL_I2S0SEL_APLL0_DIV2", board_source)
         dmic_start = board_source[
-            board_source.index("bool m55m1_audio_dmic_start") :
+            board_source.index("bool m55m1_audio_dmic_prepare") :
             board_source.index("bool m55m1_audio_dmic_take_block")
         ]
         self.assertIn("if (!g_clock_snapshot_valid)", dmic_start)
@@ -246,9 +246,6 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
         board = (REPO_ROOT / "board" / "m55m1_audio.c").read_text(
             encoding="utf-8"
         )
-        diagnostic = (
-            REPO_ROOT / "app" / "test_dac_i2s_uart1_diagnostic_main.c"
-        ).read_text(encoding="utf-8")
 
         for required in (
             "i2c_failures",
@@ -266,106 +263,44 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
             "TLV320DAC3100_I2C_READY_ATTEMPTS",
             "TLV320DAC3100_I2C_WRITE_ATTEMPTS",
             "tlv320dac3100_wait_for_i2c_ready",
-            "CLK_SysTickDelay(TLV320DAC3100_CODEC_POWER_UP_SETTLE_US)",
+            "m55m1_timebase_delay_us(TLV320DAC3100_CODEC_POWER_UP_SETTLE_US)",
             "M55M1_AUDIO_I2C_HZ    400000UL",
-            "I2C_Open(I2C1, M55M1_AUDIO_I2C_HZ)",
-            "SYS_ResetModule(SYS_I2C1RST);",
+            "I2C_Open(I2C0, M55M1_AUDIO_I2C_HZ)",
+            "SYS_ResetModule(SYS_I2C0RST);",
             "m55m1_audio_recover_i2c_bus",
             "GPIO_MODE_OPEN_DRAIN",
             "M55M1_AUDIO_BOARD_INIT_I2C_STUCK",
             "I2C_STUCK",
-            "I2C_LINES sda=%u scl=%u",
-            "I2C_REGS c=%08lx s=%02lx",
-            "p=%u r=%02x ph=%u a=%u n=%lu",
         ):
-            self.assertIn(required, header + source + board + diagnostic)
+            self.assertIn(" ".join(required.split()), " ".join((header + source + board).split()))
 
-    def test_uart1_diagnostic_uses_pa2_pa3_and_reports_every_stage(self):
-        """The standalone DAC diagnostic must retain its independent UART1 observability."""
-        diagnostic = REPO_ROOT / "app" / "test_dac_i2s_uart1_diagnostic_main.c"
-        self.assertTrue(diagnostic.is_file(), "UART1 DAC diagnostic source is missing")
-        source = diagnostic.read_text(encoding="utf-8")
 
+    def test_board_reports_clock_boundaries_and_rejects_clock_timeouts(self):
+        board_header = (REPO_ROOT / "board" / "m55m1_audio.h").read_text(encoding="utf-8")
+        board_source = (REPO_ROOT / "board" / "m55m1_audio.c").read_text(encoding="utf-8")
         for required in (
-            "SET_UART1_RXD_PA2();",
-            "SET_UART1_TXD_PA3();",
-            "CLK_EnableModuleClock(UART1_MODULE);",
-            "CLK_SetModuleClock(UART1_MODULE, CLK_UARTSEL0_UART1SEL_HIRC",
-            "UART_Open(UART1, 115200U);",
-            "BOOT",
-            "UART_READY",
-            "BOARD_READY",
-            "CODEC_INIT",
-            "CODEC_CONTROL",
-            "AUDIO_QUEUE",
-            "PLAYING",
-            "RUNNING",
-            "tlv320dac3100_get_status",
-            "completed_blocks",
-            "underrun_blocks",
-            "dma_errors",
-            "I2S0->STATUS0",
-            "PDMA0->TDSTS",
-            "@brief",
-            "static bool dac_diagnostic_take_block_due(void)",
-            "__get_PRIMASK()",
-            "__disable_irq()",
-            "__set_PRIMASK(primask)",
-            "if (dac_diagnostic_take_block_due())",
-        ):
-            self.assertIn(required, source)
-
-        self.assertNotIn("UART5_MODULE", source)
-        self.assertNotIn("m55m1_audio_dmic_start", source)
-        self.assertNotIn("SET_UART1_RXD_PA8();", source)
-        self.assertNotIn("SET_UART1_TXD_PA9();", source)
-        self.assertEqual(source.count("g_tone_block_due = false;"), 1)
-
-    def test_uart1_diagnostic_captures_reset_source_and_clock_boundaries(self):
-        """A reset loop must identify its reset source and last board-clock boundary."""
-        diagnostic = (
-            REPO_ROOT / "app" / "test_dac_i2s_uart1_diagnostic_main.c"
-        ).read_text(encoding="utf-8")
-        board_header = (REPO_ROOT / "board" / "m55m1_audio.h").read_text(
-            encoding="utf-8"
-        )
-        board_source = (REPO_ROOT / "board" / "m55m1_audio.c").read_text(
-            encoding="utf-8"
-        )
-
-        for required in (
-            "SYS_GetResetSrc()",
-            "SYS_ClearResetSrc",
-            "RSTSTS=",
-            "m55m1_tlv320dac3100_test_board_init_with_progress",
             "M55M1_AUDIO_BOARD_STAGE_HXT_WAIT",
             "M55M1_AUDIO_BOARD_STAGE_HXT_READY",
             "M55M1_AUDIO_BOARD_STAGE_APLL0_WAIT",
             "M55M1_AUDIO_BOARD_STAGE_APLL0_READY",
+            "m55m1_audio_board_init_result_t",
             "M55M1_AUDIO_BOARD_INIT_HXT_TIMEOUT",
             "M55M1_AUDIO_BOARD_INIT_APLL0_TIMEOUT",
-            "BOARD_RESULT",
+            "CLK_WaitClockReady(CLK_STATUS_HXTSTB_Msk)",
+            "CLK->STATUS & CLK_STATUS_APLL0STB_Msk",
             "@brief",
         ):
-            self.assertIn(required, diagnostic + board_header + board_source)
-
-        self.assertLess(
-            diagnostic.index("RSTSTS="),
-            diagnostic.index("m55m1_tlv320dac3100_test_board_init_with_progress"),
-        )
+            self.assertIn(required, board_header + board_source)
+        self.assertNotIn("(void)CLK_WaitClockReady(CLK_STATUS_HXTSTB_Msk)", board_source)
 
     def test_board_switches_sclk_to_hirc_before_reprogramming_apll0(self):
         """The audio PLL must never be disabled while it might clock the CPU."""
         board_source = (REPO_ROOT / "board" / "m55m1_audio.c").read_text(
             encoding="utf-8"
         )
-        diagnostic = (
-            REPO_ROOT / "app" / "test_dac_i2s_uart1_diagnostic_main.c"
-        ).read_text(encoding="utf-8")
 
         self.assertIn("CLK_SetSCLK(CLK_SCLKSEL_SCLKSEL_HIRC);", board_source)
         self.assertIn("M55M1_AUDIO_BOARD_STAGE_SCLK_HIRC_READY", board_source)
-        self.assertIn("CLK->SCLKSEL", diagnostic)
         self.assertLess(
             board_source.index("CLK_SetSCLK(CLK_SCLKSEL_SCLKSEL_HIRC);"),
             board_source.index("CLK_EnableAPLL(CLK_APLLCTL_APLLSRC_HXT"),
@@ -401,181 +336,29 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
             board_source.index("m55m1_audio_recover_i2c_bus()"),
         )
 
-    def test_led_diagnostic_uses_pa7_and_covers_audio_faults(self):
-        """The PA7 diagnostic must observe playback without reintroducing UART timing."""
-        diagnostic = REPO_ROOT / "app" / "test_dac_i2s_led_diagnostic_main.c"
-        self.assertTrue(diagnostic.is_file(), "PA7 DAC LED diagnostic source is missing")
-        source = diagnostic.read_text(encoding="utf-8")
 
-        for required in (
-            "GPIO_SetMode(PA, BIT7, GPIO_MODE_OUTPUT);",
-            "PA7 = 1U;",
-            "PA7 = 0U;",
-            "SysTick_Config(SystemCoreClock / 1000UL)",
-            "void SysTick_Handler(void)",
-            "++g_tick_ms;",
-            "LED_STAGE_CODEC_INIT",
-            "LED_STAGE_CODEC_CONTROL",
-            "LED_STAGE_AUDIO_QUEUE",
-            "LED_STAGE_PLAYING",
-            "LED_STAGE_RUNTIME",
-            "LED_CAUSE_INVALID_ARGUMENT",
-            "LED_CAUSE_INVALID_STATE",
-            "LED_CAUSE_BUSY",
-            "LED_CAUSE_CLOCK_MISMATCH",
-            "LED_CAUSE_I2C_ERROR",
-            "LED_CAUSE_DMA_ERROR",
-            "LED_CAUSE_UNDERRUN",
-            "LED_CAUSE_STALL",
-            "tlv320dac3100_get_status",
-            "if (dac_led_take_block_due())",
-            "dac_led_update",
-            "@brief",
-        ):
-            self.assertIn(required, source)
 
-        for forbidden in (
-            "UART_Open(",
-            "UART_Write(",
-            "SET_UART",
-            "UART1_MODULE",
-            "UART5_MODULE",
-            "DMIC",
-            "CCAP",
-            "SDHC",
-        ):
-            self.assertNotIn(forbidden, source)
 
-        systick_start = source.index("void SysTick_Handler(void)")
-        systick_end = source.index("/**", systick_start + 1)
-        systick_handler = source[systick_start:systick_end]
-        self.assertEqual(
-            "".join(systick_handler.split()),
-            "voidSysTick_Handler(void){++g_tick_ms;}",
-        )
-
-        expected_mappings = {
-            "LED_STAGE_BOARD_CLOCK": 1,
-            "LED_STAGE_CODEC_INIT": 2,
-            "LED_STAGE_CODEC_CONTROL": 3,
-            "LED_STAGE_AUDIO_QUEUE": 4,
-            "LED_STAGE_PLAYING": 5,
-            "LED_STAGE_RUNTIME": 6,
-            "LED_CAUSE_INVALID_ARGUMENT": 1,
-            "LED_CAUSE_INVALID_STATE": 2,
-            "LED_CAUSE_BUSY": 3,
-            "LED_CAUSE_CLOCK_MISMATCH": 4,
-            "LED_CAUSE_I2C_ERROR": 5,
-            "LED_CAUSE_DMA_ERROR": 6,
-            "LED_CAUSE_UNDERRUN": 7,
-            "LED_CAUSE_STALL": 8,
-            "LED_CAUSE_HXT_TIMEOUT": 9,
-            "LED_CAUSE_APLL_TIMEOUT": 10,
-        }
-        for name, value in expected_mappings.items():
-            self.assertRegex(source, rf"#define\s+{name}\s+{value}U")
-
-        main_start = source.index("int main(void)")
-        main = source[main_start:]
-        self.assertLess(
-            main.index("if (dac_led_take_block_due())"),
-            main.index("tlv320dac3100_get_status(&driver_status)"),
-        )
-        self.assertLess(
-            main.index("tlv320dac3100_get_status(&driver_status)"),
-            main.index("dac_led_update(now_ms)"),
-        )
-        self.assertNotIn("CLK_SysTickDelay", main)
-
-    def test_led_diagnostic_reports_clock_setup_before_codec_initialisation(self):
-        """Clock faults must be visible instead of hiding the first LED pulse."""
-        diagnostic = REPO_ROOT / "app" / "test_dac_i2s_led_diagnostic_main.c"
-        board_source = (REPO_ROOT / "board" / "m55m1_audio.c").read_text(
-            encoding="utf-8"
-        )
-        board_header = (REPO_ROOT / "board" / "m55m1_audio.h").read_text(
-            encoding="utf-8"
-        )
-        source = diagnostic.read_text(encoding="utf-8")
-        main = source[source.index("int main(void)") :]
-
-        for required in (
-            "LED_STAGE_BOARD_CLOCK",
-            "LED_CAUSE_HXT_TIMEOUT",
-            "LED_CAUSE_APLL_TIMEOUT",
-            "m55m1_audio_board_init_result_t",
-            "M55M1_AUDIO_BOARD_INIT_HXT_TIMEOUT",
-            "M55M1_AUDIO_BOARD_INIT_APLL0_TIMEOUT",
-            "CLK_WaitClockReady(CLK_STATUS_HXTSTB_Msk)",
-            "CLK->STATUS & CLK_STATUS_APLL0STB_Msk",
-            "@brief",
-        ):
-            self.assertIn(required, source + board_source + board_header)
-
-        self.assertNotIn("(void)CLK_WaitClockReady(CLK_STATUS_HXTSTB_Msk)", board_source)
-        self.assertLess(
-            main.index("dac_led_emit_startup_pulses(1U);"),
-            main.index("m55m1_tlv320dac3100_test_board_init"),
-        )
-        self.assertLess(
-            main.index("m55m1_tlv320dac3100_test_board_init"),
-            main.index("tlv320dac3100_init(&config)"),
-        )
-
-    def test_pa7_led_smoke_isolated_active_low_blink(self):
-        """The isolated PA7 test must prove LED hardware without audio dependencies."""
-        diagnostic = REPO_ROOT / "app" / "test_pa7_led_smoke_main.c"
-        self.assertTrue(diagnostic.is_file(), "PA7 LED smoke-test source is missing")
-        source = diagnostic.read_text(encoding="utf-8")
-
-        for required in (
-            "CLK_EnableModuleClock(GPIOA_MODULE);",
-            "SET_GPIO_PA7();",
-            "GPIO_SetMode(PA, BIT7, GPIO_MODE_OUTPUT);",
-            "PA7 = 0U;",
-            "PA7 = 1U;",
-            "CLK_SysTickDelay(500000UL);",
-            "@brief",
-        ):
-            self.assertIn(required, source)
-
-        for forbidden in (
-            "tlv320dac3100",
-            "m55m1_tlv320dac3100",
-            "I2S",
-            "I2C",
-            "PDMA",
-            "UART",
-            "DMIC",
-            "CCAP",
-            "SDHC",
-        ):
-            self.assertNotIn(forbidden, source)
-
-    def test_board_binding_and_smoke_test_use_confirmed_pins(self):
+    def test_board_and_product_use_confirmed_custom_pins(self):
         board = (REPO_ROOT / "board" / "m55m1_audio.c").read_text(
             encoding="utf-8"
         )
-        dmic_app = (REPO_ROOT / "app" / "test_dmic_uart5_main.c").read_text(encoding="utf-8")
-        passthrough_app = (
-            REPO_ROOT / "app" / "test_dmic_i2s_passthrough_main.c"
-        ).read_text(encoding="utf-8")
         diagnostic_app = (REPO_ROOT / "app" / "main.c").read_text(encoding="utf-8")
 
         for required in (
-            "SET_I2S0_DO_PF0();",
-            "SET_I2S0_LRCK_PF1();",
-            "SET_I2S0_BCLK_PB5();",
-            "SET_I2S0_MCLK_PB4();",
-            "SET_I2C1_SCL_PB1();",
-            "SET_I2C1_SDA_PB0();",
+            "SET_I2S1_DO_PA8();",
+            "SET_I2S1_LRCK_PB0();",
+            "SET_I2S1_BCLK_PA11();",
+            "SET_I2S1_MCLK_PA10();",
+            "SET_I2C0_SCL_PA5();",
+            "SET_I2C0_SDA_PA4();",
             "PDMA0",
-            "PDMA_I2S0_TX",
+            "PDMA0 channel 0",
             "m55m1_audio_profile_mclk_hz",
             "475136006UL",
-            "CLK_I2SDIV_I2S0DIV(58)",
-            "SET_DMIC1_CLK_PB2();",
-            "SET_DMIC1_DAT_PB3();",
+            "CLK_I2SDIV_I2S1DIV(58)",
+            "SET_DMIC1_CLK_PA1();",
+            "SET_DMIC1_DAT_PA2();",
             "DMIC0_MODULE",
             "LPPDMA0_MODULE",
             "LPPDMA_DMIC0_RX",
@@ -585,30 +368,7 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
             "m55m1_audio_dmic_start",
             "m55m1_audio_dmic_take_block",
         ):
-            self.assertIn(required, board)
-
-        self.assertIn("m55m1_tlv320dac3100_test_dmic_take_block", dmic_app)
-        self.assertNotIn("g_tone_block", dmic_app)
-        self.assertNotIn("UART0PF01_Init", dmic_app)
-
-        for required in (
-            "Standalone normal 16 kHz or 32 kHz DMIC-to-headphone passthrough test",
-            "m55m1_tlv320dac3100_test_board_init",
-            "tlv320dac3100_init(&config)",
-            "tlv320dac3100_start()",
-            "m55m1_tlv320dac3100_test_dmic_start",
-            "m55m1_tlv320dac3100_test_dmic_take_block",
-            "tlv320dac3100_submit_mono_block(g_dmic_block, sample_count)",
-            "TLV320DAC3100_STATUS_BUSY",
-            "@brief",
-        ):
-            self.assertIn(required, passthrough_app)
-
-        self.assertLess(
-            passthrough_app.index("tlv320dac3100_start()"),
-            passthrough_app.index("m55m1_tlv320dac3100_test_dmic_start"),
-        )
-        self.assertNotIn("UART_Open(", passthrough_app)
+            self.assertIn(" ".join(required.split()), " ".join(board.split()))
 
         self.assertIn("Bare-metal boot composition", diagnostic_app)
         self.assertIn("services/audio_pipeline/audio_pipeline.h", diagnostic_app)

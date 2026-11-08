@@ -33,11 +33,11 @@ class TensorFlowLibraryLayoutTests(unittest.TestCase):
         self.assertFalse(any(TENSORFLOW_ROOT.rglob("*.pdsc")))
         self.assertFalse((TENSORFLOW_ROOT / "runtime" / "examples").exists())
 
-    def test_model_free_build_disables_tflm_by_default(self):
-        """The PCM16 baseline must not pull a neural runtime into the target."""
+    def test_product_build_enables_tflm_by_default(self):
+        """The product image includes its controller runtime by default."""
         cmake = (REPO_ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
-        self.assertIn('option(M55M1_ENABLE_TFLM "Build and link TensorFlow Lite Micro with Ethos-U" OFF)', cmake)
-        self.assertIn('option(M55M1_ENABLE_TFLM "Build and link TensorFlow Lite Micro with Ethos-U" OFF)', cmake)
+        self.assertIn('option(M55M1_ENABLE_TFLM "Build and link TensorFlow Lite Micro with Ethos-U" ON)', cmake)
+        self.assertIn('option(M55M1_ENABLE_TFLM "Build and link TensorFlow Lite Micro with Ethos-U" ON)', cmake)
 
     def test_configured_build_excludes_the_cmsis_pack_timer_port(self):
         """M55M1 must not compile the Cortex-M generic RTE timer implementation."""

@@ -56,39 +56,61 @@ class DebugConfigurationTests(unittest.TestCase):
         self.assertNotIn('set(CMAKE_C_LINK_EXECUTABLE', toolchain)
         self.assertNotIn('set(CMAKE_C_ARCHIVE_CREATE', toolchain)
 
-    def test_cortex_debug_attach_is_flash_safe_and_launch_uses_the_same_override(self):
+    def test_cortex_debug_uses_nuvoton_openocd_and_separates_attach_from_flash(self):
         launch_path = REPO_ROOT / ".vscode" / "launch.json"
-        if not launch_path.is_file():
-            self.skipTest("machine-specific VS Code launch configuration is not tracked")
-
         launch = json.loads(launch_path.read_text(encoding="utf-8"))
         configs = {item["name"]: item for item in launch["configurations"]}
-        attach = configs["M55M1: Attach (WCH-Link)"]
-        launch_verified = configs["M55M1: Launch (WCH-Link, verified)"]
+        self.assertEqual(len(configs), 2)
 
-        self.assertEqual((attach["type"], attach["request"], attach["servertype"]), ("cortex-debug", "attach", "pyocd"))
-        self.assertEqual(attach["device"], "m55m1r2ljae")
-        self.assertNotIn("boardId", attach)
-        self.assertEqual(
-            attach["serverArgs"][0:2],
-            ["--probe", "0001A0000001"],
-        )
-        self.assertEqual(
-            attach["serverArgs"][2:4],
-            ["--target", "m55m1r2ljae"],
-        )
-        self.assertIn("--connect", attach["serverArgs"])
-        self.assertEqual(attach["serverArgs"][attach["serverArgs"].index("--connect") + 1], "attach")
-        self.assertNotIn("postAttachCommands", attach)
-        self.assertEqual(
-            attach["postStartSessionCommands"],
-            ["monitor reset halt sysresetreq", "tbreak main", "continue"],
-        )
-        self.assertIn("--script", attach["serverArgs"])
-        self.assertIn("${workspaceFolder}/tools/pyocd/m55m1r2ljae.py", attach["serverArgs"])
-        self.assertNotIn("loadFiles", attach)
-        self.assertEqual(launch_verified["request"], "launch")
-        self.assertEqual(launch_verified["serverArgs"], attach["serverArgs"])
+        for config in configs.values():
+            self.assertEqual(config["type"], "cortex-debug")
+            self.assertEqual(config["servertype"], "openocd")
+            self.assertEqual(config["configFiles"], ["${workspaceFolder}/tools/openocd/m55m1-ch549.cfg"])
+            self.assertEqual(config["serverpath"], "${workspaceFolder}/tools/openocd/.runtime/bin/openocd.exe")
+            self.assertNotIn("shutdown", json.dumps(config))
+            self.assertNotIn("poll off", json.dumps(config))
+
+        for prefix, image, task in (
+            ("", "build-debug/M55M1_GestureAI", "M55M1: Build Debug"),
+        ):
+            attach = configs[f"M55M1: {prefix}Attach (OpenOCD Nuvoton)"]
+            flash = configs[f"M55M1: {prefix}Flash + Debug (OpenOCD Nuvoton)"]
+            with self.subTest(image=image):
+                self.assertEqual(attach["request"], "attach")
+                self.assertEqual(attach["overrideAttachCommands"], ["monitor halt 1000"])
+                self.assertNotIn("preLaunchTask", attach)
+                self.assertNotIn("postStartSessionCommands", attach)
+                self.assertEqual(attach["executable"], f"${{workspaceFolder}}/{image}.axf")
+                self.assertEqual(flash["request"], "launch")
+                self.assertEqual(flash["preLaunchTask"], task)
+                self.assertEqual(flash["executable"], attach["executable"])
+                self.assertEqual(flash["loadFiles"], [])
+                self.assertEqual(flash["preLaunchCommands"], ["set remotetimeout 60"])
+                self.assertEqual(flash["overrideLaunchCommands"], [
+                    f"monitor m55m1_program {{{image}.bin}}", "monitor reset halt",
+                ])
+                self.assertEqual(flash["runToEntryPoint"], "main")
+
+    def test_flash_tasks_build_matching_images_and_the_server_stays_running(self):
+        launch = json.loads((REPO_ROOT / ".vscode/launch.json").read_text(encoding="utf-8"))
+        task_file = json.loads((REPO_ROOT / ".vscode/tasks.json").read_text(encoding="utf-8"))
+        tasks = {task["label"]: task for task in task_file["tasks"]}
+        for config in launch["configurations"]:
+            if "preLaunchTask" in config:
+                self.assertIn(config["preLaunchTask"], tasks)
+        for task in tasks.values():
+            if "dependsOn" in task:
+                self.assertIn(task["dependsOn"], tasks)
+        for profile, directory in [("Debug", "build-debug"), ("Release", "build")]:
+            task = tasks[f"M55M1: Flash {profile} (APROM, verify)"]
+            self.assertEqual(task["dependsOn"], f"M55M1: Build {profile}")
+            self.assertIn(f"m55m1_program {{${{workspaceFolder}}/{directory}/M55M1_GestureAI.bin}}", task["args"])
+            self.assertEqual(task["args"][-2:], ["-c", "shutdown"])
+        server = tasks["M55M1: OpenOCD gdbserver"]
+        self.assertNotIn("shutdown", json.dumps(server))
+        self.assertNotIn("poll off", json.dumps(server))
+        self.assertNotIn("pyocd", json.dumps(task_file).lower())
+        self.assertNotIn("pyocd", json.dumps(launch).lower())
 
 
 if __name__ == "__main__":

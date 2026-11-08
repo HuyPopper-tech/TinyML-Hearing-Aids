@@ -46,6 +46,7 @@ class FixedByteRingTests(unittest.TestCase):
             r"""
             #include <stdint.h>
             #include <string.h>
+            #include <assert.h>
 
             #include "common/fixed_byte_ring.h"
 
@@ -73,6 +74,28 @@ class FixedByteRingTests(unittest.TestCase):
                     if (!fixed_byte_ring_try_pop(&ring, &value) || value != expected[index]) return 6;
                 }
                 if (fixed_byte_ring_try_pop(&ring, &value)) return 7;
+
+                /* DMA must retain unread storage until completion, including wrap. */
+                fixed_byte_ring_init(&ring, storage, sizeof(storage));
+                assert(fixed_byte_ring_try_enqueue(&ring, first, sizeof(first)));
+                size_t length = 0;
+                const uint8_t *span = fixed_byte_ring_peek(&ring, &length);
+                assert(length == 6 && memcmp(span, first, 6) == 0);
+                assert(!fixed_byte_ring_try_enqueue(&ring, rejected, 3));
+                assert(!fixed_byte_ring_consume(&ring, 7));
+                assert(fixed_byte_ring_consume(&ring, 3));
+                assert(fixed_byte_ring_try_enqueue(&ring, wrapped, 4));
+                span = fixed_byte_ring_peek(&ring, &length);
+                const uint8_t end[] = {4, 5, 6, 10, 11};
+                assert(length == 5 && memcmp(span, end, 5) == 0);
+                assert(fixed_byte_ring_consume(&ring, length));
+                span = fixed_byte_ring_peek(&ring, &length);
+                assert(length == 2 && span[0] == 12 && span[1] == 13);
+                assert(fixed_byte_ring_consume(&ring, length));
+                assert(fixed_byte_ring_peek(&ring, &length) == NULL && length == 0);
+                assert(fixed_byte_ring_peek(NULL, &length) == NULL && length == 0);
+                assert(fixed_byte_ring_peek(&ring, NULL) == NULL);
+                assert(!fixed_byte_ring_consume(NULL, 1));
                 return 0;
             }
             """

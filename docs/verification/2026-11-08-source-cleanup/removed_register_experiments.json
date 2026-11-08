@@ -1,0 +1,38 @@
+[
+  {
+    "path": "tools/debug/apll1_hirc_compare.gdb",
+    "sha256": "d045c95c57591c5a004094d0d863fbd4cdfab33eebb15fa28c7bec738b8c88b4"
+  },
+  {
+    "path": "tools/debug/apll1_retry.gdb",
+    "sha256": "050d9a4d6188c0a555aef3d647e3b9044401e60ca09cd162f2946bf550409e65"
+  },
+  {
+    "path": "tools/debug/dmic_dc_input_test.gdb",
+    "sha256": "d0ad2f1065a3a6bbbd55266c36119b68923cb44b138535df2af53423b37a1feb"
+  },
+  {
+    "path": "tools/debug/dmic_snapshot.gdb",
+    "sha256": "c438b627d1c468577da56b89454fbd2f3b29da9ea405b8a0ac648a768541d6ac"
+  },
+  {
+    "path": "tools/debug/pa2_clock_high_test.gdb",
+    "sha256": "58cd348a8800f0bc6faebb64465fcada4c6319bec079e4e4634a0f6602891126"
+  },
+  {
+    "path": "tools/debug/pa2_weak_blink.gdb",
+    "sha256": "9d85372dfabed5dc4f5c5bb9f4df024d1cf3583ae3c8d92048f4f85b9800958f"
+  },
+  {
+    "path": "tests/test_apll1_retry_script.py",
+    "sha256": "479a96fc3db34ba56ffc303e153e36d6f907f77b504e2c08436e4547719c1cb3"
+  },
+  {
+    "path": "tests/test_dmic_dc_input_script.py",
+    "sha256": "c4b47fa9783286376ae62e7eeb101638bd075f09c0afa7d0a4afaf65428078b2"
+  },
+  {
+    "path": "tests/test_pa2_clock_high_script.py",
+    "sha256": "fbf11df621f0e8f9ee1a28724a759899c5406cc757c2653c8f1d02adcb2bfb47"
+  }
+]

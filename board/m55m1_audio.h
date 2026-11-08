@@ -16,7 +16,7 @@
 extern "C" {
 #endif
 
-#define M55M1_AUDIO_SAFE_MAX_GAIN_DB  (-3)
+#define M55M1_AUDIO_SAFE_MAX_GAIN_DB (-12)
 #ifndef M55M1_DMIC_GAIN_DB
 #define M55M1_DMIC_GAIN_DB 30
 #endif
@@ -81,11 +81,10 @@ typedef struct {
     uint32_t completed_cycle;
 } m55m1_audio_dmic_block_timing_t;
 
-typedef void (*m55m1_audio_board_progress_callback_t)(
-    m55m1_audio_board_stage_t stage, void *context);
+typedef void (*m55m1_audio_board_progress_callback_t)(m55m1_audio_board_stage_t stage,
+                                                      void *context);
 
-typedef void (*m55m1_audio_playback_irq_callback_t)(
-    uint32_t completed_cycle, void *context);
+typedef void (*m55m1_audio_playback_irq_callback_t)(uint32_t completed_cycle, void *context);
 
 /**
  * @brief Configure this PCB's clocks, pins, DMA and codec binding.
@@ -100,12 +99,9 @@ typedef void (*m55m1_audio_playback_irq_callback_t)(
  * Foreground-only before audio starts; binding/context remain valid for the active lifecycle.
  */
 m55m1_audio_board_init_result_t m55m1_audio_board_init(
-    m55m1_audio_profile_t profile,
-    m55m1_audio_playback_binding_t *binding,
-    m55m1_audio_playback_irq_callback_t playback_irq_callback,
-    void *playback_irq_context,
-    m55m1_audio_board_progress_callback_t progress_callback,
-    void *progress_context);
+    m55m1_audio_profile_t profile, m55m1_audio_playback_binding_t *binding,
+    m55m1_audio_playback_irq_callback_t playback_irq_callback, void *playback_irq_context,
+    m55m1_audio_board_progress_callback_t progress_callback, void *progress_context);
 
 /**
  * @brief Copy validated board clock values.
@@ -125,6 +121,16 @@ bool m55m1_audio_get_clock_snapshot(m55m1_audio_clock_snapshot_t *snapshot);
  */
 bool m55m1_audio_dmic_start(m55m1_audio_profile_t profile);
 
+/** Configure and clear capture while disabled, then enable beside the TX start.
+ * Foreground only. Shared APLL1 gives equal RX/TX sample rates; physical phase
+ * and FIFO lead must still be measured on the custom PCB. */
+bool m55m1_audio_dmic_prepare(m55m1_audio_profile_t profile);
+/**
+ * @brief Enable capture immediately beside TX start after successful prepare.
+ * @pre Foreground only, descriptors and IRQ are ready and transport is stopped.
+ */
+void m55m1_audio_dmic_enable(void);
+
 /**
  * @brief Quiesce DMIC capture, LPPDMA requests, and the capture IRQ.
  *
@@ -142,8 +148,7 @@ void m55m1_audio_dmic_stop(void);
  * Foreground-only; the DMA ISR remains the producer. The caller retains
  * ownership of destination.
  */
-bool m55m1_audio_dmic_take_block(
-    int16_t *destination, uint16_t sample_count);
+bool m55m1_audio_dmic_take_block(int16_t *destination, uint16_t sample_count);
 
 /**
  * @brief Copy a block and its capture tag.
@@ -154,10 +159,8 @@ bool m55m1_audio_dmic_take_block(
  *
  * Foreground-only. The caller retains ownership of both output buffers.
  */
-bool m55m1_audio_dmic_take_block_timed(
-    int16_t *destination,
-    uint16_t sample_count,
-    m55m1_audio_dmic_block_timing_t *timing);
+bool m55m1_audio_dmic_take_block_timed(int16_t *destination, uint16_t sample_count,
+                                       m55m1_audio_dmic_block_timing_t *timing);
 
 /**
  * @brief Check capture availability.

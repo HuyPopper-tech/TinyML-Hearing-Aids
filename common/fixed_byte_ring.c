@@ -4,8 +4,7 @@
  * @author Bui Minh Huy
  * @date 2026-07-29
  *
- * The foreground producer is the only writer of head. The UART ISR consumer is
- * the only writer of tail.
+ * The producer is the only writer of head; its single consumer owns tail.
  */
 
 #include "common/fixed_byte_ring.h"
@@ -16,13 +15,11 @@
  * bytes precede the release store of head; consumer acquires head before it
  * reads a byte, then releases tail only after the read completes.
  */
-#define FIXED_BYTE_RING_LOAD_ACQUIRE(pointer) \
-    __atomic_load_n((pointer), __ATOMIC_ACQUIRE)
-#define FIXED_BYTE_RING_LOAD_RELAXED(pointer) \
-    __atomic_load_n((pointer), __ATOMIC_RELAXED)
-#define FIXED_BYTE_RING_STORE_RELEASE(pointer, value) \
+#define FIXED_BYTE_RING_LOAD_ACQUIRE(pointer) __atomic_load_n((pointer), __ATOMIC_ACQUIRE)
+#define FIXED_BYTE_RING_LOAD_RELAXED(pointer) __atomic_load_n((pointer), __ATOMIC_RELAXED)
+#define FIXED_BYTE_RING_STORE_RELEASE(pointer, value)                                              \
     __atomic_store_n((pointer), (value), __ATOMIC_RELEASE)
-#define FIXED_BYTE_RING_STORE_RELAXED(pointer, value) \
+#define FIXED_BYTE_RING_STORE_RELAXED(pointer, value)                                              \
     __atomic_store_n((pointer), (value), __ATOMIC_RELAXED)
 
 void fixed_byte_ring_init(fixed_byte_ring_t *ring, uint8_t *storage, size_t capacity) {
@@ -44,14 +41,13 @@ size_t fixed_byte_ring_count(const fixed_byte_ring_t *ring) {
                     FIXED_BYTE_RING_LOAD_ACQUIRE(&ring->tail));
 }
 
-bool fixed_byte_ring_try_enqueue(
-    fixed_byte_ring_t *ring, const uint8_t *message, size_t length) {
+bool fixed_byte_ring_try_enqueue(fixed_byte_ring_t *ring, const uint8_t *message, size_t length) {
     uint32_t head;
     uint32_t tail;
     size_t index;
 
-    if ((ring == NULL) || (ring->storage == NULL) ||
-        ((message == NULL) && (length != 0U)) || (length > ring->capacity)) {
+    if ((ring == NULL) || (ring->storage == NULL) || ((message == NULL) && (length != 0U)) ||
+        (length > ring->capacity)) {
         return false;
     }
 
@@ -69,8 +65,7 @@ bool fixed_byte_ring_try_enqueue(
 }
 
 bool fixed_byte_ring_try_pop(fixed_byte_ring_t *ring, uint8_t *value) {
-    const uint32_t tail = (ring == NULL) ? 0U :
-        FIXED_BYTE_RING_LOAD_RELAXED(&ring->tail);
+    const uint32_t tail = (ring == NULL) ? 0U : FIXED_BYTE_RING_LOAD_RELAXED(&ring->tail);
 
     if ((ring == NULL) || (value == NULL) || (ring->storage == NULL) ||
         (tail == FIXED_BYTE_RING_LOAD_ACQUIRE(&ring->head))) {
@@ -79,5 +74,41 @@ bool fixed_byte_ring_try_pop(fixed_byte_ring_t *ring, uint8_t *value) {
 
     *value = ring->storage[tail % ring->capacity];
     FIXED_BYTE_RING_STORE_RELEASE(&ring->tail, tail + 1U);
+    return true;
+}
+
+const uint8_t *fixed_byte_ring_peek(const fixed_byte_ring_t *ring, size_t *length) {
+    uint32_t tail;
+    size_t available;
+    size_t index;
+
+    if (length == NULL) {
+        return NULL;
+    }
+    *length = 0U;
+    if ((ring == NULL) || (ring->storage == NULL) || (ring->capacity == 0U)) {
+        return NULL;
+    }
+    tail = FIXED_BYTE_RING_LOAD_RELAXED(&ring->tail);
+    available = (size_t)(FIXED_BYTE_RING_LOAD_ACQUIRE(&ring->head) - tail);
+    if (available == 0U) {
+        return NULL;
+    }
+    index = tail % ring->capacity;
+    *length = ring->capacity - index;
+    if (*length > available) {
+        *length = available;
+    }
+    return &ring->storage[index];
+}
+
+bool fixed_byte_ring_consume(fixed_byte_ring_t *ring, size_t length) {
+    uint32_t tail;
+
+    if ((ring == NULL) || (ring->storage == NULL) || (length > fixed_byte_ring_count(ring))) {
+        return false;
+    }
+    tail = FIXED_BYTE_RING_LOAD_RELAXED(&ring->tail);
+    FIXED_BYTE_RING_STORE_RELEASE(&ring->tail, tail + (uint32_t)length);
     return true;
 }

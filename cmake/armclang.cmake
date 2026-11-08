@@ -1,7 +1,7 @@
 # =============================================================================
 #  armclang.cmake - CMake toolchain file for Arm Compiler 6 (armclang/AC6)
 #  Target: Nuvoton M55M1 (Cortex-M55 + Helium MVE + FPU double-precision)
-#  Board:  NuMaker-GestureAI-M55M1 (M55M1R2LJAE, LQFP64)
+#  Board:  custom M55M1 PCB (M55M1R2LJAE, LQFP64)
 #
 #  SPDX-License-Identifier: Apache-2.0
 #

@@ -14,13 +14,12 @@
 extern "C" {
 #endif
 
-#define AUDIO_TRANSPORT_SAMPLE_RATE_HZ       16000UL
-#define AUDIO_TRANSPORT_SAMPLES_PER_BLOCK    16U
+#define AUDIO_TRANSPORT_SAMPLE_RATE_HZ 16000UL
+#define AUDIO_TRANSPORT_SAMPLES_PER_BLOCK 16U
 #ifndef M55M1_DMIC_GAIN_DB
 #define M55M1_DMIC_GAIN_DB 30
 #endif
 #define AUDIO_TRANSPORT_MICROPHONE_DSP_GAIN_DB M55M1_DMIC_GAIN_DB
-#define AUDIO_TRANSPORT_SAFE_MAX_GAIN_DB     (-3)
 
 typedef enum {
     AUDIO_TRANSPORT_STATUS_OK = 0,
@@ -72,6 +71,8 @@ typedef struct {
     uint32_t sequence;
     uint32_t capture_completed_cycle;
     uint32_t dac_completed_cycle;
+    /** Zero-based TX DMA slot since stream start; expected sequence + 1. */
+    uint32_t playback_slot;
 } audio_transport_completion_t;
 
 typedef struct {
@@ -81,9 +82,8 @@ typedef struct {
     uint32_t dac_dma_errors;
 } audio_transport_health_t;
 
-typedef void (*audio_transport_progress_callback_t)(
-    audio_transport_board_stage_t stage,
-    void *context);
+typedef void (*audio_transport_progress_callback_t)(audio_transport_board_stage_t stage,
+                                                    void *context);
 
 /**
  * @brief Bind the production board and optional codec transport.
@@ -95,10 +95,9 @@ typedef void (*audio_transport_progress_callback_t)(
  * Foreground-only before audio starts. The callback context remains caller-owned
  * and is retained only for the duration of this call.
  */
-bool audio_transport_init(
-    audio_transport_init_report_t *report,
-    audio_transport_progress_callback_t progress_callback,
-    void *progress_context);
+bool audio_transport_init(audio_transport_init_report_t *report,
+                          audio_transport_progress_callback_t progress_callback,
+                          void *progress_context);
 
 /**
  * @brief Start DMIC capture and, when enabled, DAC DMA.
@@ -125,9 +124,8 @@ void audio_transport_stop_safe(void);
  * Foreground-only; the ISR publishes blocks. Both destinations remain
  * caller-owned.
  */
-bool audio_transport_take_capture(
-    int16_t destination[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
-    audio_transport_capture_timing_t *timing);
+bool audio_transport_take_capture(int16_t destination[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
+                                  audio_transport_capture_timing_t *timing);
 
 /**
  * @brief Check for a completed capture block.
@@ -137,6 +135,12 @@ bool audio_transport_take_capture(
  */
 bool audio_transport_capture_pending(void);
 
+/** Foreground product Idle until an IRQ when capture/health have no pending work.
+ * Does not consume a block or change DMA ownership. Skips ISR/masked callers.
+ * Call only while the transport is running; diagnostic targets remain nonblocking.
+ */
+void audio_transport_wait_for_work(void);
+
 /**
  * @brief Submit one playback block.
  * @param samples Exact-size caller buffer copied before return.
@@ -144,8 +148,8 @@ bool audio_transport_capture_pending(void);
  *
  * Foreground-only and non-blocking. The caller may reuse samples after return.
  */
-audio_transport_status_t audio_transport_submit(
-    const int16_t samples[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK]);
+audio_transport_status_t
+audio_transport_submit(const int16_t samples[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK]);
 
 /**
  * @brief Submit playback with its prior capture source tag.
@@ -155,9 +159,9 @@ audio_transport_status_t audio_transport_submit(
  *
  * Foreground-only and non-blocking. Both inputs remain caller-owned.
  */
-audio_transport_status_t audio_transport_submit_tagged(
-    const int16_t samples[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
-    const audio_transport_block_tag_t *tag);
+audio_transport_status_t
+audio_transport_submit_tagged(const int16_t samples[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
+                              const audio_transport_block_tag_t *tag);
 
 /**
  * @brief Take one DAC completion tag.
@@ -189,9 +193,7 @@ uint32_t audio_transport_cycles_now(void);
  * @param end_cycle Later captured cycle value.
  * @return Unsigned elapsed cycles across at most one counter wrap.
  */
-uint32_t audio_transport_cycles_elapsed(
-    uint32_t start_cycle,
-    uint32_t end_cycle);
+uint32_t audio_transport_cycles_elapsed(uint32_t start_cycle, uint32_t end_cycle);
 
 /**
  * @brief Convert a cycle delta to microseconds.
@@ -202,8 +204,23 @@ uint32_t audio_transport_cycles_elapsed(
  */
 uint32_t audio_transport_cycles_to_us(uint32_t cycles);
 
+/**
+ * @brief Configured stack capacity.
+ * @return Bytes, or zero when stack instrumentation is unavailable.
+ * @note Foreground-only observation; not a proof of worst-case stack usage.
+ */
 uint32_t audio_transport_stack_configured_bytes(void);
+/**
+ * @brief Estimated painted-stack high-water usage.
+ * @return Bytes, or zero when stack instrumentation is unavailable.
+ * @note Foreground-only observation; not a proof of worst-case stack usage.
+ */
 uint32_t audio_transport_stack_high_water_bytes(void);
+/**
+ * @brief Estimated remaining painted-stack capacity.
+ * @return Bytes, or zero when stack instrumentation is unavailable.
+ * @note Foreground-only observation; not a proof of worst-case stack usage.
+ */
 uint32_t audio_transport_stack_headroom_bytes(void);
 
 #ifdef __cplusplus

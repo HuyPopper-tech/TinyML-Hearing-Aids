@@ -28,10 +28,9 @@ void m55m1_stack_monitor_init(void) {
     g_stack_base = (uint8_t *)base;
     g_stack_limit = (uint8_t *)limit;
     g_stack_high_water = 0U;
-    if ((limit > base) && (msp > base + M55M1_STACK_GUARD_BYTES) &&
-        (msp <= limit)) {
-        for (uintptr_t address = base;
-             address < msp - M55M1_STACK_GUARD_BYTES; ++address) {
+    if ((limit > base) && (msp > base + M55M1_STACK_GUARD_BYTES) && (msp <= limit)) {
+        // Leave the active stack frame and a guard untouched while painting unused space.
+        for (uintptr_t address = base; address < msp - M55M1_STACK_GUARD_BYTES; ++address) {
             *(uint8_t *)address = M55M1_STACK_PAINT;
         }
     }
@@ -43,8 +42,9 @@ void m55m1_stack_monitor_init(void) {
 }
 
 uint32_t m55m1_stack_configured_bytes(void) {
-    return (g_stack_base == NULL || g_stack_limit == NULL) ? 0U :
-        (uint32_t)(g_stack_limit - g_stack_base);
+    return (g_stack_base == NULL || g_stack_limit == NULL)
+               ? 0U
+               : (uint32_t)(g_stack_limit - g_stack_base);
 }
 
 uint32_t m55m1_stack_high_water_bytes(void) {
@@ -57,8 +57,7 @@ uint32_t m55m1_stack_high_water_bytes(void) {
     }
     const uint32_t configured = m55m1_stack_configured_bytes();
     const uint32_t untouched = (uint32_t)(cursor - g_stack_base);
-    g_stack_high_water = (configured > untouched) ?
-        (configured - untouched) : 0U;
+    g_stack_high_water = (configured > untouched) ? (configured - untouched) : 0U;
     return g_stack_high_water;
 }
 

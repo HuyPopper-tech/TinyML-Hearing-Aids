@@ -57,18 +57,15 @@ static uint16_t bounded_u16(uint32_t value) {
     return (value > UINT16_MAX) ? UINT16_MAX : (uint16_t)value;
 }
 
-static void record_sample(
-    uint16_t samples[AUDIO_TELEMETRY_INTERVAL_FRAMES],
-    uint16_t *count,
-    uint32_t value) {
+static void record_sample(uint16_t samples[AUDIO_TELEMETRY_INTERVAL_FRAMES], uint16_t *count,
+                          uint32_t value) {
     if (*count < AUDIO_TELEMETRY_INTERVAL_FRAMES) {
         samples[*count] = bounded_u16(value);
         ++(*count);
     }
 }
 
-static audio_telemetry_window_stats_t window_stats(
-    const uint16_t *samples, uint16_t count) {
+static audio_telemetry_window_stats_t window_stats(const uint16_t *samples, uint16_t count) {
     audio_telemetry_window_stats_t result = {0U, 0U, 0U, count, 0U};
     uint16_t sorted[AUDIO_TELEMETRY_INTERVAL_FRAMES];
 
@@ -152,8 +149,7 @@ static int32_t mean_int8(int64_t sum, uint32_t count) {
 }
 
 static uint32_t percentage(uint32_t numerator, uint32_t denominator) {
-    return (denominator == 0U) ? 0U :
-        (uint32_t)(((uint64_t)numerator * 100U) / denominator);
+    return (denominator == 0U) ? 0U : (uint32_t)(((uint64_t)numerator * 100U) / denominator);
 }
 
 static void clear_windows(void) {
@@ -233,18 +229,17 @@ void audio_telemetry_record_transport_us(uint32_t elapsed_us, uint32_t sequence)
     record_sample(g_transport_us, &g_transport_count, elapsed_us);
 }
 
-#define AUDIO_STATS_RANGE(field) \
-    do { \
-        if (!g_audio_window_valid || (stats->field##_min < g_audio_window.field##_min)) { \
-            g_audio_window.field##_min = stats->field##_min; \
-        } \
-        if (!g_audio_window_valid || (stats->field##_max > g_audio_window.field##_max)) { \
-            g_audio_window.field##_max = stats->field##_max; \
-        } \
+#define AUDIO_STATS_RANGE(field)                                                                   \
+    do {                                                                                           \
+        if (!g_audio_window_valid || (stats->field##_min < g_audio_window.field##_min)) {          \
+            g_audio_window.field##_min = stats->field##_min;                                       \
+        }                                                                                          \
+        if (!g_audio_window_valid || (stats->field##_max > g_audio_window.field##_max)) {          \
+            g_audio_window.field##_max = stats->field##_max;                                       \
+        }                                                                                          \
     } while (0)
 
-void audio_telemetry_record_audio_stats(
-    const audio_telemetry_audio_stats_t *stats) {
+void audio_telemetry_record_audio_stats(const audio_telemetry_audio_stats_t *stats) {
     if (stats == NULL) {
         return;
     }
@@ -296,22 +291,18 @@ void audio_telemetry_record_audio_stats(
     g_audio_window.gain_sum += stats->gain_sum;
     g_audio_window.gain_near_zero += stats->gain_near_zero;
     g_audio_window.gain_near_unity += stats->gain_near_unity;
-    g_audio_window.spectrum_input_energy_q30 +=
-        stats->spectrum_input_energy_q30;
-    g_audio_window.spectrum_output_energy_q30 +=
-        stats->spectrum_output_energy_q30;
+    g_audio_window.spectrum_input_energy_q30 += stats->spectrum_input_energy_q30;
+    g_audio_window.spectrum_output_energy_q30 += stats->spectrum_output_energy_q30;
     g_audio_window.ifft_energy_q30 += stats->ifft_energy_q30;
     g_audio_window.wola_energy_q30 += stats->wola_energy_q30;
     g_audio_window.ifft_sample_count += stats->ifft_sample_count;
     g_audio_window.wola_sample_count += stats->wola_sample_count;
     g_audio_window.bin_gain_count += stats->bin_gain_count;
     g_audio_window.bin_gain_sum_q15 += stats->bin_gain_sum_q15;
-    if (!g_audio_window_valid ||
-        (stats->bin_gain_min_q15 < g_audio_window.bin_gain_min_q15)) {
+    if (!g_audio_window_valid || (stats->bin_gain_min_q15 < g_audio_window.bin_gain_min_q15)) {
         g_audio_window.bin_gain_min_q15 = stats->bin_gain_min_q15;
     }
-    if (!g_audio_window_valid ||
-        (stats->bin_gain_max_q15 > g_audio_window.bin_gain_max_q15)) {
+    if (!g_audio_window_valid || (stats->bin_gain_max_q15 > g_audio_window.bin_gain_max_q15)) {
         g_audio_window.bin_gain_max_q15 = stats->bin_gain_max_q15;
     }
     if (stats->wola_peak_q15 > g_audio_window.wola_peak_q15) {
@@ -334,11 +325,9 @@ void audio_telemetry_boot(const audio_telemetry_boot_info_t *info) {
         "[BOOT] build=%s git=%s dirty=%lu hop=%lu frame=%lu "
         "core_hz=%lu dsp_mode=%s input_gain_db=%lu model_hash=%s model_bytes=%lu diagnostics=1\r\n",
         (info->build == NULL) ? "unknown" : info->build,
-        (info->git_rev == NULL) ? "unknown" : info->git_rev,
-        (unsigned long)info->git_dirty,
+        (info->git_rev == NULL) ? "unknown" : info->git_rev, (unsigned long)info->git_dirty,
         (unsigned long)info->hop_samples, (unsigned long)info->frame_samples,
-        (unsigned long)info->core_hz,
-        (info->dsp_mode == NULL) ? "unknown" : info->dsp_mode,
+        (unsigned long)info->core_hz, (info->dsp_mode == NULL) ? "unknown" : info->dsp_mode,
         (unsigned long)info->input_gain_db,
         (info->model_hash == NULL) ? "unknown" : info->model_hash,
         (unsigned long)info->model_bytes);
@@ -347,8 +336,7 @@ void audio_telemetry_boot(const audio_telemetry_boot_info_t *info) {
     }
 }
 
-void audio_telemetry_poll(
-    const audio_telemetry_snapshot_t *snapshot, bool dmic_block_pending) {
+void audio_telemetry_poll(const audio_telemetry_snapshot_t *snapshot, bool dmic_block_pending) {
     audio_telemetry_window_stats_t processing;
     audio_telemetry_window_stats_t invoke;
     audio_telemetry_window_stats_t e2e;
@@ -394,8 +382,7 @@ void audio_telemetry_poll(
         return;
     }
     if ((snapshot->frame_count == 0U) ||
-        ((snapshot->frame_count - g_last_snapshot_frame) <
-         AUDIO_TELEMETRY_INTERVAL_FRAMES)) {
+        ((snapshot->frame_count - g_last_snapshot_frame) < AUDIO_TELEMETRY_INTERVAL_FRAMES)) {
         return;
     }
 
@@ -408,46 +395,49 @@ void audio_telemetry_poll(
     wola = window_stats(g_wola_us, g_wola_count);
     transport = window_stats(g_transport_us, g_transport_count);
     audio = g_audio_window_valid ? &g_audio_window : &snapshot->audio;
-    input_rms = (audio->pcm_samples == 0U) ? 0U :
-        integer_sqrt_u64(audio->input_energy / audio->pcm_samples);
-    model_input_rms = (audio->pcm_samples == 0U) ? 0U :
-        integer_sqrt_u64(audio->model_input_energy / audio->pcm_samples);
-    output_rms = (audio->pcm_samples == 0U) ? 0U :
-        integer_sqrt_u64(audio->output_energy / audio->pcm_samples);
-    rms_ratio_milli = (input_rms == 0U) ? 0U :
-        (uint32_t)(((uint64_t)output_rms * 1000U) / input_rms);
-    active_mmac_s_x1000 = (invoke.sum == 0U) ? 0U :
-        (uint32_t)(((uint64_t)snapshot->macs_per_inference *
-                    invoke.count * 1000U) /
-                   invoke.sum);
-    stream_mmac_s_x1000 = (uint32_t)(
-        ((uint64_t)snapshot->macs_per_inference * 100U * 1000U + 500000U) /
-        1000000U);
-    duty_permille = (processing.count == 0U) ? 0U :
-        (uint32_t)((invoke.sum * 1000U) /
-                   ((uint64_t)processing.count * 10000U));
-    gain_min_milli = (audio->gain_count == 0U) ? 0U :
-        gain_q_to_milli(audio->gain_min);
-    gain_mean_milli = (audio->gain_count == 0U) ? 0U :
-        gain_q_to_milli(mean_int8(audio->gain_sum, audio->gain_count));
-    gain_max_milli = (audio->gain_count == 0U) ? 0U :
-        gain_q_to_milli(audio->gain_max);
-    dsp_valid = ((audio->bin_gain_count != 0U) &&
-                 (audio->ifft_sample_count != 0U) &&
-                 (audio->wola_sample_count != 0U)) ? 1U : 0U;
-    bin_gain_min_milli = (audio->bin_gain_count == 0U) ? 0U :
-        q15_to_milli(audio->bin_gain_min_q15);
-    bin_gain_mean_milli = (audio->bin_gain_count == 0U) ? 0U :
-        q15_to_milli(audio->bin_gain_sum_q15 / audio->bin_gain_count);
-    bin_gain_max_milli = (audio->bin_gain_count == 0U) ? 0U :
-        q15_to_milli(audio->bin_gain_max_q15);
-    spectrum_ratio_milli = sqrt_ratio_milli(
-        audio->spectrum_output_energy_q30,
-        audio->spectrum_input_energy_q30);
-    ifft_rms = (audio->ifft_sample_count == 0U) ? 0U :
-        integer_sqrt_u64(audio->ifft_energy_q30 / audio->ifft_sample_count);
-    wola_rms = (audio->wola_sample_count == 0U) ? 0U :
-        integer_sqrt_u64(audio->wola_energy_q30 / audio->wola_sample_count);
+    input_rms = (audio->pcm_samples == 0U)
+                    ? 0U
+                    : integer_sqrt_u64(audio->input_energy / audio->pcm_samples);
+    model_input_rms = (audio->pcm_samples == 0U)
+                          ? 0U
+                          : integer_sqrt_u64(audio->model_input_energy / audio->pcm_samples);
+    output_rms = (audio->pcm_samples == 0U)
+                     ? 0U
+                     : integer_sqrt_u64(audio->output_energy / audio->pcm_samples);
+    rms_ratio_milli =
+        (input_rms == 0U) ? 0U : (uint32_t)(((uint64_t)output_rms * 1000U) / input_rms);
+    active_mmac_s_x1000 =
+        (invoke.sum == 0U)
+            ? 0U
+            : (uint32_t)(((uint64_t)snapshot->macs_per_inference * invoke.count * 1000U) /
+                         invoke.sum);
+    stream_mmac_s_x1000 =
+        (uint32_t)(((uint64_t)snapshot->macs_per_inference * 100U * 1000U + 500000U) / 1000000U);
+    duty_permille = (processing.count == 0U)
+                        ? 0U
+                        : (uint32_t)((invoke.sum * 1000U) / ((uint64_t)processing.count * 10000U));
+    gain_min_milli = (audio->gain_count == 0U) ? 0U : gain_q_to_milli(audio->gain_min);
+    gain_mean_milli = (audio->gain_count == 0U)
+                          ? 0U
+                          : gain_q_to_milli(mean_int8(audio->gain_sum, audio->gain_count));
+    gain_max_milli = (audio->gain_count == 0U) ? 0U : gain_q_to_milli(audio->gain_max);
+    dsp_valid = ((audio->bin_gain_count != 0U) && (audio->ifft_sample_count != 0U) &&
+                 (audio->wola_sample_count != 0U))
+                    ? 1U
+                    : 0U;
+    bin_gain_min_milli = (audio->bin_gain_count == 0U) ? 0U : q15_to_milli(audio->bin_gain_min_q15);
+    bin_gain_mean_milli = (audio->bin_gain_count == 0U)
+                              ? 0U
+                              : q15_to_milli(audio->bin_gain_sum_q15 / audio->bin_gain_count);
+    bin_gain_max_milli = (audio->bin_gain_count == 0U) ? 0U : q15_to_milli(audio->bin_gain_max_q15);
+    spectrum_ratio_milli =
+        sqrt_ratio_milli(audio->spectrum_output_energy_q30, audio->spectrum_input_energy_q30);
+    ifft_rms = (audio->ifft_sample_count == 0U)
+                   ? 0U
+                   : integer_sqrt_u64(audio->ifft_energy_q30 / audio->ifft_sample_count);
+    wola_rms = (audio->wola_sample_count == 0U)
+                   ? 0U
+                   : integer_sqrt_u64(audio->wola_energy_q30 / audio->wola_sample_count);
 
     length = snprintf(
         g_message, sizeof(g_message),
@@ -470,78 +460,40 @@ void audio_telemetry_poll(
         "state2_q=%ld/%ld state_sat=%lu\r\n"
         "[DSP] valid=%lu bin_gain_milli=%lu/%lu/%lu spec_ratio_milli=%lu "
         "ifft_rms=%lu wola_rms=%lu wola_peak=%lu\r\n",
-        (unsigned long)snapshot->frame_count,
-        (unsigned long)fft.average,
-        (unsigned long)fft.maximum,
-        (unsigned long)fft.p99,
-        (unsigned long)feature.average,
-        (unsigned long)feature.maximum,
-        (unsigned long)feature.p99,
-        (unsigned long)invoke.average,
-        (unsigned long)invoke.maximum,
-        (unsigned long)invoke.p99,
-        (unsigned long)df.average,
-        (unsigned long)df.maximum,
-        (unsigned long)df.p99,
-        (unsigned long)wola.average,
-        (unsigned long)wola.maximum,
-        (unsigned long)wola.p99,
-        (unsigned long)e2e.average,
-        (unsigned long)e2e.maximum,
-        (unsigned long)e2e.p99,
-        (unsigned long)transport.average,
-        (unsigned long)transport.maximum,
-        (unsigned long)transport.p99,
-        (unsigned long)processing.average,
-        (unsigned long)processing.maximum,
-        (unsigned long)processing.p99,
-        (unsigned long)e2e.count,
-        (unsigned long)transport.count,
-        (unsigned long)g_e2e_gap_count,
-        (unsigned long)g_transport_gap_count,
-        (unsigned long)g_e2e_over_limit_count,
-        (unsigned long)snapshot->unity_fallback,
-        (unsigned long)snapshot->deadline_miss,
-        (unsigned long)snapshot->dmic_overrun,
-        (unsigned long)snapshot->dmic_dma_error,
-        (unsigned long)snapshot->dac_busy,
-        (unsigned long)snapshot->dac_underrun,
-        (unsigned long)snapshot->dac_dma_error,
-        (unsigned long)snapshot->npu_error,
-        (unsigned long)snapshot->fault_injected,
+        (unsigned long)snapshot->frame_count, (unsigned long)fft.average,
+        (unsigned long)fft.maximum, (unsigned long)fft.p99, (unsigned long)feature.average,
+        (unsigned long)feature.maximum, (unsigned long)feature.p99, (unsigned long)invoke.average,
+        (unsigned long)invoke.maximum, (unsigned long)invoke.p99, (unsigned long)df.average,
+        (unsigned long)df.maximum, (unsigned long)df.p99, (unsigned long)wola.average,
+        (unsigned long)wola.maximum, (unsigned long)wola.p99, (unsigned long)e2e.average,
+        (unsigned long)e2e.maximum, (unsigned long)e2e.p99, (unsigned long)transport.average,
+        (unsigned long)transport.maximum, (unsigned long)transport.p99,
+        (unsigned long)processing.average, (unsigned long)processing.maximum,
+        (unsigned long)processing.p99, (unsigned long)e2e.count, (unsigned long)transport.count,
+        (unsigned long)g_e2e_gap_count, (unsigned long)g_transport_gap_count,
+        (unsigned long)g_e2e_over_limit_count, (unsigned long)snapshot->unity_fallback,
+        (unsigned long)snapshot->deadline_miss, (unsigned long)snapshot->dmic_overrun,
+        (unsigned long)snapshot->dmic_dma_error, (unsigned long)snapshot->dac_busy,
+        (unsigned long)snapshot->dac_underrun, (unsigned long)snapshot->dac_dma_error,
+        (unsigned long)snapshot->npu_error, (unsigned long)snapshot->fault_injected,
         (unsigned long)snapshot->parity_max_pcm_difference,
-        (unsigned long)snapshot->parity_violation_count,
-        (unsigned long)debug_uart_tx_drop_count(),
-        (unsigned long)snapshot->macs_per_inference,
-        (unsigned long)snapshot->npu_operator_count,
-        (unsigned long)snapshot->cpu_operator_count,
-        (unsigned long)active_mmac_s_x1000,
-        (unsigned long)stream_mmac_s_x1000,
-        (unsigned long)duty_permille,
-        (unsigned long)snapshot->invoke_count,
-        (unsigned long)snapshot->model_flash_bytes,
-        (unsigned long)snapshot->arena_used_bytes,
-        (unsigned long)snapshot->arena_capacity_bytes,
-        (unsigned long)snapshot->dsp_static_bytes,
-        (unsigned long)snapshot->stack_configured_bytes,
-        (unsigned long)audio->frames,
-        (unsigned long)audio->input_peak,
-        (unsigned long)input_rms,
-        (unsigned long)audio->input_clip_count,
-        (unsigned long)audio->model_input_peak,
-        (unsigned long)model_input_rms,
-        (unsigned long)audio->model_input_clip_count,
-        (unsigned long)audio->output_peak,
-        (unsigned long)output_rms,
-        (unsigned long)audio->output_clip_count,
-        (unsigned long)rms_ratio_milli,
+        (unsigned long)snapshot->parity_violation_count, (unsigned long)debug_uart_tx_drop_count(),
+        (unsigned long)snapshot->macs_per_inference, (unsigned long)snapshot->npu_operator_count,
+        (unsigned long)snapshot->cpu_operator_count, (unsigned long)active_mmac_s_x1000,
+        (unsigned long)stream_mmac_s_x1000, (unsigned long)duty_permille,
+        (unsigned long)snapshot->invoke_count, (unsigned long)snapshot->model_flash_bytes,
+        (unsigned long)snapshot->arena_used_bytes, (unsigned long)snapshot->arena_capacity_bytes,
+        (unsigned long)snapshot->dsp_static_bytes, (unsigned long)snapshot->stack_configured_bytes,
+        (unsigned long)audio->frames, (unsigned long)audio->input_peak, (unsigned long)input_rms,
+        (unsigned long)audio->input_clip_count, (unsigned long)audio->model_input_peak,
+        (unsigned long)model_input_rms, (unsigned long)audio->model_input_clip_count,
+        (unsigned long)audio->output_peak, (unsigned long)output_rms,
+        (unsigned long)audio->output_clip_count, (unsigned long)rms_ratio_milli,
         (long)((audio->feature_count == 0U) ? 0 : audio->feature_min),
         (long)mean_int8(audio->feature_sum, audio->feature_count),
         (long)((audio->feature_count == 0U) ? 0 : audio->feature_max),
-        (unsigned long)audio->feature_sat_low,
-        (unsigned long)audio->feature_sat_high,
-        (unsigned long)gain_min_milli,
-        (unsigned long)gain_mean_milli,
+        (unsigned long)audio->feature_sat_low, (unsigned long)audio->feature_sat_high,
+        (unsigned long)gain_min_milli, (unsigned long)gain_mean_milli,
         (unsigned long)gain_max_milli,
         (unsigned long)percentage(audio->gain_near_zero, audio->gain_count),
         (unsigned long)percentage(audio->gain_near_unity, audio->gain_count),
@@ -549,17 +501,11 @@ void audio_telemetry_poll(
         (long)((audio->gain_count == 0U) ? 0 : audio->state1_max),
         (long)((audio->gain_count == 0U) ? 0 : audio->state2_min),
         (long)((audio->gain_count == 0U) ? 0 : audio->state2_max),
-        (unsigned long)audio->state_sat_count,
-        (unsigned long)dsp_valid,
-        (unsigned long)bin_gain_min_milli,
-        (unsigned long)bin_gain_mean_milli,
-        (unsigned long)bin_gain_max_milli,
-        (unsigned long)spectrum_ratio_milli,
-        (unsigned long)ifft_rms,
-        (unsigned long)wola_rms,
-        (unsigned long)audio->wola_peak_q15);
-    if (snapshot->diagnostics_enabled != 0U &&
-        length > 0 && (size_t)length < sizeof(g_message)) {
+        (unsigned long)audio->state_sat_count, (unsigned long)dsp_valid,
+        (unsigned long)bin_gain_min_milli, (unsigned long)bin_gain_mean_milli,
+        (unsigned long)bin_gain_max_milli, (unsigned long)spectrum_ratio_milli,
+        (unsigned long)ifft_rms, (unsigned long)wola_rms, (unsigned long)audio->wola_peak_q15);
+    if (snapshot->diagnostics_enabled != 0U && length > 0 && (size_t)length < sizeof(g_message)) {
         length += snprintf(
             g_message + length, sizeof(g_message) - (size_t)length,
             "[DFN] complex_q=%ld/%ld/%lu gain_q=%ld/%ld/%lu "
@@ -568,43 +514,31 @@ void audio_telemetry_poll(
             "enc0_q=%ld/%ld/%lu enc1_q=%ld/%ld/%lu enc2_q=%ld/%ld/%lu "
             "df0_q=%ld/%ld/%lu df1_q=%ld/%ld/%lu\r\n",
             (long)audio->complex_min, (long)audio->complex_max,
-            (unsigned long)audio->complex_sat_count,
-            (long)audio->gain_min, (long)audio->gain_max,
-            (unsigned long)audio->gain_sat_count,
-            (long)audio->df_min, (long)audio->df_max,
-            (unsigned long)audio->df_sat_count,
-            (long)audio->alpha_min, (long)audio->alpha_max,
-            (unsigned long)audio->alpha_sat_count,
-            (long)audio->erb_cache_min, (long)audio->erb_cache_max,
-            (unsigned long)audio->erb_cache_sat_count,
+            (unsigned long)audio->complex_sat_count, (long)audio->gain_min, (long)audio->gain_max,
+            (unsigned long)audio->gain_sat_count, (long)audio->df_min, (long)audio->df_max,
+            (unsigned long)audio->df_sat_count, (long)audio->alpha_min, (long)audio->alpha_max,
+            (unsigned long)audio->alpha_sat_count, (long)audio->erb_cache_min,
+            (long)audio->erb_cache_max, (unsigned long)audio->erb_cache_sat_count,
             (long)audio->complex_cache_min, (long)audio->complex_cache_max,
-            (unsigned long)audio->complex_cache_sat_count,
-            (long)audio->enc0_min, (long)audio->enc0_max,
-            (unsigned long)audio->enc0_sat_count,
-            (long)audio->enc1_min, (long)audio->enc1_max,
-            (unsigned long)audio->enc1_sat_count,
-            (long)audio->enc2_min, (long)audio->enc2_max,
-            (unsigned long)audio->enc2_sat_count,
-            (long)audio->df0_min, (long)audio->df0_max,
-            (unsigned long)audio->df0_sat_count,
-            (long)audio->df1_min, (long)audio->df1_max,
-            (unsigned long)audio->df1_sat_count);
+            (unsigned long)audio->complex_cache_sat_count, (long)audio->enc0_min,
+            (long)audio->enc0_max, (unsigned long)audio->enc0_sat_count, (long)audio->enc1_min,
+            (long)audio->enc1_max, (unsigned long)audio->enc1_sat_count, (long)audio->enc2_min,
+            (long)audio->enc2_max, (unsigned long)audio->enc2_sat_count, (long)audio->df0_min,
+            (long)audio->df0_max, (unsigned long)audio->df0_sat_count, (long)audio->df1_min,
+            (long)audio->df1_max, (unsigned long)audio->df1_sat_count);
         if (length > 0 && (size_t)length < sizeof(g_message)) {
-            length += snprintf(
-                g_message + length, sizeof(g_message) - (size_t)length,
-                "[STACK] cfg=%lu high_water=%lu headroom=%lu gate=%s\r\n",
-                (unsigned long)snapshot->stack_configured_bytes,
-                (unsigned long)snapshot->stack_high_water_bytes,
-                (unsigned long)snapshot->stack_headroom_bytes,
-                (snapshot->stack_headroom_bytes >= 2048U) ? "pass" : "pending");
+            length += snprintf(g_message + length, sizeof(g_message) - (size_t)length,
+                               "[STACK] cfg=%lu high_water=%lu headroom=%lu gate=%s\r\n",
+                               (unsigned long)snapshot->stack_configured_bytes,
+                               (unsigned long)snapshot->stack_high_water_bytes,
+                               (unsigned long)snapshot->stack_headroom_bytes,
+                               (snapshot->stack_headroom_bytes >= 2048U) ? "pass" : "pending");
         }
     }
-    if ((snapshot->diagnostics_enabled == 0U) &&
-        (length > 0) && ((size_t)length < sizeof(g_message))) {
-        length += snprintf(g_message + length,
-                           sizeof(g_message) - (size_t)length,
-                           "e2e_16ms=%lu\r\n",
-                           (unsigned long)g_e2e_over_limit_count);
+    if ((snapshot->diagnostics_enabled == 0U) && (length > 0) &&
+        ((size_t)length < sizeof(g_message))) {
+        length += snprintf(g_message + length, sizeof(g_message) - (size_t)length,
+                           "e2e_16ms=%lu\r\n", (unsigned long)g_e2e_over_limit_count);
     }
     if ((length <= 0) || ((size_t)length >= sizeof(g_message))) {
         return;
@@ -619,9 +553,8 @@ void audio_telemetry_poll(
 }
 
 void audio_telemetry_fatal(const char *stage, int status) {
-    const int length = snprintf(
-        g_message, sizeof(g_message), "[FAIL] %s (status=%d)\r\n",
-        (stage == NULL) ? "unknown" : stage, status);
+    const int length = snprintf(g_message, sizeof(g_message), "[FAIL] %s (status=%d)\r\n",
+                                (stage == NULL) ? "unknown" : stage, status);
 
     if ((length > 0) && ((size_t)length < sizeof(g_message))) {
         (void)debug_uart_tx_try_enqueue(g_message, (size_t)length);
