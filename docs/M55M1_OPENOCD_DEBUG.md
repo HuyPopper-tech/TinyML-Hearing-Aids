@@ -34,8 +34,10 @@ Arm Compiler 6 remains the firmware compiler.
 
 | Run and Debug profile | Behavior |
 | --- | --- |
-| M55M1: Flash + Debug (OpenOCD Nuvoton) | Builds the custom product Debug image, programs/verifies `build-debug/M55M1_GestureAI.bin`, resets and stops at `main`. |
-| M55M1: Attach (OpenOCD Nuvoton) | Halts the existing custom product image using `build-debug/M55M1_GestureAI.axf`; no build, flash or automatic reset. |
+| M55M1: Debug: Flash + Debug (OpenOCD Nuvoton) | Builds the custom product Debug image, programs/verifies `build-debug/M55M1_GestureAI.bin`, resets and stops at `main`. |
+| M55M1: Debug: Attach (OpenOCD Nuvoton) | Halts the existing custom product image using `build-debug/M55M1_GestureAI.axf`; no build, flash or automatic reset. |
+| M55M1: Release: Flash + Debug (OpenOCD Nuvoton) | Builds the custom product Release image, programs/verifies `build/M55M1_GestureAI.bin`, resets and stops at `main`. |
+| M55M1: Release: Attach (OpenOCD Nuvoton) | Halts the existing custom product image using `build/M55M1_GestureAI.axf`; no build, flash or automatic reset. |
 
 Choose a profile and press F5. Cortex-Debug starts and owns its OpenOCD process;
 do not start a second server task against the same probe. The server stays alive
@@ -44,8 +46,9 @@ Stop ends the debug session and its server. Attach symbols must match the image
 already in flash; using a different build AXF gives
 incorrect source information.
 
-Only the two main Flash + Debug / Attach profiles remain. Both use the custom
-PCB product image; Debug and Release are the only build configurations.
+The Run and Debug selector contains Debug and Release variants of Flash + Debug
+and Attach. Both build configurations use the same custom PCB and OpenOCD target.
+Release optimization can limit stepping and variable visibility.
 Do not flash without separate authorization. See `docs/r2_custom_integration.md`.
 
 The **Flash Debug/Release (APROM, verify)** tasks build the corresponding profile,
@@ -60,9 +63,9 @@ Use **Terminal > Run Task** for these two programming choices:
 | M55M1: Flash Debug (APROM, verify) | `build-debug/` | `build-debug/M55M1_GestureAI.bin` |
 | M55M1: Flash Release (APROM, verify) | `build/` | `build/M55M1_GestureAI.bin` |
 
-Both tasks use the same pinned CH549/Nuvoton configuration. F5 uses the Debug
-AXF for source debugging; the Release programming task does not depend on Debug
-symbols. The obsolete per-diagnostic build profiles and root build directories
+Both tasks use the same pinned CH549/Nuvoton configuration. F5 uses the AXF and
+BIN of the selected Debug or Release launch profile. Programming tasks only use
+the corresponding BIN. The obsolete per-diagnostic build profiles and root build directories
 were removed during the R2 integration; their evidence is preserved under
 `diagnostics/r2_custom_integration_20261108_105000/obsolete_build_evidence.zip`.
 The memory-only recovery configuration is retained. Obsolete `tools/debug/`

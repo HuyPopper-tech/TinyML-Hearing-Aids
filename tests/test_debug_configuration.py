@@ -60,7 +60,7 @@ class DebugConfigurationTests(unittest.TestCase):
         launch_path = REPO_ROOT / ".vscode" / "launch.json"
         launch = json.loads(launch_path.read_text(encoding="utf-8"))
         configs = {item["name"]: item for item in launch["configurations"]}
-        self.assertEqual(len(configs), 2)
+        self.assertEqual(len(configs), 4)
 
         for config in configs.values():
             self.assertEqual(config["type"], "cortex-debug")
@@ -71,7 +71,8 @@ class DebugConfigurationTests(unittest.TestCase):
             self.assertNotIn("poll off", json.dumps(config))
 
         for prefix, image, task in (
-            ("", "build-debug/M55M1_GestureAI", "M55M1: Build Debug"),
+            ("Debug: ", "build-debug/M55M1_GestureAI", "M55M1: Build Debug"),
+            ("Release: ", "build/M55M1_GestureAI", "M55M1: Build Release"),
         ):
             attach = configs[f"M55M1: {prefix}Attach (OpenOCD Nuvoton)"]
             flash = configs[f"M55M1: {prefix}Flash + Debug (OpenOCD Nuvoton)"]

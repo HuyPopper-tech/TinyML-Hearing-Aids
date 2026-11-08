@@ -108,24 +108,26 @@ foreach call $calls {echo "CALL:[join $call |]"}
 
     def test_cortex_monitor_image_resolves_without_windows_path_escaping(self):
         launch = json.loads((REPO_ROOT / ".vscode/launch.json").read_text(encoding="utf-8"))
-        config = next(c for c in launch["configurations"]
-                      if c["name"] == "M55M1: Flash + Debug (OpenOCD Nuvoton)")
-        self.assertEqual(config["cwd"], "${workspaceFolder}")
-        command = config["overrideLaunchCommands"][0]
-        match = re.fullmatch(r"monitor m55m1_program \{(.+)\}", command)
-        self.assertIsNotNone(match, command)
-        image_name = match.group(1)
-        self.assertNotIn("${", image_name, "workspace expansion introduces Windows backslashes into GDB MI")
-        self.assertNotIn("\\", image_name)
-        self.assertFalse(Path(image_name).is_absolute())
-        with tempfile.TemporaryDirectory(prefix="OpenOCD workspace with spaces ") as temporary:
-            working = Path(temporary)
-            image = working / image_name
-            image.parent.mkdir(parents=True)
-            image.write_bytes(b"\x00" * 8)
-            output, calls = self.run_program(Path(image_name), cwd=working)
-        self.assertIn("RESULT:0:", output)
-        self.assertEqual(calls[-1], f"verify|{image_name}|0x00100000|bin")
+        configs = [c for c in launch["configurations"] if c["request"] == "launch"]
+        self.assertEqual(len(configs), 2)
+        for config in configs:
+            with self.subTest(profile=config["name"]):
+                self.assertEqual(config["cwd"], "${workspaceFolder}")
+                command = config["overrideLaunchCommands"][0]
+                match = re.fullmatch(r"monitor m55m1_program \{(.+)\}", command)
+                self.assertIsNotNone(match, command)
+                image_name = match.group(1)
+                self.assertNotIn("${", image_name, "workspace expansion introduces Windows backslashes into GDB MI")
+                self.assertNotIn("\\", image_name)
+                self.assertFalse(Path(image_name).is_absolute())
+                with tempfile.TemporaryDirectory(prefix="OpenOCD workspace with spaces ") as temporary:
+                    working = Path(temporary)
+                    image = working / image_name
+                    image.parent.mkdir(parents=True)
+                    image.write_bytes(b"\x00" * 8)
+                    output, calls = self.run_program(Path(image_name), cwd=working)
+                self.assertIn("RESULT:0:", output)
+                self.assertEqual(calls[-1], f"verify|{image_name}|0x00100000|bin")
 
     def test_writes_only_aprom_and_verifies_before_reporting_success(self):
         with tempfile.TemporaryDirectory(prefix="firmware with spaces ") as temporary:
