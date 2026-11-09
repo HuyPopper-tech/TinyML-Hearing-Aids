@@ -76,10 +76,10 @@ not evidence of the Release 1 ms deadline or measured power.
 | Run and Debug profile | Behavior |
 | --- | --- |
 | M55M1: Debug: Flash + Debug (OpenOCD Nuvoton) | Builds the custom product Debug image, programs/verifies `build-debug/M55M1_GestureAI.bin`, resets and stops at `main`. |
-| M55M1: Debug: Attach (OpenOCD Nuvoton) | Halts the existing custom product image using `build-debug/M55M1_GestureAI.axf`; no build, flash or automatic reset. |
+| M55M1: Debug: Attach (OpenOCD Nuvoton) | Resets the existing image through OpenOCD, then runs to a temporary hardware breakpoint at `main`, using `build-debug/M55M1_GestureAI.axf`; no build or flash. |
 | M55M1: Release: Flash + Debug (OpenOCD Nuvoton) | Builds the custom product Release image, programs/verifies `build/M55M1_GestureAI.bin`, resets and stops at `main`. |
 | M55M1: Release Probe: Flash + Debug (OpenOCD Nuvoton) | Configures Release, enables the finite timing probe, builds without reconfiguration, programs/verifies `build/M55M1_GestureAI.bin` and stops at `main`. |
-| M55M1: Release: Attach (OpenOCD Nuvoton) | Halts the existing custom product image using `build/M55M1_GestureAI.axf`; no build, flash or automatic reset. |
+| M55M1: Release: Attach (OpenOCD Nuvoton) | Resets the existing image through OpenOCD, then runs to a temporary hardware breakpoint at `main`, using `build/M55M1_GestureAI.axf`; no build or flash. |
 
 Choose a profile and press F5. Cortex-Debug starts and owns its OpenOCD process;
 do not start a second server task against the same probe. The server stays alive
@@ -87,6 +87,16 @@ during debugging. Use Continue, Pause, Step, Breakpoints and the Registers pane.
 Stop ends the debug session and its server. Attach symbols must match the image
 already in flash; using a different build AXF gives
 incorrect source information.
+
+Both Attach profiles restart execution: they do not preserve a running audio
+session. Cortex-Debug 1.12.1 ignores `runToEntryPoint` for Attach, so the profiles
+use `monitor reset halt`, followed after session startup by `thbreak main` and
+`continue`. Once stopped at main, open UART and Continue to capture Debug boot
+logs. Ordinary Release keeps UART disabled; stopping at main does not enable it.
+The probe has no nRESET: this is the existing OpenOCD software-reset mechanism,
+not physical reset. If software reset fails, power-cycle the whole board; do not
+assume codec/external peripherals have been power-reset. The updated Attach
+sequence has configuration regression coverage but still requires a board test.
 
 The Run and Debug selector contains Debug/Release Flash + Debug and Attach, plus
 Release Probe Flash + Debug. All use the same custom PCB and OpenOCD target.

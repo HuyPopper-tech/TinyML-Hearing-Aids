@@ -78,9 +78,11 @@ class DebugConfigurationTests(unittest.TestCase):
             flash = configs[f"M55M1: {prefix}Flash + Debug (OpenOCD Nuvoton)"]
             with self.subTest(image=image):
                 self.assertEqual(attach["request"], "attach")
-                self.assertEqual(attach["overrideAttachCommands"], ["monitor halt 1000"])
+                self.assertEqual(attach["overrideAttachCommands"], ["monitor reset halt"])
                 self.assertNotIn("preLaunchTask", attach)
-                self.assertNotIn("postStartSessionCommands", attach)
+                self.assertEqual(attach["postStartSessionCommands"], ["thbreak main", "continue"])
+                self.assertNotIn("runToEntryPoint", attach, "Cortex-Debug ignores it for Attach")
+                self.assertNotIn("postAttachCommands", attach, "Resume only after session startup")
                 self.assertEqual(attach["executable"], f"${{workspaceFolder}}/{image}.axf")
                 self.assertEqual(flash["request"], "launch")
                 self.assertEqual(flash["preLaunchTask"], task)

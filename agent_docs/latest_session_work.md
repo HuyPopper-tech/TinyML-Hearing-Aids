@@ -1,5 +1,15 @@
 # Latest Session Work
 
+## Latest: Attach startup correction — 2026-11-09
+
+Both Debug and Release Attach previously only halted the current PC, so neither
+guaranteed main or initial logs. Both now use software `monitor reset halt`, then
+post-session `thbreak main`/`continue`. Cortex-Debug1.12.1 ignores runToEntryPoint
+for Attach; it is deliberately absent. No build/flash in Attach; match the AXF
+to the flashed image. Ordinary Release UART remains off. All135 tests PASS,
+diff check PASS. No binary rebuild or device operations; live retest NOT_RUN.
+See docs/verification/2026-11-09-attach-main.md and the updated OpenOCD guide.
+
 ## Latest: codec I2C init failure after Debug flash — 2026-11-09
 
 User reports board_status=0, BUS_FREE, valid clocks, codec_status=5. Board

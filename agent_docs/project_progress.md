@@ -1,5 +1,14 @@
 # Project Progress
 
+## Attach startup correction — 2026-11-09
+
+Debug and Release Attach now software-reset/halt, then execute temporary hardware
+break at main and Continue after session startup. This replaces halt-at-current-
+PC behavior; Attach does not build/flash. Installed Cortex-Debug1.12.1 ignores
+runToEntryPoint for Attach. Ordinary Release UART remains off.135 tests PASS,
+diff check PASS; live board validation NOT_RUN, no image rebuild/device action.
+Evidence: docs/verification/2026-11-09-attach-main.md.
+
 ## Codec I2C boot diagnosis — 2026-11-09
 
 New user Debug log reports board_status=0/BUS_FREE and codec_status=5/I2C_ERROR;
