@@ -1,5 +1,27 @@
 # Project Progress
 
+## Codec I2C boot diagnosis — 2026-11-09
+
+New user Debug log reports board_status=0/BUS_FREE and codec_status=5/I2C_ERROR;
+this is a later codec transaction failure, distinct from board I2C_STUCK=5.
+The exact failing byte and flashed image hash were not in the supplied log.
+Native testing reproduced a source defect: START could overlap pending STOP.
+The codec writer now bounds/waits STOP at entry and completion, snapshots the
+failed byte before abort, and preserves an independent STOP-timeout flag.
+Transport copies diagnostics to stopped Debug `[CODEC_I2C]` UART output.
+No model/DSP, pins/clocks/DMA, codec script/gain/settle, package or libs changes.
+
+Verified 135 tests PASS/no skips (15 codec register-model scenarios, actual
+transport diagnostic copy and Debug logging), Arm6.24 Debug/Release/Probe build
+PASS, both optimized nine-range MVE checks PASS, diff check PASS.
+Debug BIN644512B SHA4a1e46164be0252116174b805b65560eb1d1b3b4cc5d4b8779583da827c1b360;
+Release619392B SHA5920f75e343c846786e7a0678e1586837b823cfa6fad1b68fff4c62944515df2.
+Probe626400B SHAa4ea2a22320a8a6d3a245d3ca920ea7582eb788d53bbc02cf920d433f6f4de8b.
+Ordinary Release UART/diagnostic opt-ins OFF; editor Debug. No device operations.
+The physical intermittent cause and revised-image board/timing/soak remain
+unverified; earlier 60000-hop timing does not attest these new images.
+Evidence/commands/maps/next steps: docs/verification/2026-11-09-codec-i2c-init/.
+
 ## Continuous product finalization — 2026-11-09
 
 Current result supersedes the earlier startup-fault snapshots below. User-supplied

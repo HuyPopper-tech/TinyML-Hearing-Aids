@@ -1,0 +1,17 @@
+[
+  {
+    "file": "M55M1_GestureAI.bin",
+    "bytes": 644512,
+    "sha256": "4a1e46164be0252116174b805b65560eb1d1b3b4cc5d4b8779583da827c1b360"
+  },
+  {
+    "file": "M55M1_GestureAI.axf",
+    "bytes": 3527416,
+    "sha256": "818407d44fb58d118c6f1918c7fa0271a26d67b47cad46726b93452a550d2db4"
+  },
+  {
+    "file": "M55M1_GestureAI.axf.map",
+    "bytes": 3814906,
+    "sha256": "af5bef2e99f53640667bc71b22fbdb41f5509161c4337a51f80aed0b6222299c"
+  }
+]

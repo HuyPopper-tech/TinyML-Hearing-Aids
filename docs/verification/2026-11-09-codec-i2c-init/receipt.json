@@ -1,0 +1,94 @@
+{
+  "base_commit": "029cd184ae4b55b3b549e72d97364b4ded69d432",
+  "source_sha256": {
+    "drivers/tlv320dac3100/tlv320dac3100.c": "13352a6b79afe3b5a5cd88065df151a22d02cd06e63b455fcb4778c04358b976",
+    "drivers/tlv320dac3100/tlv320dac3100.h": "840a6df8fe5c52a6e51393c1e65680c703a77c13df7c5b41a7aba1bae4d07e99",
+    "drivers/audio_transport/audio_transport.c": "66875bcb53f86b1fbdbd22cb32a1998e6a484bbb78c18ce43d36b97513fc1dc1",
+    "drivers/audio_transport/audio_transport.h": "0e97164942d632ba63396286433d1cac8ccd821de036d300586fcca6c5ee92ae",
+    "services/audio_pipeline/audio_pipeline.c": "259f2c3c7c4052056ec9920e32930e04c22ed6e0239bb43851e23445fededeaf",
+    "tests/test_codec_i2c_transaction.py": "cf7f36a789e0d773a6ed7a5d68fa82a878399076f17745c9ef9929376ddf65e1",
+    "tests/test_deepfir_audio_runtime_debug.py": "ec1d01fb3743154d38c0a4c41ebb26a398503f06eef5cd22040b70eedb1b420c"
+  },
+  "supplied_log_sha256": "23625e33972d8f125655a6e3a23ecf0389f695a4762e6bb7e0982e90ae10698f",
+  "native_tests": {
+    "count": 135,
+    "result": "PASS",
+    "skipped": 0,
+    "codec_register_model_cases": 15
+  },
+  "images": {
+    "debug": {
+      "binary": {
+        "file": "M55M1_GestureAI.bin",
+        "bytes": 644512,
+        "sha256": "4a1e46164be0252116174b805b65560eb1d1b3b4cc5d4b8779583da827c1b360"
+      },
+      "codec_diagnostics": true,
+      "execution_regions": [
+        "Execution Region ITCM (Exec base: 0x00000000, Load base: 0x0019d0d4, Size: 0x000001b4, Max: 0x00010000, ABSOLUTE)",
+        "Execution Region ER_ROM (Exec base: 0x00100000, Load base: 0x00100000, Size: 0x0001edd0, Max: 0x00200000, ABSOLUTE)",
+        "Execution Region DTCM_VTOR (Exec base: 0x20000000, Load base: 0x0019d288, Size: 0x000002c8, Max: 0xffffffff, ABSOLUTE)",
+        "Execution Region DTCM (Exec base: 0x200002c8, Load base: 0x0019d550, Size: 0x00000800, Max: 0xffffffff, ABSOLUTE)",
+        "Execution Region ARM_LIB_STACK (Exec base: 0x2001e000, Load base: 0x0019d5a0, Size: 0x00002000, Max: 0x00002000, ABSOLUTE)",
+        "Execution Region U55_MODEL_RAM (Exec base: 0x20100000, Load base: 0x0011ede0, Size: 0x0007e2f4, Max: 0xffffffff, ABSOLUTE)",
+        "Execution Region RW_NOINIT (Exec base: 0x201c0000, Load base: 0x0019d550, Size: 0x00000000, Max: 0x0006f800, ABSOLUTE, UNINIT)",
+        "Execution Region RW_RAM (Exec base: 0x201c0000, Load base: 0x0019d560, Size: 0x00013380, Max: 0xffffffff, ABSOLUTE)",
+        "Execution Region ARM_LIB_HEAP (Exec base: 0x201d3380, Load base: 0x0019d5a0, Size: 0x00000800, Max: 0x00000800, ABSOLUTE)",
+        "Execution Region SRAM_NONCACHEABLE (Exec base: 0x20230000, Load base: 0x0019d5a0, Size: 0x00000140, Max: 0x00020000, ABSOLUTE)",
+        "Execution Region SRAM_NONCACHEABLE_END (Exec base: 0x20250000, Load base: 0x0019d5a0, Size: 0x00000000, Max: 0xffffffff, ABSOLUTE)",
+        "Execution Region LPSRAM (Exec base: 0x20310000, Load base: 0x0019d5a0, Size: 0x00000000, Max: 0x00002000, ABSOLUTE)"
+      ],
+      "local_artifact_directory": "D:\\TinyML-Hearing-Aids\\diagnostics\\submillisecond_runtime_20261108\\fifo_build_085852\\debug"
+    },
+    "release": {
+      "binary": {
+        "file": "M55M1_GestureAI.bin",
+        "bytes": 619392,
+        "sha256": "5920f75e343c846786e7a0678e1586837b823cfa6fad1b68fff4c62944515df2"
+      },
+      "codec_diagnostics": false,
+      "execution_regions": [
+        "Execution Region ITCM (Exec base: 0x00000000, Load base: 0x00196f54, Size: 0x00000140, Max: 0x00010000, ABSOLUTE)",
+        "Execution Region ER_ROM (Exec base: 0x00100000, Load base: 0x00100000, Size: 0x00018c48, Max: 0x00200000, ABSOLUTE)",
+        "Execution Region DTCM_VTOR (Exec base: 0x20000000, Load base: 0x00197094, Size: 0x000002c8, Max: 0xffffffff, ABSOLUTE)",
+        "Execution Region DTCM (Exec base: 0x200002c8, Load base: 0x0019735c, Size: 0x00000000, Max: 0xffffffff, ABSOLUTE)",
+        "Execution Region ARM_LIB_STACK (Exec base: 0x2001e000, Load base: 0x00197380, Size: 0x00002000, Max: 0x00002000, ABSOLUTE)",
+        "Execution Region U55_MODEL_RAM (Exec base: 0x20100000, Load base: 0x00118c60, Size: 0x0007e2f4, Max: 0xffffffff, ABSOLUTE)",
+        "Execution Region RW_NOINIT (Exec base: 0x201c0000, Load base: 0x0019735c, Size: 0x00000000, Max: 0x0006f800, ABSOLUTE, UNINIT)",
+        "Execution Region RW_RAM (Exec base: 0x201c0000, Load base: 0x00197360, Size: 0x00012d74, Max: 0xffffffff, ABSOLUTE)",
+        "Execution Region ARM_LIB_HEAP (Exec base: 0x201d2d78, Load base: 0x00197380, Size: 0x00000800, Max: 0x00000800, ABSOLUTE)",
+        "Execution Region SRAM_NONCACHEABLE (Exec base: 0x20230000, Load base: 0x00197380, Size: 0x00000140, Max: 0x00020000, ABSOLUTE)",
+        "Execution Region SRAM_NONCACHEABLE_END (Exec base: 0x20250000, Load base: 0x00197380, Size: 0x00000000, Max: 0xffffffff, ABSOLUTE)",
+        "Execution Region LPSRAM (Exec base: 0x20310000, Load base: 0x00197380, Size: 0x00000000, Max: 0x00002000, ABSOLUTE)"
+      ],
+      "local_artifact_directory": "D:\\TinyML-Hearing-Aids\\diagnostics\\submillisecond_runtime_20261108\\fifo_build_085852\\release"
+    },
+    "release_probe": {
+      "binary": {
+        "file": "M55M1_GestureAI.bin",
+        "bytes": 626400,
+        "sha256": "a4ea2a22320a8a6d3a245d3ca920ea7582eb788d53bbc02cf920d433f6f4de8b"
+      },
+      "codec_diagnostics": false,
+      "execution_regions": [
+        "Execution Region ITCM (Exec base: 0x00000000, Load base: 0x00198ab4, Size: 0x00000140, Max: 0x00010000, ABSOLUTE)",
+        "Execution Region ER_ROM (Exec base: 0x00100000, Load base: 0x00100000, Size: 0x0001a7bc, Max: 0x00200000, ABSOLUTE)",
+        "Execution Region DTCM_VTOR (Exec base: 0x20000000, Load base: 0x00198bf4, Size: 0x000002c8, Max: 0xffffffff, ABSOLUTE)",
+        "Execution Region DTCM (Exec base: 0x200002c8, Load base: 0x00198ebc, Size: 0x00000800, Max: 0xffffffff, ABSOLUTE)",
+        "Execution Region ARM_LIB_STACK (Exec base: 0x2001e000, Load base: 0x00198ee0, Size: 0x00002000, Max: 0x00002000, ABSOLUTE)",
+        "Execution Region U55_MODEL_RAM (Exec base: 0x20100000, Load base: 0x0011a7c0, Size: 0x0007e2f4, Max: 0xffffffff, ABSOLUTE)",
+        "Execution Region RW_NOINIT (Exec base: 0x201c0000, Load base: 0x00198ebc, Size: 0x00000000, Max: 0x0006f800, ABSOLUTE, UNINIT)",
+        "Execution Region RW_RAM (Exec base: 0x201c0000, Load base: 0x00198ec0, Size: 0x00013188, Max: 0xffffffff, ABSOLUTE)",
+        "Execution Region ARM_LIB_HEAP (Exec base: 0x201d3188, Load base: 0x00198ee0, Size: 0x00000800, Max: 0x00000800, ABSOLUTE)",
+        "Execution Region SRAM_NONCACHEABLE (Exec base: 0x20230000, Load base: 0x00198ee0, Size: 0x00000140, Max: 0x00020000, ABSOLUTE)",
+        "Execution Region SRAM_NONCACHEABLE_END (Exec base: 0x20250000, Load base: 0x00198ee0, Size: 0x00000000, Max: 0xffffffff, ABSOLUTE)",
+        "Execution Region LPSRAM (Exec base: 0x20310000, Load base: 0x00198ee0, Size: 0x00000000, Max: 0x00002000, ABSOLUTE)"
+      ],
+      "local_artifact_directory": "D:\\TinyML-Hearing-Aids\\diagnostics\\submillisecond_runtime_20261108\\fifo_build_085852\\release_probe"
+    }
+  },
+  "device_execution": "NOT_RUN",
+  "physical_root_cause": "UNCONFIRMED",
+  "compiled_replay": "BLOCKED",
+  "deployment_approved": false
+}

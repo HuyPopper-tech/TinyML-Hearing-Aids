@@ -1,0 +1,61 @@
+{
+  "normalization": "Only trailing whitespace and console newline encoding; values unchanged",
+  "raw_runs": "diagnostics/submillisecond_runtime_20261108/085517, 085854, fifo_build_085852",
+  "files": [
+    {
+      "file": "build_evidence\\Build_Release.log",
+      "raw_copy_sha256": "b7cf53df6c86d4a3e65c55628f46245c69a79d76bb91ef2299b4460dd749abaa",
+      "normalized_sha256": "5282bc480bee4fcb1480267bfc1ff1020c20ccfdb14effaa563d9a90f7a9e5f6"
+    },
+    {
+      "file": "build_evidence\\Build_Release_Probe.log",
+      "raw_copy_sha256": "7c9cab8dddd948b26e34a3bd0d1324985e4a1a577f937a716391cfbd93fdf85e",
+      "normalized_sha256": "df95a7ff5be0422286ec8f8c64744a27b52f0f3a9b7bde51cd0c644b84885331"
+    },
+    {
+      "file": "build_evidence\\Configure_Debug.log",
+      "raw_copy_sha256": "6b0cb7072b55b023b6dcefebc8d836114fdb9d3d857423c3fbdfe83d27b5f559",
+      "normalized_sha256": "6b0cb7072b55b023b6dcefebc8d836114fdb9d3d857423c3fbdfe83d27b5f559"
+    },
+    {
+      "file": "build_evidence\\Configure_Release.log",
+      "raw_copy_sha256": "fc6b5282b238126c5d81ef837e8eac2a6f0b8f3d94516d6e586ed1d8f57c8c8d",
+      "normalized_sha256": "fc6b5282b238126c5d81ef837e8eac2a6f0b8f3d94516d6e586ed1d8f57c8c8d"
+    },
+    {
+      "file": "build_evidence\\Configure_Release_Probe.log",
+      "raw_copy_sha256": "3cea84d4c3e5a9b735ae6e9d821a190bcdb94615b4c8a3d5a1f770f7f34efbf3",
+      "normalized_sha256": "3cea84d4c3e5a9b735ae6e9d821a190bcdb94615b4c8a3d5a1f770f7f34efbf3"
+    },
+    {
+      "file": "build_evidence\\debug_build.log",
+      "raw_copy_sha256": "2b25af63d93f8396d9f1a268b90055f514a871922905b4ab3825ddcb09e4cb49",
+      "normalized_sha256": "735c094d08ce7285a6d9c260cdbff8cff90db60b11d0897cc8c1ec1bc8bf2308"
+    },
+    {
+      "file": "build_evidence\\debug_config.log",
+      "raw_copy_sha256": "41ca494a8dd05eba061cbd623ccc783560ec75b41efa9c027a63097614b4189b",
+      "normalized_sha256": "41ca494a8dd05eba061cbd623ccc783560ec75b41efa9c027a63097614b4189b"
+    },
+    {
+      "file": "build_evidence\\release_mve.log",
+      "raw_copy_sha256": "c09924f7b9e737b52bc132ce7ef27704ae18d142e4724d4a68e419214fd79116",
+      "normalized_sha256": "85a34af90e8196786c70c51ae578e5391432c9656206eeb952849ff37f799da1"
+    },
+    {
+      "file": "build_evidence\\release_probe_mve.log",
+      "raw_copy_sha256": "c09924f7b9e737b52bc132ce7ef27704ae18d142e4724d4a68e419214fd79116",
+      "normalized_sha256": "85a34af90e8196786c70c51ae578e5391432c9656206eeb952849ff37f799da1"
+    },
+    {
+      "file": "host\\full.log",
+      "raw_copy_sha256": "6c82782ea8525e3d8eaf5720e674097b70abfec7bc801c79ab2942e5d0e1333d",
+      "normalized_sha256": "ec8205bdfd6093d7ff4153421911dc8fe55807a8e0f268dadcd9632dff3ab1cf"
+    },
+    {
+      "file": "host\\red.log",
+      "raw_copy_sha256": "dd97e2839a445fac59633890a5a0557a806f8eb47e967d2c2bce0c1b2becd17e",
+      "normalized_sha256": "b1aee91188675eeaebb751a487a53c6c47dd4f6421c387a62d699e2fd67b0f12"
+    }
+  ]
+}

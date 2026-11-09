@@ -170,6 +170,14 @@ typedef struct {
      * @brief I2C CTL0 captured before the latest bounded transaction was aborted.
      */
     uint32_t last_i2c_control;
+    /** Byte step: 1 START, 2 SLA+W, 3 register, 4 value, 5 STOP completion. */
+    uint8_t last_i2c_step;
+    /** Expected STATUS0; START also accepts repeated-START 0x10. STOP expects STO clear. */
+    uint8_t last_i2c_expected_status;
+    /** True for a poll timeout rather than an unexpected SI status. */
+    bool last_i2c_timed_out;
+    /** True if STOP did not complete, independently of the original byte failure. */
+    bool last_i2c_stop_timed_out;
     /**
      * @brief Bit n is one when PDMA has released stereo descriptor slot n.
      */

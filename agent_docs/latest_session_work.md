@@ -1,5 +1,28 @@
 # Latest Session Work
 
+## Latest: codec I2C init failure after Debug flash — 2026-11-09
+
+User reports board_status=0, BUS_FREE, valid clocks, codec_status=5. Board
+recovery succeeded; later codec I2C init failed, before inference/audio start.
+Old log lacks failing register/status and flashed image identity. Native test
+reproduced a missing STOP-completion wait in the writer, separate from the
+unconfirmed physical cause. Added bounded STOP wait before START/after writes,
+pre-abort byte-state capture, independent cleanup timeout and portable report
+copy to stopped Debug `[CODEC_I2C]`. Preserved retries/settle/script/gain and
+all pins/clocks/DMA/model/DSP/libs/package files.
+
+135 tests PASS/no skips; 15 native codec scenarios plus actual transport-copy
+and Debug-log checks. Debug/Release/Release Probe Arm6.24 builds PASS, nine scoped
+MVE gates PASS for both optimized images. Diff check PASS. New binary hashes,
+memory regions, exact supplied log and red/green evidence are retained under
+docs/verification/2026-11-09-codec-i2c-init/. Local raw images/maps:
+diagnostics/submillisecond_runtime_20261108/fifo_build_085852/.
+Ordinary Release/Debug outputs restored, diagnostic opt-ins OFF, editor Debug.
+No flash/reset/device operations. Revised image needs repeated F5→Continue and
+power-cycle boot logs with image hash. If it fails, collect `[CODEC_I2C]` before
+changing bus speed, retries or wiring. Probe lacks nRESET; full-board power
+cycle remains physical recovery. Prior timing/compiled-parity limits remain.
+
 ## Continuous custom audio delivery — 2026-11-09
 
 User's latest supplied Probe completed60000 hops with total max863us, capture-to-

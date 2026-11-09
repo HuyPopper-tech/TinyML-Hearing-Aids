@@ -192,6 +192,25 @@ static void trace_transport_report(const audio_transport_init_report_t *report) 
         (void)debug_uart_tx_try_enqueue(message, (size_t)length);
         debug_uart_tx_flush_blocking();
     }
+    if (report->codec_i2c_failures != 0U) {
+        static const char *const steps[] = {"none",     "start", "address",
+                                            "register", "value", "stop"};
+        const unsigned step = report->codec_i2c_step;
+        const int codec_length =
+            snprintf(message, sizeof(message),
+                     "[CODEC_I2C] failures=%lu page=%u reg=%u phase=%u step=%s attempts=%u "
+                     "status=%02x expected=%02x ctl=%08lx timeout=%u stop_timeout=%u\r\n",
+                     (unsigned long)report->codec_i2c_failures, report->codec_i2c_page,
+                     report->codec_i2c_register, report->codec_i2c_phase,
+                     step < (sizeof(steps) / sizeof(steps[0])) ? steps[step] : "unknown",
+                     report->codec_i2c_attempts, report->codec_i2c_status,
+                     report->codec_i2c_expected_status, (unsigned long)report->codec_i2c_control,
+                     report->codec_i2c_timed_out, report->codec_i2c_stop_timed_out);
+        if (codec_length > 0 && (size_t)codec_length < sizeof(message)) {
+            (void)debug_uart_tx_try_enqueue(message, (size_t)codec_length);
+            debug_uart_tx_flush_blocking();
+        }
+    }
 }
 #define AUDIO_PIPELINE_TRACE_INIT(stage, status, code) trace_init(stage, status, code)
 #else

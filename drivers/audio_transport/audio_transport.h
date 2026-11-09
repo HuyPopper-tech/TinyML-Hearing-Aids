@@ -70,6 +70,20 @@ typedef struct {
 #if M55M1_RUNTIME_TELEMETRY
     /** Board-owned, read-only until next init; NULL if recovery was not attempted. */
     const i2c_recovery_trace_t *i2c_trace;
+    /** Copied exhausted codec operation; valid only when codec_i2c_failures != 0. */
+    uint32_t codec_i2c_failures;
+    uint32_t codec_i2c_control;
+    uint8_t codec_i2c_page;
+    uint8_t codec_i2c_register;
+    /** 1 page select, 2 requested register. */
+    uint8_t codec_i2c_phase;
+    uint8_t codec_i2c_attempts;
+    uint8_t codec_i2c_status;
+    uint8_t codec_i2c_expected_status;
+    /** 1 START, 2 SLA+W, 3 register, 4 value, 5 STOP completion. */
+    uint8_t codec_i2c_step;
+    bool codec_i2c_timed_out;
+    bool codec_i2c_stop_timed_out;
 #endif
 } audio_transport_init_report_t;
 

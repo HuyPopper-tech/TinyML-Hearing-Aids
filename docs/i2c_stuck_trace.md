@@ -68,6 +68,13 @@ không chứng minh bus vật lý. Chỉ sửa recovery khi trace chỉ ra sai h
 tái hiện; sau sửa phải test lại cả nạp/debug lẫn power-cycle. Không coi một lần
 boot thành công là đã hết lỗi chập chờn. Lỗi deadline/underrun runtime là việc riêng.
 
+## Codec failure after successful bus clear — 2026-11-09
+
+When `board_status=0` and `codec_status=5`, recovery completed but a later codec
+transaction failed. Use the additional Debug `[CODEC_I2C]` record to distinguish
+byte NACK from SI/STOP timeout; do not infer that the earlier bus-clear failed.
+See [codec transaction verification](verification/2026-11-09-codec-i2c-init/).
+
 Evidence của bản triển khai: [verification](verification/2026-11-08-i2c-stuck-trace/).
 Thiết kế: [spec](superpowers/specs/2026-11-08-i2c-stuck-trace-design.md).
 

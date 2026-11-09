@@ -57,7 +57,7 @@
 #define TLV320DAC3100_DMA_MAX_FRAMES_PER_BLOCK 16U
 /* Reset-less breakouts need time to release internal reset after their rails rise. */
 #define TLV320DAC3100_CODEC_POWER_UP_SETTLE_US 20000UL
-/* Probe for a maximum of 100 ms after the initial 20 ms power-up settle. */
+/* Twenty readiness attempts, 5 ms apart; bounded transaction polling adds time. */
 #define TLV320DAC3100_I2C_READY_ATTEMPTS 20U
 #define TLV320DAC3100_I2C_READY_RETRY_DELAY_US 5000UL
 /* A transient NACK may occur while a software reset or analogue block settles. */
@@ -65,8 +65,13 @@
 #define TLV320DAC3100_I2C_WRITE_RETRY_DELAY_US 2000UL
 #define TLV320DAC3100_I2C_PHASE_PAGE_SELECT 1U
 #define TLV320DAC3100_I2C_PHASE_TARGET_REGISTER 2U
-/* At 100 kHz, every master state arrives in under 100 us; 200,000 HIRC cycles gives margin. */
+/* Poll-iteration bound, not elapsed microseconds; valid at the board's 400 kHz rate. */
 #define TLV320DAC3100_I2C_WAIT_LIMIT 200000UL
+#define TLV320DAC3100_I2C_STEP_START 1U
+#define TLV320DAC3100_I2C_STEP_ADDRESS 2U
+#define TLV320DAC3100_I2C_STEP_REGISTER 3U
+#define TLV320DAC3100_I2C_STEP_VALUE 4U
+#define TLV320DAC3100_I2C_STEP_STOP 5U
 
 typedef struct {
     uint32_t sample_rate_hz;
@@ -125,8 +130,6 @@ static void tlv320dac3100_record_i2c_failure(uint8_t page, uint8_t reg, uint8_t 
     g_context.status.last_i2c_register = reg;
     g_context.status.last_i2c_phase = phase;
     g_context.status.last_i2c_attempts = attempts;
-    g_context.status.last_i2c_status = (uint8_t)I2C_GET_STATUS(g_context.config.i2c);
-    g_context.status.last_i2c_control = g_context.config.i2c->CTL0;
 }
 
 /**
@@ -176,7 +179,7 @@ uint16_t tlv320dac3100_profile_samples_per_block(tlv320dac3100_audio_profile_t p
  *
  * The StdDriver helper polls SI for `SystemCoreClock` iterations. A missing
  * peripheral clock therefore hides the root cause behind a multi-second
- * diagnostic freeze. The driver-owned bound is long enough for 100 kHz I2C
+ * diagnostic freeze. The driver-owned bound is long enough for 400 kHz I2C
  * but always lets foreground UART report the frozen controller state.
  */
 static bool tlv320dac3100_wait_for_i2c_si(I2C_T *i2c) {
@@ -190,54 +193,96 @@ static bool tlv320dac3100_wait_for_i2c_si(I2C_T *i2c) {
     return false;
 }
 
+/** @brief Wait for hardware to complete STOP before issuing another START. */
+static bool tlv320dac3100_wait_for_i2c_stop(I2C_T *i2c) {
+    for (uint32_t count = 0U; count < TLV320DAC3100_I2C_WAIT_LIMIT; ++count) {
+        if ((i2c->CTL0 & I2C_CTL0_STO_Msk) == 0U) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/** @brief Capture the failing byte state before STOP can replace STATUS0 with idle. */
+static void tlv320dac3100_snapshot_i2c_failure(I2C_T *i2c, uint8_t step, uint8_t expected_status,
+                                               bool timed_out) {
+    g_context.status.last_i2c_step = step;
+    g_context.status.last_i2c_expected_status = expected_status;
+    g_context.status.last_i2c_status = (uint8_t)I2C_GET_STATUS(i2c);
+    g_context.status.last_i2c_control = i2c->CTL0;
+    g_context.status.last_i2c_timed_out = timed_out;
+}
+
 /**
  * @brief Write one 8-bit codec register through a bounded polling state machine.
  * @param i2c Board-provided, enabled I2C controller.
  * @param address Codec 7-bit I2C address.
  * @param reg Codec register address to transmit after SLA+W.
  * @param value Register value to transmit.
- * @return True only after SLA+W, register, and value were each ACKed.
+ * @return True only after all bytes were ACKed and STOP completed.
  *
  * No I2C IRQ is used: this runs only during foreground codec control. On a
- * missing SI, arbitration loss, or NACK it sends STOP immediately. The caller
- * then owns retry policy and records STATUS0/CTL0 for UART diagnostics.
+ * missing SI, arbitration loss, or NACK it snapshots the failed byte before
+ * bounded STOP cleanup. The caller owns retry policy; it cannot START while
+ * a previous STOP is still pending. No logging runs inside this transaction.
  */
 static bool tlv320dac3100_write_one_reg_bounded(I2C_T *i2c, uint8_t address, uint8_t reg,
                                                 uint8_t value) {
-    uint8_t expected_status;
+    uint8_t expected_status = 0x08U;
+    uint8_t step = TLV320DAC3100_I2C_STEP_START;
+    bool ready;
+
+    g_context.status.last_i2c_stop_timed_out = false;
+    if (!tlv320dac3100_wait_for_i2c_stop(i2c)) {
+        tlv320dac3100_snapshot_i2c_failure(i2c, TLV320DAC3100_I2C_STEP_STOP, 0xF8U, true);
+        g_context.status.last_i2c_stop_timed_out = true;
+        return false;
+    }
 
     I2C_START(i2c);
-    if (!tlv320dac3100_wait_for_i2c_si(i2c)) {
-        goto failed;
-    }
-    expected_status = I2C_GET_STATUS(i2c);
-    if ((expected_status != 0x08U) && (expected_status != 0x10U)) {
+    ready = tlv320dac3100_wait_for_i2c_si(i2c);
+    if (!ready || ((I2C_GET_STATUS(i2c) != 0x08U) && (I2C_GET_STATUS(i2c) != 0x10U))) {
         goto failed;
     }
 
+    step = TLV320DAC3100_I2C_STEP_ADDRESS;
+    expected_status = 0x18U;
     I2C_SET_DATA(i2c, (uint8_t)(address << 1U));
     I2C_SET_CONTROL_REG(i2c, I2C_CTL_SI);
-    if (!tlv320dac3100_wait_for_i2c_si(i2c) || (I2C_GET_STATUS(i2c) != 0x18U)) {
+    ready = tlv320dac3100_wait_for_i2c_si(i2c);
+    if (!ready || (I2C_GET_STATUS(i2c) != expected_status)) {
         goto failed;
     }
 
+    step = TLV320DAC3100_I2C_STEP_REGISTER;
+    expected_status = 0x28U;
     I2C_SET_DATA(i2c, reg);
     I2C_SET_CONTROL_REG(i2c, I2C_CTL_SI);
-    if (!tlv320dac3100_wait_for_i2c_si(i2c) || (I2C_GET_STATUS(i2c) != 0x28U)) {
+    ready = tlv320dac3100_wait_for_i2c_si(i2c);
+    if (!ready || (I2C_GET_STATUS(i2c) != expected_status)) {
         goto failed;
     }
 
+    step = TLV320DAC3100_I2C_STEP_VALUE;
     I2C_SET_DATA(i2c, value);
     I2C_SET_CONTROL_REG(i2c, I2C_CTL_SI);
-    if (!tlv320dac3100_wait_for_i2c_si(i2c) || (I2C_GET_STATUS(i2c) != 0x28U)) {
+    ready = tlv320dac3100_wait_for_i2c_si(i2c);
+    if (!ready || (I2C_GET_STATUS(i2c) != expected_status)) {
         goto failed;
     }
 
     I2C_SET_CONTROL_REG(i2c, I2C_CTL_STO_SI);
+    if (!tlv320dac3100_wait_for_i2c_stop(i2c)) {
+        tlv320dac3100_snapshot_i2c_failure(i2c, TLV320DAC3100_I2C_STEP_STOP, 0xF8U, true);
+        g_context.status.last_i2c_stop_timed_out = true;
+        return false;
+    }
     return true;
 
 failed:
+    tlv320dac3100_snapshot_i2c_failure(i2c, step, expected_status, !ready);
     I2C_SET_CONTROL_REG(i2c, I2C_CTL_STO_SI);
+    g_context.status.last_i2c_stop_timed_out = !tlv320dac3100_wait_for_i2c_stop(i2c);
     return false;
 }
 
@@ -258,7 +303,9 @@ static tlv320dac3100_status_t tlv320dac3100_wait_for_i2c_ready(void) {
                                                 TLV320DAC3100_PAGE_0)) {
             return TLV320DAC3100_STATUS_OK;
         }
-        m55m1_timebase_delay_us(TLV320DAC3100_I2C_READY_RETRY_DELAY_US);
+        if (attempt < TLV320DAC3100_I2C_READY_ATTEMPTS) {
+            m55m1_timebase_delay_us(TLV320DAC3100_I2C_READY_RETRY_DELAY_US);
+        }
     }
 
     tlv320dac3100_record_i2c_failure(TLV320DAC3100_PAGE_0, TLV320DAC3100_REG_PAGE_SELECT,

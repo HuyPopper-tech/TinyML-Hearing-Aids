@@ -1,0 +1,56 @@
+[
+  {
+    "command": [
+      "rtk",
+      "--version"
+    ],
+    "exit_code": 0,
+    "output": "rtk 0.49.0\n"
+  },
+  {
+    "command": [
+      "rtk",
+      "proxy",
+      "python",
+      "--version"
+    ],
+    "exit_code": 0,
+    "output": "Python 3.12.10\n[rtk] /!\\ No hook installed \u2014 run `rtk init -g` for automatic token savings\n"
+  },
+  {
+    "command": [
+      "rtk",
+      "proxy",
+      "C:/Program Files/ArmCompilerforEmbedded6.24/bin/armclang.exe",
+      "--version"
+    ],
+    "exit_code": 0,
+    "output": "Product: Keil MDK Nuvoton Edition - Full Cortex-M\nComponent: Arm Compiler for Embedded 6.24\nTool: armclang [5f371800]\n\nTarget: unspecified-arm-none-none\n[rtk] /!\\ No hook installed \u2014 run `rtk init -g` for automatic token savings\n"
+  },
+  {
+    "command": [
+      "rtk",
+      "proxy",
+      "D:\\TinyML-Hearing-Aids\\diagnostics\\i2c_stuck_trace_20261108_162019\\style_tools\\clang_format\\data\\bin\\clang-format.exe",
+      "--dry-run",
+      "--Werror",
+      "drivers/tlv320dac3100/tlv320dac3100.c",
+      "drivers/tlv320dac3100/tlv320dac3100.h",
+      "drivers/audio_transport/audio_transport.c",
+      "drivers/audio_transport/audio_transport.h",
+      "services/audio_pipeline/audio_pipeline.c"
+    ],
+    "exit_code": 0,
+    "output": "[rtk] /!\\ No hook installed \u2014 run `rtk init -g` for automatic token savings\n"
+  },
+  {
+    "command": [
+      "rtk",
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "output": "\n[rtk] /!\\ No hook installed \u2014 run `rtk init -g` for automatic token savings\n"
+  }
+]

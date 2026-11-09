@@ -115,6 +115,21 @@ bool audio_transport_init(audio_transport_init_report_t *report,
     codec_status = tlv320dac3100_init(&config);
     report->codec_status = (int)codec_status;
     if (codec_status != TLV320DAC3100_STATUS_OK) {
+#if M55M1_RUNTIME_TELEMETRY
+        tlv320dac3100_driver_status_t status;
+        tlv320dac3100_get_status(&status);
+        report->codec_i2c_failures = status.i2c_failures;
+        report->codec_i2c_control = status.last_i2c_control;
+        report->codec_i2c_page = status.last_i2c_page;
+        report->codec_i2c_register = status.last_i2c_register;
+        report->codec_i2c_phase = status.last_i2c_phase;
+        report->codec_i2c_attempts = status.last_i2c_attempts;
+        report->codec_i2c_status = status.last_i2c_status;
+        report->codec_i2c_expected_status = status.last_i2c_expected_status;
+        report->codec_i2c_step = status.last_i2c_step;
+        report->codec_i2c_timed_out = status.last_i2c_timed_out;
+        report->codec_i2c_stop_timed_out = status.last_i2c_stop_timed_out;
+#endif
         return false;
     }
 #else

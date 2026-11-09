@@ -1,0 +1,46 @@
+test_stop_completion_and_failure_snapshot (test_codec_i2c_transaction.CodecI2CTransactionTests.test_stop_completion_and_failure_snapshot) ...
+  test_stop_completion_and_failure_snapshot (test_codec_i2c_transaction.CodecI2CTransactionTests.test_stop_completion_and_failure_snapshot) (mode=0) ... FAIL
+  test_stop_completion_and_failure_snapshot (test_codec_i2c_transaction.CodecI2CTransactionTests.test_stop_completion_and_failure_snapshot) (mode=2) ... FAIL
+  test_stop_completion_and_failure_snapshot (test_codec_i2c_transaction.CodecI2CTransactionTests.test_stop_completion_and_failure_snapshot) (mode=3) ... FAIL
+  test_stop_completion_and_failure_snapshot (test_codec_i2c_transaction.CodecI2CTransactionTests.test_stop_completion_and_failure_snapshot) (mode=4) ... FAIL
+
+======================================================================
+FAIL: test_stop_completion_and_failure_snapshot (test_codec_i2c_transaction.CodecI2CTransactionTests.test_stop_completion_and_failure_snapshot) (mode=0)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\TinyML-Hearing-Aids\tests\test_codec_i2c_transaction.py", line 117, in test_stop_completion_and_failure_snapshot
+    self.assertEqual(run.returncode, 0, run.stderr)
+AssertionError: 3 != 0 : Assertion failed: !(i2c->control[0] & I2C_CTL0_STO_Msk), file C:\Users\proha\AppData\Local\Temp\tmp7qg3ns7u\test.c, line 25
+
+
+======================================================================
+FAIL: test_stop_completion_and_failure_snapshot (test_codec_i2c_transaction.CodecI2CTransactionTests.test_stop_completion_and_failure_snapshot) (mode=2)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\TinyML-Hearing-Aids\tests\test_codec_i2c_transaction.py", line 117, in test_stop_completion_and_failure_snapshot
+    self.assertEqual(run.returncode, 0, run.stderr)
+AssertionError: 3 != 0 : Assertion failed: !(i2c->control[0] & I2C_CTL0_STO_Msk), file C:\Users\proha\AppData\Local\Temp\tmp7qg3ns7u\test.c, line 25
+
+
+======================================================================
+FAIL: test_stop_completion_and_failure_snapshot (test_codec_i2c_transaction.CodecI2CTransactionTests.test_stop_completion_and_failure_snapshot) (mode=3)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\TinyML-Hearing-Aids\tests\test_codec_i2c_transaction.py", line 117, in test_stop_completion_and_failure_snapshot
+    self.assertEqual(run.returncode, 0, run.stderr)
+AssertionError: 3 != 0 : Assertion failed: !(i2c->control[0] & I2C_CTL0_STO_Msk), file C:\Users\proha\AppData\Local\Temp\tmp7qg3ns7u\test.c, line 25
+
+
+======================================================================
+FAIL: test_stop_completion_and_failure_snapshot (test_codec_i2c_transaction.CodecI2CTransactionTests.test_stop_completion_and_failure_snapshot) (mode=4)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\TinyML-Hearing-Aids\tests\test_codec_i2c_transaction.py", line 117, in test_stop_completion_and_failure_snapshot
+    self.assertEqual(run.returncode, 0, run.stderr)
+AssertionError: 3 != 0 : Assertion failed: !(i2c->control[0] & I2C_CTL0_STO_Msk), file C:\Users\proha\AppData\Local\Temp\tmp7qg3ns7u\test.c, line 25
+
+
+----------------------------------------------------------------------
+Ran 1 test in 3.673s
+
+FAILED (failures=4)

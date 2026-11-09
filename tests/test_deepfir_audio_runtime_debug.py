@@ -158,7 +158,7 @@ class DeepfirAudioRuntimeDebugTests(unittest.TestCase):
             static uint32_t frame;
             static uint32_t logs;
             static unsigned stops, resets, submissions;
-            static bool fail_model, fail_init, fail_inference_init, fail_start;
+            static bool fail_model, fail_init, fail_codec, fail_inference_init, fail_start;
             static bool audio_running;
             static char all_logs[16384];
             static uint32_t blocking_flushes;
@@ -182,6 +182,19 @@ class DeepfirAudioRuntimeDebugTests(unittest.TestCase):
                 if (fail_init) {
                     report->board_status = 5;
                     report->i2c_trace = &trace;
+                    return false;
+                }
+                if (fail_codec) {
+                    report->codec_status = 5;
+                    report->codec_i2c_failures = 1;
+                    report->codec_i2c_page = 1;
+                    report->codec_i2c_register = 40;
+                    report->codec_i2c_phase = 2;
+                    report->codec_i2c_step = 2;
+                    report->codec_i2c_attempts = 3;
+                    report->codec_i2c_status = 0x20;
+                    report->codec_i2c_expected_status = 0x18;
+                    report->codec_i2c_control = 0x48;
                     return false;
                 }
                 report->clocks_valid = true;
@@ -288,12 +301,14 @@ class DeepfirAudioRuntimeDebugTests(unittest.TestCase):
             {
                 if (argc > 1) {
                     fail_init = strcmp(argv[1], "transport") == 0;
+                    fail_codec = strcmp(argv[1], "codec") == 0;
                     fail_inference_init = strcmp(argv[1], "inference") == 0;
                     fail_start = strcmp(argv[1], "transport_start") == 0;
                     bool initialized = audio_pipeline_init();
                     bool started = initialized && audio_pipeline_start();
                     char expected[100];
-                    snprintf(expected, sizeof(expected), "[INIT] stage=%s status=FAIL", argv[1]);
+                    snprintf(expected, sizeof(expected), "[INIT] stage=%s status=FAIL",
+                             fail_codec ? "transport" : argv[1]);
                     if (started || !strstr(all_logs, expected) || !blocking_flushes) {
                         fprintf(stderr, "%s", all_logs); return 20;
                     }
@@ -303,6 +318,11 @@ class DeepfirAudioRuntimeDebugTests(unittest.TestCase):
                         !strstr(all_logs, "[I2C_EDGE] index=1 phase=stop.sda_release pulse=9") ||
                         !strstr(all_logs, "elapsed_us=10 sda=0 scl=1"))) {
                         fprintf(stderr, "%s", all_logs); return 21;
+                    }
+                    if (fail_codec && (!strstr(all_logs, "board_status=0 codec_status=5") ||
+                        !strstr(all_logs, "[CODEC_I2C] failures=1 page=1 reg=40 phase=2 step=address") ||
+                        !strstr(all_logs, "attempts=3 status=20 expected=18 ctl=00000048 timeout=0 stop_timeout=0"))) {
+                        fprintf(stderr, "%s", all_logs); return 23;
                     }
                     return 0;
                 }
@@ -384,7 +404,7 @@ class DeepfirAudioRuntimeDebugTests(unittest.TestCase):
                 [str(executable)], capture_output=True, text=True, check=False
             )
             self.assertEqual(run.returncode, 0, run.stderr)
-            for stage in ("transport", "inference", "transport_start"):
+            for stage in ("transport", "codec", "inference", "transport_start"):
                 with self.subTest(failure_stage=stage):
                     run = subprocess.run([str(executable), stage], capture_output=True, text=True)
                     self.assertEqual(run.returncode, 0, run.stderr)

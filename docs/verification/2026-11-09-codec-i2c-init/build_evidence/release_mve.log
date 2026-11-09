@@ -1,0 +1,11 @@
+[rtk] /!\ No hook installed — run `rtk init -g` for automatic token savings
+DeepFIR feature, adapter, and FIR MVE linkage present
+  deepfir_feature_float: 110 vector instructions in its linked Thumb range
+  deepfir_dsp_process_mve: 48 vector instructions in its linked Thumb range
+  arm_cfft_f32: 177 vector instructions in its linked Thumb range
+  arm_vlog_f32: 48 vector instructions in its linked Thumb range
+  arm_vexp_f32: 49 vector instructions in its linked Thumb range
+  arm_q15_to_float: 6 vector instructions in its linked Thumb range
+  deepfir_feedback_q31: 11 vector instructions in its linked Thumb range
+  deepfir_quantize_feature_block: 26 vector instructions in its linked Thumb range
+  deepfir_reconstruct_taps: 18 vector instructions in its linked Thumb range
