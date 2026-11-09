@@ -1,5 +1,16 @@
 # Latest Session Work
 
+## Latest: SCL-low recurrence after reported power cycle — 2026-11-09
+
+Board init fails before codec/inference: board_status5, SCL_LOW, PA5 low in input
+and released open-drain snapshots, PA4 high. New report after power cycle has
+rststs00000001; four low samples cover19us. Do not blame Attach alone or interpret
+codec_status0 as codec success; codec init was not reached. MCU readback points
+to a line that did not rise, but physical cause/voltage and codec power reset are
+unverified. Requested SCL/SDA/codec I/O supply DC measurements and USB/SWD power
+details. No firmware changes or device actions. Preserve fail-stop behavior.
+Evidence/next steps: docs/verification/2026-11-09-scl-low-recurrence.md.
+
 ## Latest: Attach startup correction — 2026-11-09
 
 Both Debug and Release Attach previously only halted the current PC, so neither

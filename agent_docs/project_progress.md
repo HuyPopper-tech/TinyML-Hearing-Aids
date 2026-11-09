@@ -1,5 +1,17 @@
 # Project Progress
 
+## Active blocker: SCL low before codec init — 2026-11-09
+
+New supplied Debug logs report board_status=5/SCL_LOW, including after a user-
+reported power cycle (rststs00000001). PA5 reads low before recovery as input and
+after open-drain release; PA4 high, DOUT high, MFP0, DINOFF0, I2C CTL0=0. Four
+observations span19us; no physical voltage or device cause established. This is
+earlier than the separately fixed codec STOP-completion defect. An Attach-only
+explanation is insufficient. Await stopped SCL/SDA/codec I/O supply measurements
+and external power-path details. No new firmware/board operation. Evidence:
+docs/verification/2026-11-09-scl-low-recurrence.md. Physical init remains failing
+in these supplied boots; earlier host/build success does not close this blocker.
+
 ## Attach startup correction — 2026-11-09
 
 Debug and Release Attach now software-reset/halt, then execute temporary hardware
