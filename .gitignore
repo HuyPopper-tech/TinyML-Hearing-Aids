@@ -32,6 +32,7 @@ __pycache__/
 .worktrees/
 .superpowers/sdd/
 .claude/
+.codex/
 # Local training/provenance packages are never firmware repository inputs to Git.
 /deepfir_r2_scratch_ptq_20261107_151431_366715/
 /deepfir_ptq_20260921_033946/
