@@ -129,7 +129,7 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
         for required in (
             "m55m1_audio_profile_t profile",
             "M55M1_AUDIO_SAFE_MAX_GAIN_DB",
-            "CLK_I2SDIV_I2S1DIV(58)",
+            "CLK_I2SDIV_I2S1DIV(M55M1_AUDIO_I2S_DIVIDER)",
             "DMIC_DOWNSAMPLE_128",
             "m55m1_audio_profile_samples_per_block",
         ):
@@ -147,7 +147,7 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
         ):
             self.assertIn(required, pipeline)
 
-    def test_board_separates_220mhz_core_from_exact_audio_pll(self):
+    def test_board_separates_220mhz_core_from_low_audio_pll(self):
         board_header = (
             REPO_ROOT / "board" / "m55m1_audio.h"
         ).read_text(encoding="utf-8")
@@ -158,7 +158,9 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
 
         for required in (
             "M55M1_AUDIO_CORE_HZ       220000000UL",
-            "M55M1_AUDIO_AUDIO_APLL_HZ 475136006UL",
+            "M55M1_AUDIO_AUDIO_APLL_HZ 73728000UL",
+            "M55M1_AUDIO_AUDIO_APLL_READBACK_HZ 73728405UL",
+            "M55M1_AUDIO_I2S_DIVIDER 9UL",
             "CLK_APLL1_SELECT",
             "CLK_STATUS_APLL1STB_Msk",
             "CLK_SET_SCLKDIV(1UL)",
@@ -351,8 +353,7 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
             "PDMA0",
             "PDMA0 channel 0",
             "m55m1_audio_profile_mclk_hz",
-            "475136006UL",
-            "CLK_I2SDIV_I2S1DIV(58)",
+            "CLK_I2SDIV_I2S1DIV(M55M1_AUDIO_I2S_DIVIDER)",
             "SET_DMIC1_CLK_PA1();",
             "SET_DMIC1_DAT_PA2();",
             "DMIC0_MODULE",

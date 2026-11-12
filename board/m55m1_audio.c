@@ -17,7 +17,9 @@
 #endif
 
 #define M55M1_AUDIO_CORE_HZ 220000000UL
-#define M55M1_AUDIO_AUDIO_APLL_HZ 475136006UL
+#define M55M1_AUDIO_AUDIO_APLL_HZ 73728000UL
+#define M55M1_AUDIO_AUDIO_APLL_READBACK_HZ 73728405UL
+#define M55M1_AUDIO_I2S_DIVIDER 9UL
 /* TLV320DAC3100 supports I2C Fast-mode; control transfers do not gate PDMA audio. */
 #define M55M1_AUDIO_I2C_HZ 400000UL
 #define M55M1_AUDIO_PDMA_CH 0UL
@@ -302,7 +304,6 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
     m55m1_audio_playback_irq_callback_t playback_irq_callback, void *playback_irq_context,
     m55m1_audio_board_progress_callback_t progress_callback, void *progress_context) {
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
-    uint32_t i2s_module_divider;
     uint32_t required_mclk_hz;
 #endif
 
@@ -324,9 +325,6 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
     }
 #endif
     g_clock_snapshot_valid = false;
-#if M55M1_ENABLE_DAC_I2S_OUTPUT
-    i2s_module_divider = 58UL;
-#endif
     m55m1_audio_notify_progress(progress_callback, progress_context, M55M1_AUDIO_BOARD_STAGE_ENTER);
     SYS_UnlockReg();
 
@@ -336,7 +334,6 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
      * CLK_EnableAPLL first disables its selected PLL. The BSP or a prior boot stage may
      * still select APLL0 as SCLK, so switching the core to HIRC first prevents
      * an APLL0 reprogram from removing the CPU clock and causing CPULK reset.
-     * APLL0 is reconfigured for the 220 MHz core only after HIRC owns SCLK.
      */
     CLK_SetSCLK(CLK_SCLKSEL_SCLKSEL_HIRC);
     m55m1_audio_notify_progress(progress_callback, progress_context,
@@ -357,13 +354,9 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
     m55m1_audio_notify_progress(progress_callback, progress_context,
                                 M55M1_AUDIO_BOARD_STAGE_HXT_READY);
     /*
-     * The DMIC-only custom image uses 196.608 MHz (98.304 MHz / 48 for PDM).
-     * The DAC build uses the following separate audio clock plan:
-     * APLL1 remains inside the M55M1 36..500 MHz operating range. The selected
-     * fractional value is divided by two and then by 58 or 29,
-     * yielding exact 4.096 MHz or 8.192 MHz I2S source clocks. An invalid
-     * 32.768 MHz APLL target would silently select the BSP fallback clock and
-     * make the driver's clock-mismatch guard fail.
+     * The 24 MHz HXT and BSP fractional divider give a 73728405 Hz readback.
+     * I2S uses APLL1/2/9; DMIC uses APLL1/2/2/9 at OSR128. Both sample
+     * clocks divide the same source by 4608, keeping capture and playback synchronous.
      */
     m55m1_audio_notify_progress(progress_callback, progress_context,
                                 M55M1_AUDIO_BOARD_STAGE_APLL1_WAIT);
@@ -390,6 +383,7 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
     m55m1_audio_notify_progress(progress_callback, progress_context,
                                 M55M1_AUDIO_BOARD_STAGE_APLL0_READY);
     CLK_SET_SCLKDIV(1UL);
+    // CLK_SetSCLK selects PL0 for the 220 MHz core.
     CLK_SetSCLK(CLK_SCLKSEL_SCLKSEL_APLL0);
     m55m1_audio_notify_progress(progress_callback, progress_context,
                                 M55M1_AUDIO_BOARD_STAGE_SCLK_APLL0_READY);
@@ -403,10 +397,10 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
     g_clock_snapshot.mclk_hz = 0UL;
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
     g_clock_snapshot.i2s_src_hz = g_clock_snapshot.apll1_hz / 2UL;
-    g_clock_snapshot.mclk_hz = g_clock_snapshot.i2s_src_hz / i2s_module_divider;
+    g_clock_snapshot.mclk_hz = g_clock_snapshot.i2s_src_hz / M55M1_AUDIO_I2S_DIVIDER;
     if ((g_clock_snapshot.core_hz != M55M1_AUDIO_CORE_HZ) ||
         (g_clock_snapshot.apll0_hz != M55M1_AUDIO_CORE_HZ) ||
-        (g_clock_snapshot.mclk_hz != required_mclk_hz)) {
+        (g_clock_snapshot.apll1_hz != M55M1_AUDIO_AUDIO_APLL_READBACK_HZ)) {
         SYS_LockReg();
         return M55M1_AUDIO_BOARD_INIT_CLOCK_MISMATCH;
     }
@@ -418,7 +412,8 @@ m55m1_audio_board_init_result_t m55m1_audio_board_init(
     }
 #endif
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
-    CLK_SetModuleClock(I2S1_MODULE, CLK_I2SSEL_I2S1SEL_APLL1_DIV2, CLK_I2SDIV_I2S1DIV(58));
+    CLK_SetModuleClock(I2S1_MODULE, CLK_I2SSEL_I2S1SEL_APLL1_DIV2,
+                       CLK_I2SDIV_I2S1DIV(M55M1_AUDIO_I2S_DIVIDER));
     CLK_EnableModuleClock(I2S1_MODULE);
     CLK_EnableModuleClock(I2C0_MODULE);
     CLK_EnableModuleClock(PDMA0_MODULE);
@@ -496,6 +491,7 @@ bool m55m1_audio_get_clock_snapshot(m55m1_audio_clock_snapshot_t *snapshot) {
 }
 
 bool m55m1_audio_dmic_prepare(m55m1_audio_profile_t profile) {
+    const uint32_t module_divider = g_clock_snapshot_valid ? 2UL : 1UL;
     uint32_t index;
     uint32_t actual_sample_rate;
     uint32_t requested_sample_rate;
@@ -524,7 +520,8 @@ bool m55m1_audio_dmic_prepare(m55m1_audio_profile_t profile) {
         SYS_LockReg();
         return false;
     }
-    CLK_SetModuleClock(DMIC0_MODULE, CLK_DMICSEL_DMIC0SEL_APLL1_DIV2, CLK_DMICDIV_DMIC0DIV(1));
+    CLK_SetModuleClock(DMIC0_MODULE, CLK_DMICSEL_DMIC0SEL_APLL1_DIV2,
+                       CLK_DMICDIV_DMIC0DIV(module_divider));
     CLK_EnableModuleClock(GPIOA_MODULE);
     SET_DMIC1_CLK_PA1();
     SET_DMIC1_DAT_PA2();
@@ -546,7 +543,14 @@ bool m55m1_audio_dmic_prepare(m55m1_audio_profile_t profile) {
      * prior high-Z/transition state and corrupts the PDM stream.
      */
     DMIC_SET_LATCHEDGE_CH23(DMIC0, DMIC_LATCHDATA_CH23RF);
-    actual_sample_rate = DMIC_SetSampleRate(DMIC0, requested_sample_rate);
+    if (g_clock_snapshot_valid) {
+        // Keep the DMIC module divider at /2. The BSP auto-divider selects /1 here.
+        DMIC0->DIV = (DMIC0->DIV & ~DMIC_DIV_DMCLKDIV_Msk) |
+                     ((M55M1_AUDIO_I2S_DIVIDER - 1UL) << DMIC_DIV_DMCLKDIV_Pos);
+        actual_sample_rate = DMIC_GetSampleRate(DMIC0);
+    } else {
+        actual_sample_rate = DMIC_SetSampleRate(DMIC0, requested_sample_rate);
+    }
     if (actual_sample_rate != requested_sample_rate) {
         DMIC_Close(DMIC0);
         return false;

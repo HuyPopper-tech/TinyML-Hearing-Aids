@@ -1,6 +1,6 @@
 # Core Technology
 
-- Custom M55M1 PCB, Cortex-M55 at 220 MHz, CMSIS-DSP/MVE and bare-metal foreground loop.
+- Custom M55M1 PCB with a 220 MHz Cortex-M55 (PL0), nominal 73.728 MHz audio APLL1, CMSIS-DSP/MVE, and a bare-metal foreground loop.
 - Mono PCM16 16 kHz/hop16; /32768 normalization; symmetric Hamming256 and FFT256; context [previous,current] [1,2,129,3].
 - R2 INT16 controller: feature/c/h runtime inputs 0/1/2; h_next/c_next/phase/gain outputs 0/1/2/3. Encoded h/c each 200; both use exact int64 fixed-point feedback.
 - Compiled 516848-byte model executes from SRAM through one TFLM interpreter and Ethos-U55 runtime. Immutable memory initialization precedes AllocateTensors.

@@ -527,7 +527,9 @@ tlv320dac3100_status_t tlv320dac3100_init(const tlv320dac3100_config_t *config) 
     actual_rate = I2S_Open(config->i2s, I2S_MODE_MASTER, profile->sample_rate_hz, I2S_DATABIT_16,
                            I2S_DISABLE_MONO, I2S_FORMAT_I2S);
     actual_mclk = I2S_EnableMCLK(config->i2s, profile->mclk_hz);
-    if ((actual_rate != profile->sample_rate_hz) || (actual_mclk != profile->mclk_hz)) {
+    // Compare both BSP readbacks at sample-rate resolution for a fractional source PLL.
+    const uint32_t mclk_ratio = profile->mclk_hz / profile->sample_rate_hz;
+    if ((actual_rate != profile->sample_rate_hz) || (actual_mclk / mclk_ratio != actual_rate)) {
         I2S_Close(config->i2s);
         return TLV320DAC3100_STATUS_CLOCK_MISMATCH;
     }

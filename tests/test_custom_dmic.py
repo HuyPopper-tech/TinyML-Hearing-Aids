@@ -42,6 +42,8 @@ class CustomCaptureTests(unittest.TestCase):
             #define DMIC_FIFOWIDTH_16 0
             #define DMIC_CTL_CHEN2_Msk 4
             #define DMIC_CTL_SWRST_Msk (1u << 24)
+            #define DMIC_DIV_DMCLKDIV_Pos 8
+            #define DMIC_DIV_DMCLKDIV_Msk (0x3fu << DMIC_DIV_DMCLKDIV_Pos)
             #define DMIC_DOWNSAMPLE_128 1
             #define DMIC_DOWNSAMPLE_64 0
             #define DMIC_LATCHDATA_CH23RF 512
@@ -54,8 +56,8 @@ class CustomCaptureTests(unittest.TestCase):
             static m55m1_audio_dmic_state_t g_dmic_state;
             static unsigned g_dmic_descriptors[2];
             static bool g_clock_snapshot_valid = true;
-            static struct { unsigned STATUS; } clock_regs = {128};
-            static struct { unsigned CTL; bool empty; } dmic_regs;
+            static struct { unsigned STATUS, DMICDIV; } clock_regs = {128, 0};
+            static struct { unsigned CTL, DIV; bool empty; } dmic_regs;
             #define CLK (&clock_regs)
             #define DMIC0 (&dmic_regs)
             #define LPPDMA 0
@@ -67,7 +69,11 @@ class CustomCaptureTests(unittest.TestCase):
             #define CLK_WaitClockReady(mask) ((void)(mask), 1)
             #define CLK_EnableModuleClock(module) ((void)(module))
             #define CLK_EnableAPLL(src, hz, pll) ((void)(src), (void)(pll), (hz))
-            #define CLK_SetModuleClock(module, src, div) ((void)(module), (void)(src), (void)(div))
+            static void CLK_SetModuleClock(unsigned module, unsigned src, unsigned div) {
+                assert(unlocked && module == DMIC0_MODULE && src == CLK_DMICSEL_DMIC0SEL_APLL1_DIV2);
+                assert(div == (g_clock_snapshot_valid ? 1u : 0u));
+                clock_regs.DMICDIV = div;
+            }
             #define SET_DMIC1_CLK_PA1() (pins |= 1)
             #define SET_DMIC1_DAT_PA2() (pins |= 2)
             #define SET_DMIC1_CLK_PB2() (pins |= 4)
@@ -75,7 +81,9 @@ class CustomCaptureTests(unittest.TestCase):
             #define DMIC_SetFIFOWidth(d, width) ((void)(d), (void)(width))
             #define DMIC_SetDSPGainVolume(d, ch, gain) \
                 assert((d) == DMIC0 && (ch) == 4 && (gain) == M55M1_DMIC_GAIN_DB)
-            #define DMIC_SET_DOWNSAMPLE(d, osr) assert((d) == DMIC0 && (osr) == 1)
+            #define DMIC_SET_DOWNSAMPLE(d, osr) do { \
+                assert((d) == DMIC0 && (osr) == 1); (d)->DIV = 1u << 24; \
+            } while (0)
             #define DMIC_SET_LATCHEDGE_CH23(d, edge) assert((d) == DMIC0 && (edge) == 512)
             #define DMIC_IS_FIFOEMPTY(d) ((d)->empty)
             #define DMIC_Close(d) ((void)(d), channel = false, closed = true)
@@ -94,7 +102,16 @@ class CustomCaptureTests(unittest.TestCase):
                 assert(pins == 3u);
             }
             static uint32_t DMIC_SetSampleRate(void *d, unsigned fs) {
-                assert(d == DMIC0 && fs == 16000); return scenario == 4 ? 0 : fs;
+                assert(d == DMIC0 && fs == 16000 && !g_clock_snapshot_valid);
+                return fs;
+            }
+            static uint32_t DMIC_GetSampleRate(void *d) {
+                assert(d == DMIC0 && g_clock_snapshot_valid);
+                assert(dmic_regs.DIV == ((1u << 24) | (8u << DMIC_DIV_DMCLKDIV_Pos)));
+                // BSP integer readback for the 73.728 MHz request from 24 MHz HXT.
+                return scenario == 4 ? 0 : 73728405u / 2u / (clock_regs.DMICDIV + 1u) /
+                       (((dmic_regs.DIV & DMIC_DIV_DMCLKDIV_Msk) >> DMIC_DIV_DMCLKDIV_Pos) + 1u) /
+                       128u;
             }
             void DMIC_ClearFIFO(void *d) {
                 assert(d == DMIC0 && !dma_open && !irq && !requests);
@@ -149,11 +166,12 @@ class CustomCaptureTests(unittest.TestCase):
         ''')
         harness += clock_config + start + textwrap.dedent(r'''
             int main(int argc, char **argv) {
-                assert(M55M1_AUDIO_AUDIO_APLL_HZ == (TEST_WARMUP ? 196608000u : 475136006u));
+                assert(M55M1_AUDIO_AUDIO_APLL_HZ == 73728000u);
                 assert(argc == 2); scenario = (unsigned)atoi(argv[1]);
+                g_clock_snapshot_valid = scenario != 6;
                 bool ok = m55m1_audio_dmic_start(scenario == 5 ? 99 : 0);
                 assert(!unlocked);
-                if (scenario == 0 || (!TEST_WARMUP && scenario < 4)) {
+                if (scenario == 0 || (!TEST_WARMUP && scenario < 4) || scenario == 6) {
                     assert(ok && requests && !closed);
                     assert(waited == (TEST_WARMUP ? 10000u : 0u));
                 } else {
@@ -173,7 +191,7 @@ class CustomCaptureTests(unittest.TestCase):
                 str(source), "-o", str(binary),
             ], capture_output=True, text=True)
             self.assertEqual(compiled.returncode, 0, compiled.stderr)
-            for scenario in range(6):
+            for scenario in range(7):
                 with self.subTest(scenario=scenario):
                     result = subprocess.run([str(binary), str(scenario)],
                                             capture_output=True, text=True)

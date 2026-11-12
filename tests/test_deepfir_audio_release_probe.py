@@ -1,4 +1,4 @@
-"""Release-only probe must stop audio before its UART summary."""
+"""Exercise the Release audio pipeline with modeled DMA and inference."""
 
 from pathlib import Path
 import subprocess
@@ -28,10 +28,16 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
             static uint32_t logs;
             static uint32_t flushes;
             static uint32_t early_uart;
+            static uint32_t inference_calls;
+            static uint32_t submissions;
             static bool submitted;
             static char last_log[1024];
             static char result_log[1024];
             static const char *failure = "";
+            static const int16_t capture[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK] = {
+                -32768, 32767, -10, 5, 0, 12, -1234, 4567,
+                1000, -1000, 987, -2, 44, -45, -18, 19,
+            };
 
             bool audio_transport_init(audio_transport_init_report_t *report,
                                       audio_transport_progress_callback_t callback,
@@ -63,7 +69,7 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
                 audio_transport_capture_timing_t *timing)
             {
                 ++frame;
-                memset(destination, 0, AUDIO_TRANSPORT_SAMPLES_PER_BLOCK * sizeof(int16_t));
+                memcpy(destination, capture, sizeof(capture));
                 timing->sequence = frame;
                 if (!strcmp(failure, "sequence")) ++timing->sequence;
                 timing->completed_cycle = frame * 1000U;
@@ -73,8 +79,13 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
                 const int16_t samples[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
                 const audio_transport_block_tag_t *tag)
             {
-                (void)samples;
-                (void)tag;
+                if (tag->sequence != frame || tag->capture_completed_cycle != frame * 1000U) {
+                    return AUDIO_TRANSPORT_STATUS_ERROR;
+                }
+                if (samples[0] != 32767) {
+                    return AUDIO_TRANSPORT_STATUS_ERROR;
+                }
+                ++submissions;
                 submitted = true;
                 return !strcmp(failure, "submit") ? AUDIO_TRANSPORT_STATUS_BUSY : AUDIO_TRANSPORT_STATUS_OK;
             }
@@ -105,6 +116,7 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
                                            uint32_t count)
             {
                 (void)input;
+                ++inference_calls;
                 memset(output, 0, count * sizeof(int16_t));
                 output[0] = 32767;
                 return strcmp(failure, "invoke") != 0;
@@ -237,7 +249,15 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
                 audio_pipeline_poll();
                 if (frame != 60000U || stops != 1U || logs != 3U) return 5;
             #else
-                if (stops || logs || flushes || early_uart) return 6;
+                for (uint32_t index = 0U; index < 5U; ++index) {
+                    audio_pipeline_poll();
+                }
+                if (stops || logs || flushes || early_uart || submissions != 60005U) {
+                    return 6;
+                }
+                if (inference_calls != 60005U) {
+                    return 11;
+                }
             #endif
                 return 0;
             }
@@ -248,7 +268,7 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
             source = temporary / "audio_release_probe_test.c"
             source.write_text(harness, encoding="utf-8")
             for enabled in (0, 1):
-                executable = temporary / f"audio_release_probe_{enabled}.exe"
+                executable = temporary / f"audio_release_{enabled}.exe"
                 result = subprocess.run(
                     ["gcc", "-std=c11", "-Wall", "-Wextra", "-Werror",
                      "-DM55M1_RUNTIME_TELEMETRY=0",
@@ -262,7 +282,7 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
                 run = subprocess.run(
                     [str(executable)], capture_output=True, text=True, check=False
                 )
-                self.assertEqual(run.returncode, 0, run.stderr)
+                self.assertEqual(run.returncode, 0, f"probe={enabled}: {run.stderr}")
                 if enabled:
                     for failure in ('transport', 'sequence', 'invoke', 'deadline', 'submit', 'publish'):
                         with self.subTest(failure=failure):

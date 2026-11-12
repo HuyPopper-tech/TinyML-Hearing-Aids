@@ -39,6 +39,7 @@ class R2OptimizationTests(unittest.TestCase):
     def test_release_quantizer_and_reconstruction_have_vector_kernels(self):
         for name, function, instruction in (
             ('deepfir_features.c', 'deepfir_quantize_feature_block', r'vcvt\.s32\.f32'),
+            ('deepfir_features.c', 'deepfir_feature_float', r'bl\s+arm_vlog_f32'),
             ('deepfir_reconstruction.c', 'deepfir_reconstruct_taps', r'vmul\.f32\s+q')):
             with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
                 assembly = Path(directory) / 'kernel.s'
@@ -55,6 +56,8 @@ class R2OptimizationTests(unittest.TestCase):
                                    assembly.read_text())
                 self.assertIsNotNone(kernel, name+' has no vector kernel')
                 self.assertRegex(kernel.group(), r'(?i)\b'+instruction)
+                if function == 'deepfir_feature_float':
+                    self.assertNotRegex(kernel.group(), r'(?i)\b(?:vsqrt\.f32|sqrtf)\b')
 
     @unittest.skipUnless(shutil.which('armclang'), 'Arm Compiler required for target code-generation checks')
     def test_release_feedback_uses_rounded_q31_vectors(self):

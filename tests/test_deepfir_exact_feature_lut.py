@@ -40,8 +40,11 @@ class DeepfirFeatureTransformTests(unittest.TestCase):
                         (float)(next_random() & 0xffffU) / 4096.0f - 8.0f;
                     buffer[2U * index + 1U] =
                         (float)(next_random() & 0xffffU) / 4096.0f - 8.0f;
-                    if (hop_number < 4u) {
-                        const float cases[4] = {0.0f, 1.0e-20f, -1.0e-8f, -1000.0f};
+                    if (hop_number < 8u) {
+                        const float cases[8] = {
+                            0.0f, 1.0e-24f, -1.0e-20f, 1.0e-19f,
+                            -1.0e-8f, 1.0e-4f, -1.0f, -1000.0f,
+                        };
                         buffer[2U * index] = cases[hop_number];
                         buffer[2U * index + 1U] = -cases[hop_number];
                     }
@@ -95,17 +98,20 @@ class DeepfirFeatureTransformTests(unittest.TestCase):
             source = temporary / "feature_transform_test.c"
             executable = temporary / "feature_transform.exe"
             source.write_text(harness, encoding="utf-8")
-            build = subprocess.run(
-                ["gcc", "-std=c11", "-O3", "-Wall", "-Wextra", "-Werror",
-                 "-DM55M1_DEEPFIR_MVE=1", "-I", str(ROOT),
-                 "-I", str(ROOT / "services/deepfir"), str(source),
-                 str(ROOT / "services/deepfir/deepfir_features.c"),
-                 "-lm", "-o", str(executable)],
-                capture_output=True, text=True, check=False,
-            )
-            self.assertEqual(build.returncode, 0, build.stderr)
-            run = subprocess.run([str(executable)], capture_output=True, check=False)
-            self.assertEqual(run.returncode, 0, run.stderr)
+            for vector in (False, True):
+                with self.subTest(vector=vector):
+                    # The native lane model exercises the MVE control flow with host math.
+                    flags = ["-D__ARM_FEATURE_MVE=2", "-I", str(ROOT / "tests/mve_model")] if vector else []
+                    build = subprocess.run(
+                        ["gcc", "-std=c11", "-O3", "-Wall", "-Wextra", "-Werror",
+                         "-DM55M1_DEEPFIR_MVE=1", *flags, "-I", str(ROOT), str(source),
+                         str(ROOT / "services/deepfir/deepfir_features.c"),
+                         "-lm", "-o", str(executable)],
+                        capture_output=True, text=True, check=False,
+                    )
+                    self.assertEqual(build.returncode, 0, build.stderr)
+                    run = subprocess.run([str(executable)], capture_output=True, check=False)
+                    self.assertEqual(run.returncode, 0, run.stderr)
 
 
 if __name__ == "__main__":

@@ -179,21 +179,23 @@ int deepfir_feature_float(const float *pcm, uint32_t count, int16_t *feature, vo
         const float re = spectrum[2u * index];
         const float im = spectrum[2u * index + 1u];
         const float power = re * re + im * im;
+#if DEEPFIR_DSP_HAS_MVEF
+        // The vector log needs a positive normal input. This floor is below half a
+        // feature code at the model scale, and exact silence is restored at packing.
+        magnitude[index] = power < FLT_MIN ? FLT_MIN : power;
+        gain[index] = power + 1.0e-16f;
+#else
         magnitude[index] = sqrtf(power);
         gain[index] = sqrtf(power + 1.0e-16f);
+#endif
     }
 #if DEEPFIR_DSP_HAS_MVEF
-    // Positive epsilon protects signed channels; silence magnitude is restored below.
-    for (index = 0; index < 129u; ++index) {
-        if (magnitude[index] == 0.0f) {
-            magnitude[index] = 1.0e-30f;
-        }
-    }
+    // Fold sqrt into the two exponents so the vector path works directly on power.
     arm_vlog_f32(magnitude, magnitude, 129u);
-    arm_scale_f32(magnitude, 0.3f, magnitude, 129u);
+    arm_scale_f32(magnitude, 0.15f, magnitude, 129u);
     arm_vexp_f32(magnitude, magnitude, 129u);
     arm_vlog_f32(gain, gain, 129u);
-    arm_scale_f32(gain, -0.7f, gain, 129u);
+    arm_scale_f32(gain, -0.35f, gain, 129u);
     arm_vexp_f32(gain, gain, 129u);
 #else
     for (index = 0; index < 129u; ++index) {
