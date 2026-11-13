@@ -55,7 +55,7 @@ option(M55M1_MODEL_IN_SRAM "Place the model image in SRAM at runtime" ON)
 
 include(${PROJ_ROOT}/cmake/model_package.cmake)
 
-set(M55M1_DMIC_GAIN_DB 30 CACHE STRING "DMIC hardware DSP gain in dB")
+set(M55M1_DMIC_GAIN_DB 36 CACHE STRING "DMIC hardware DSP gain in dB")
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(M55M1_RUNTIME_TELEMETRY_VALUE 1)

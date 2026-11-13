@@ -13,7 +13,8 @@
 extern "C" {
 #endif
 
-#define I2C_RECOVERY_TRACE_CAPACITY 22U
+// Each of two attempts records RELEASE, nine clock pairs, and three STOP observations.
+#define I2C_RECOVERY_TRACE_CAPACITY 44U
 #define I2C_RECOVERY_TRACE_NO_EVENT 255U
 
 typedef enum {
@@ -50,7 +51,10 @@ typedef struct {
     uint32_t systick_load_before, systick_load_after;
     uint32_t systick_source_before, systick_source_after;
     bool attempted, released;
-    uint8_t event_count, pulses, first_scl_low_event;
+    uint8_t event_count;
+    uint8_t pulses;              /**< Cumulative clock pulses across both attempts. */
+    uint8_t first_scl_low_event; /**< First unexpected SCL-low observation, or NO_EVENT. */
+    // A second RELEASE marks the slow retry; foreground records both attempts in order.
     i2c_recovery_event_t events[I2C_RECOVERY_TRACE_CAPACITY];
 } i2c_recovery_trace_t;
 

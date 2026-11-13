@@ -29,11 +29,6 @@
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE || M55M1_AUDIO_UART_PCM_CAPTURE
 #include "drivers/debug_uart_tx/debug_uart_tx.h"
 #endif
-#if M55M1_AUDIO_UART_PCM_CAPTURE
-#ifndef M55M1_DMIC_GAIN_DB
-#define M55M1_DMIC_GAIN_DB 30
-#endif
-#endif
 
 typedef struct {
     int16_t capture[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK];

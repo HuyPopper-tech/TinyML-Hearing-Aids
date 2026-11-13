@@ -26,6 +26,7 @@
 #define M55M1_AUDIO_LPPDMA_CH 0UL
 #define M55M1_AUDIO_I2C_RECOVERY_PULSES 9U
 #define M55M1_AUDIO_I2C_RECOVERY_DELAY_US 5UL
+#define M55M1_AUDIO_I2C_SLOW_RECOVERY_DELAY_US 2000UL
 #define M55M1_AUDIO_MAX_SAMPLES_PER_BLOCK 16U
 
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
@@ -183,8 +184,9 @@ static void m55m1_audio_trace_i2c_event(i2c_recovery_phase_t phase, uint8_t puls
                                                                 .pulse = pulse,
                                                                 .sda = (pin & BIT4) != 0U,
                                                                 .scl = (pin & BIT5) != 0U};
-    // Only clock-low deliberately drives SCL low; other low readings need investigation.
-    if (phase != I2C_RECOVERY_CLOCK_LOW && (pin & BIT5) == 0U &&
+    // Clock-low and STOP setup deliberately drive SCL low.
+    if (phase != I2C_RECOVERY_CLOCK_LOW && phase != I2C_RECOVERY_STOP_SDA_LOW &&
+        (pin & BIT5) == 0U &&
         g_i2c_recovery_trace.first_scl_low_event == I2C_RECOVERY_TRACE_NO_EVENT) {
         g_i2c_recovery_trace.first_scl_low_event = index;
     }
@@ -204,67 +206,98 @@ const i2c_recovery_trace_t *m55m1_audio_get_i2c_trace(void) {
 }
 #endif
 
-/**
- * @brief Release a slave that retained SDA low across an MCU-only reset.
- * @return True only when both I2C bus lines are released after recovery.
- *
- * The codec may remain powered while the M55M1 is manually reset during an
- * I2C transfer. Temporarily using SDA/SCL as open-drain GPIO permits the
- * standard maximum of nine SCL pulses, followed by a STOP, before I2C owns
- * the pins. No push-pull high level is ever driven onto this shared bus.
- */
 #if M55M1_ENABLE_DAC_I2S_OUTPUT
-static bool m55m1_audio_recover_i2c_bus(void) {
+/**
+ * @brief Attempt at most nine recovery clocks, then generate STOP.
+ * @param delay_us Requested delay per GPIO phase, in microseconds.
+ * @param pulses Non-null caller-owned counter, accumulated across both attempts.
+ * @return True only when SDA and SCL are both released.
+ *
+ * Foreground only: audio is stopped, GPIO owns the open-drain pins, and I2C0
+ * is disabled. Every return leaves both output latches released.
+ */
+static bool m55m1_audio_recover_i2c_attempt(uint32_t delay_us, uint8_t *pulses) {
     uint32_t pulse;
 
-#if M55M1_RUNTIME_TELEMETRY
-    m55m1_audio_trace_i2c_begin();
-#endif
-    SET_GPIO_PA4();
-    SET_GPIO_PA5();
-    GPIO_SetMode(PA, BIT4 | BIT5, GPIO_MODE_OPEN_DRAIN);
     M55M1_AUDIO_I2C_SDA = 1U;
     M55M1_AUDIO_I2C_SCL = 1U;
-    m55m1_timebase_delay_us(M55M1_AUDIO_I2C_RECOVERY_DELAY_US);
+    m55m1_timebase_delay_us(delay_us);
 
 #if M55M1_RUNTIME_TELEMETRY
-    m55m1_audio_trace_i2c_event(I2C_RECOVERY_RELEASE, 0U);
+    m55m1_audio_trace_i2c_event(I2C_RECOVERY_RELEASE, *pulses);
 #endif
+    if (M55M1_AUDIO_I2C_SCL == 0U) {
+        return false;
+    }
 
     for (pulse = 0U; (pulse < M55M1_AUDIO_I2C_RECOVERY_PULSES) && (M55M1_AUDIO_I2C_SDA == 0U);
          ++pulse) {
         M55M1_AUDIO_I2C_SCL = 0U;
-        m55m1_timebase_delay_us(M55M1_AUDIO_I2C_RECOVERY_DELAY_US);
+        m55m1_timebase_delay_us(delay_us);
 #if M55M1_RUNTIME_TELEMETRY
-        m55m1_audio_trace_i2c_event(I2C_RECOVERY_CLOCK_LOW, (uint8_t)(pulse + 1U));
+        m55m1_audio_trace_i2c_event(I2C_RECOVERY_CLOCK_LOW, (uint8_t)(*pulses + 1U));
 #endif
         M55M1_AUDIO_I2C_SCL = 1U;
-        m55m1_timebase_delay_us(M55M1_AUDIO_I2C_RECOVERY_DELAY_US);
+        m55m1_timebase_delay_us(delay_us);
+        ++*pulses;
 #if M55M1_RUNTIME_TELEMETRY
-        m55m1_audio_trace_i2c_event(I2C_RECOVERY_CLOCK_HIGH, (uint8_t)(pulse + 1U));
+        m55m1_audio_trace_i2c_event(I2C_RECOVERY_CLOCK_HIGH, *pulses);
 #endif
+        if (M55M1_AUDIO_I2C_SCL == 0U) {
+            return false;
+        }
     }
 
-    /* A STOP releases SDA while SCL is high, resetting compliant slave bus state. */
+    // Set SDA low while SCL is low, then release SCL before SDA to form STOP.
+    M55M1_AUDIO_I2C_SCL = 0U;
+    m55m1_timebase_delay_us(delay_us);
     M55M1_AUDIO_I2C_SDA = 0U;
-    m55m1_timebase_delay_us(M55M1_AUDIO_I2C_RECOVERY_DELAY_US);
+    m55m1_timebase_delay_us(delay_us);
 #if M55M1_RUNTIME_TELEMETRY
-    m55m1_audio_trace_i2c_event(I2C_RECOVERY_STOP_SDA_LOW, (uint8_t)pulse);
+    m55m1_audio_trace_i2c_event(I2C_RECOVERY_STOP_SDA_LOW, *pulses);
 #endif
     M55M1_AUDIO_I2C_SCL = 1U;
-    m55m1_timebase_delay_us(M55M1_AUDIO_I2C_RECOVERY_DELAY_US);
+    m55m1_timebase_delay_us(delay_us);
 #if M55M1_RUNTIME_TELEMETRY
-    m55m1_audio_trace_i2c_event(I2C_RECOVERY_STOP_SCL_RELEASE, (uint8_t)pulse);
+    m55m1_audio_trace_i2c_event(I2C_RECOVERY_STOP_SCL_RELEASE, *pulses);
 #endif
     M55M1_AUDIO_I2C_SDA = 1U;
-    m55m1_timebase_delay_us(M55M1_AUDIO_I2C_RECOVERY_DELAY_US);
+    m55m1_timebase_delay_us(delay_us);
 #if M55M1_RUNTIME_TELEMETRY
-    m55m1_audio_trace_i2c_event(I2C_RECOVERY_STOP_SDA_RELEASE, (uint8_t)pulse);
+    m55m1_audio_trace_i2c_event(I2C_RECOVERY_STOP_SDA_RELEASE, *pulses);
 #endif
 
-    const bool released = (M55M1_AUDIO_I2C_SDA != 0U) && (M55M1_AUDIO_I2C_SCL != 0U);
+    return (M55M1_AUDIO_I2C_SDA != 0U) && (M55M1_AUDIO_I2C_SCL != 0U);
+}
+
+/**
+ * @brief Clear a retained slave transaction before enabling I2C master mode.
+ *
+ * Retry once with 2 ms phase delays only if SDA remains held and SCL is high.
+ * Requested delays total at most 46.115 ms, excluding code/reset overhead.
+ * Audio is stopped, both outputs stay open-drain, and held SCL fails safely.
+ * @return True only when both bus lines are released before restoring I2C mux.
+ */
+static bool m55m1_audio_recover_i2c_bus(void) {
+    uint8_t pulses = 0U;
+
 #if M55M1_RUNTIME_TELEMETRY
-    m55m1_audio_trace_i2c_end((uint8_t)pulse, released);
+    m55m1_audio_trace_i2c_begin();
+#endif
+    // A warm restart can leave the controller enabled; isolate it before GPIO recovery.
+    SYS_ResetModule(SYS_I2C0RST);
+    SET_GPIO_PA4();
+    SET_GPIO_PA5();
+    M55M1_AUDIO_I2C_SDA = 1U;
+    M55M1_AUDIO_I2C_SCL = 1U;
+    GPIO_SetMode(PA, BIT4 | BIT5, GPIO_MODE_OPEN_DRAIN);
+
+    bool released = m55m1_audio_recover_i2c_attempt(M55M1_AUDIO_I2C_RECOVERY_DELAY_US, &pulses);
+    if (!released && (M55M1_AUDIO_I2C_SCL != 0U)) {
+        released = m55m1_audio_recover_i2c_attempt(M55M1_AUDIO_I2C_SLOW_RECOVERY_DELAY_US, &pulses);
+    }
+#if M55M1_RUNTIME_TELEMETRY
+    m55m1_audio_trace_i2c_end(pulses, released);
 #endif
     return released;
 }
