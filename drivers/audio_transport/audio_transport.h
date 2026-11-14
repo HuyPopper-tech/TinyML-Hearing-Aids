@@ -29,7 +29,7 @@ const volatile audio_startup_trace_t *audio_transport_get_startup_trace(void);
 #define AUDIO_TRANSPORT_SAMPLE_RATE_HZ 16000UL
 #define AUDIO_TRANSPORT_SAMPLES_PER_BLOCK 16U
 #ifndef M55M1_DMIC_GAIN_DB
-#define M55M1_DMIC_GAIN_DB 24
+#define M55M1_DMIC_GAIN_DB 12
 #endif
 // Active build's whole-dB DMIC gain, also used by capture metadata.
 #define AUDIO_TRANSPORT_MICROPHONE_DSP_GAIN_DB M55M1_DMIC_GAIN_DB

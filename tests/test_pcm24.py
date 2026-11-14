@@ -8,6 +8,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class Pcm24Tests(unittest.TestCase):
+    def test_transport_gain_default_and_explicit_override(self):
+        for definition, expected in (('', 12), ('#define M55M1_DMIC_GAIN_DB 30', 30)):
+            with self.subTest(gain=expected):
+                self.compile_and_run(definition + '\n' + r'''
+                #include "drivers/audio_transport/audio_transport.h"
+                _Static_assert(AUDIO_TRANSPORT_MICROPHONE_DSP_GAIN_DB == ''' + str(expected) + r''',
+                               "Transport metadata must match the DMIC gain");
+                int main(void) { return 0; }
+                ''')
+
     def test_pcm24_operations_are_owned_without_a_generic_header(self):
         self.assertFalse((ROOT/'common/audio_pcm.h').exists())
         for folder in ('app', 'board', 'drivers', 'services'):
