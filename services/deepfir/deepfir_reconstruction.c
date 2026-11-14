@@ -31,7 +31,7 @@ static void phase_sin_cos(float angle, float *sine, float *cosine) {
 }
 
 int deepfir_reconstruct_taps(const int16_t *gain, const int16_t *phase, const float *scales,
-                             const int32_t *zero_points, deepfir_fft_callback fft,
+                             const int32_t *zero_points, deepfir_fft_callback_t fft,
                              void *fft_context, float taps[128]) {
     // Positive bins plus conjugate completion initialize every complex element.
     float spectrum[256];

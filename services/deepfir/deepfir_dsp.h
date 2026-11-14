@@ -15,14 +15,14 @@ extern "C" {
 #define DEEPFIR_DSP_TAPS 128u
 #define DEEPFIR_DSP_HOP 16u
 
-typedef int (*deepfir_fft_callback)(float *buffer, uint32_t length, uint8_t inverse, void *context);
+typedef int (*deepfir_fft_callback_t)(float *buffer, uint32_t length, uint8_t inverse, void *context);
 typedef struct {
     // Foreground audio owner; reset with model context. Oldest sample is at history_position.
     float history[256], window[256];
     uint32_t history_position; // Next 16-sample write; always a multiple of 16 in [0, 240].
     double scale;
     int32_t zero_point;
-    deepfir_fft_callback fft;
+    deepfir_fft_callback_t fft;
     void *fft_context;
 } deepfir_feature_state_t;
 /**
@@ -100,7 +100,7 @@ int deepfir_dsp_process(deepfir_dsp_state_t *state, const float *samples, uint32
                         const float *next_taps, float *output);
 /** True when this image contains and has enabled the Helium FIR kernel. */
 bool deepfir_dsp_mve_ready(void);
-/** Optional foreground check used by Debug before DMA starts. */
+/** Build-selected foreground vector check before DMA starts in all product profiles. */
 bool deepfir_dsp_prepare_mve(void);
 
 #ifdef __cplusplus

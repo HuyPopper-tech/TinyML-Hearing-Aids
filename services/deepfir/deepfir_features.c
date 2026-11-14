@@ -311,7 +311,7 @@ bool deepfir_feature_prepare_mve(deepfir_feature_state_t *state) {
     if (!state) {
         return false;
     }
-    deepfir_fft_callback saved_fft = state->fft;
+    deepfir_fft_callback_t saved_fft = state->fft;
     void *saved_context = state->fft_context;
     int16_t feature[387], pcm[16] = {0};
     unsigned mode;

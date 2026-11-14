@@ -22,7 +22,7 @@ extern "C" {
  * @note Foreground-only; Hermitian completion, roll +64 and taper follow DSP_CONTRACT.md.
  */
 int deepfir_reconstruct_taps(const int16_t *gain, const int16_t *phase, const float *scales,
-                             const int32_t *zero_points, deepfir_fft_callback fft,
+                             const int32_t *zero_points, deepfir_fft_callback_t fft,
                              void *fft_context, float taps[128]);
 #ifdef __cplusplus
 }

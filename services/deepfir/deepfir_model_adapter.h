@@ -40,12 +40,12 @@ typedef struct {
     int32_t zero_point;
 } deepfir_tensor_map_t;
 
-typedef int (*deepfir_mapped_infer_callback)(const deepfir_tensor_map_t *inputs,
-                                             uint32_t input_count, deepfir_tensor_map_t *outputs,
-                                             uint32_t output_count, void *context);
+typedef int (*deepfir_mapped_infer_callback_t)(const deepfir_tensor_map_t *inputs,
+                                              uint32_t input_count, deepfir_tensor_map_t *outputs,
+                                              uint32_t output_count, void *context);
 // Borrow normalized PCM for this call only; the same immutable hop feeds the FIR.
-typedef int (*deepfir_feature_callback)(const float *pcm, uint32_t sample_count, int16_t *feature,
-                                        void *context);
+typedef int (*deepfir_feature_callback_t)(const float *pcm, uint32_t sample_count, int16_t *feature,
+                                         void *context);
 
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
 typedef enum {
@@ -56,7 +56,7 @@ typedef enum {
     DEEPFIR_PROBE_AFTER_FIR,
     DEEPFIR_PROBE_STAGE_COUNT
 } deepfir_probe_stage_t;
-typedef void (*deepfir_probe_mark_callback)(uint32_t stage, void *context);
+typedef void (*deepfir_probe_mark_callback_t)(uint32_t stage, void *context);
 #endif
 
 typedef struct {
@@ -76,7 +76,7 @@ typedef struct {
     int16_t phase_buffer[65];
     // A failed hop is unusable until the stream owner performs a full reset.
     uint8_t faulted;
-    deepfir_fft_callback fft;
+    deepfir_fft_callback_t fft;
     void *fft_context;
     deepfir_tensor_map_t input_map[DEEPFIR_MODEL_INPUT_COUNT];
     deepfir_tensor_map_t output_map[DEEPFIR_MODEL_OUTPUT_COUNT];
@@ -84,13 +84,13 @@ typedef struct {
     int32_t input_zero_points[DEEPFIR_MODEL_INPUT_COUNT];
     float output_scales[DEEPFIR_MODEL_OUTPUT_COUNT];
     int32_t output_zero_points[DEEPFIR_MODEL_OUTPUT_COUNT];
-    deepfir_mapped_infer_callback infer_mapped;
-    deepfir_feature_callback feature;
+    deepfir_mapped_infer_callback_t infer_mapped;
+    deepfir_feature_callback_t feature;
     void *infer_context;
     void *feature_context;
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     // Foreground-only cycle marks; absent from the silent Release build.
-    deepfir_probe_mark_callback probe_mark;
+    deepfir_probe_mark_callback_t probe_mark;
     void *probe_context;
 #endif
 } deepfir_model_adapter_t;
