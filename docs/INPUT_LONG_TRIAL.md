@@ -1,5 +1,9 @@
 # Fixed +21 dB input trial — 2026-11-14
 
+For new firmware builds, gains can be changed through
+[CMake audio gain configuration](AUDIO_GAIN_CONFIGURATION.md). This procedure
+and the previously delivered package describe the default 12/21/-9 dB settings.
+
 This package contains one Release configuration, not an acoustic calibration.
 Use `M55M1_GestureAI.bin` and its matching `M55M1_GestureAI.axf` together.
 Verify their SHA256 values against `SHA256SUMS.txt` before programming.

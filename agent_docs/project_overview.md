@@ -2,6 +2,9 @@
 
 The active product is the custom M55M1 PCB, running mono 16 kHz in 16-sample hops: DMIC FIFO24/DMA32 -> signed PCM24 -> fixed input conditioner -> R2 frontend -> one TFLM/Ethos-U55 controller -> gain/phase FIR reconstruction -> FIR/crossfade -> PCM16 I2S1 DMA -> TLV320DAC3100. The trial uses DMIC +12 dB, software +21 dB, a soft-knee compressor with 3/120 ms attack/release and an independent -1 dBFS input limiter. The same conditioned float hop feeds analysis and waveform filtering; raw PCM16 replay bypasses the conditioner.
 
+Build-time DMIC/software/DAC gains are configurable in CMake with validated
+whole-dB ranges; defaults remain 12/21/-9 dB. See `docs/AUDIO_GAIN_CONFIGURATION.md`.
+
 `models/deepfir/` imports the immutable package `deepfir_r2_scratch_ptq_20261107_151431_366715` with compiled SHA-256 `69c1c3d2f2491df24a66c2190f266091bf8c192fcbce6724ee430d5cf28b1c27`. The controller has three INT16 inputs and four INT16 outputs. Encoded h/c state stays in graph order and both feedback lanes requantize using the contract.
 
 Dependency direction remains `app -> services -> drivers -> board -> libs`. ISR work is bounded acknowledgement/descriptor handoff/signalling. DSP runs in the foreground with fixed buffers and one owner per history. `libs/` is unchanged.
