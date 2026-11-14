@@ -12,8 +12,9 @@ from pathlib import Path
 VECTOR_REGISTER = re.compile(r"\bq[0-7]\b", re.IGNORECASE)
 REQUIRED_KERNELS = (
     "deepfir_feature_float", "deepfir_dsp_process_mve", "arm_cfft_f32",
-    "arm_vlog_f32", "arm_vexp_f32", "arm_q15_to_float",
+    "arm_vlog_f32", "arm_vexp_f32", "deepfir_input_conditioner_process",
     "deepfir_feedback_q31", "deepfir_quantize_feature_block", "deepfir_reconstruct_taps",
+    "deepfir_pcm16_render_hop",
 )
 
 REQUIRED_MAP_REFERENCES = (
@@ -21,7 +22,8 @@ REQUIRED_MAP_REFERENCES = (
     "deepfir_features.o(.text.deepfir_feature_float) refers to arm_vexp_f32.o",
     "deepfir_features.o(.text.deepfir_feature_float) refers to arm_scale_f32.o",
     "deepfir_dsp_process_mve",
-    "deepfir_model_adapter.o(.text.deepfir_model_adapter_process_pcm16) refers to arm_q15_to_float.o",
+    "deepfir_input_conditioner_process",
+    "deepfir_pcm16_render_hop",
 )
 
 
@@ -50,9 +52,12 @@ def verify_kernel_ranges(map_text: str, disassembly: str) -> dict[str, int]:
         if name == "deepfir_feedback_q31" and not any(
                 re.search(r"\bvqrdmulh\.s32\b", line, re.IGNORECASE) for line in lines):
             raise ValueError("Feedback has no rounded Q31 vector multiply")
-        if name == "deepfir_quantize_feature_block" and not any(
+        if name in ("deepfir_quantize_feature_block", "deepfir_pcm16_render_hop") and not any(
                 re.search(r"\bvcvt\.s32\.f32\b", line, re.IGNORECASE) for line in lines):
-            raise ValueError("Quantizer has no vector float conversion")
+            raise ValueError(f"{name} has no vector float conversion")
+        if name == "deepfir_input_conditioner_process" and not any(
+                re.search(r"\bvcvt\.f32\.s32\b.*#23\b", line, re.IGNORECASE) for line in lines):
+            raise ValueError("PCM24 has no vector normalization by 2^23")
         counts[name] = len(lines)
     return counts
 

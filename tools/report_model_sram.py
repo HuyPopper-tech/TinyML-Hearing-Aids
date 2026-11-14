@@ -62,6 +62,9 @@ def report(map_path: Path) -> None:
         print(f"  {label:<24}: {size:>9,} B")
     print(f"  other DeepFIR statics    : {static_total - detailed:>9,} B")
     print(f"  model-owned SRAM linked  : {linked + static_total:>9,} B")
+    dtcm_total = sum(size for region, _, obj, size in sections
+                     if region == "DTCM" and obj.startswith("deepfir_"))
+    print(f"  CPU-only DeepFIR DTCM    : {dtcm_total:>9,} B (excluded from SRAM above)")
     print(f"  RW_RAM all firmware      : {regions['RW_RAM'][1]:>9,} B")
     print("  Tensor arena is allocated capacity; runtime peak use is not in the map.")
 
