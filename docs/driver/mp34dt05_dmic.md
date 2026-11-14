@@ -1,8 +1,21 @@
 # MP34DT05 DMIC Capture Notes
 
-## Current custom binding — 2026-11-08
+## Current custom binding — 2026-11-14
 
 Custom product: PA1 DMIC clock / PA2 data, DMIC0 channel2, rising edge, OSR=128 at 16 kHz; RX LPPDMA0 channel0. The product hop is16 samples.
+
+The approved input-conditioning trial uses +12 dB DMIC gain, FIFO24 and 32-bit DMA transfers.
+Two non-cacheable slots each hold 16 words. Foreground sign-extends bits23:0
+to `int32_t`; unused upper bits are ignored. Transport keeps these PCM24 codes
+through normalization by 8388608, then a fixed +21 dB software preamp,
+soft-knee compressor and independent -1 dBFS limiter before the shared frontend/FIR. The model still
+uses INT16 tensors; playback remains PCM16 with DAC startup gain -9 dB.
+PCM24 retains precision; it does not add acoustic or DMIC saturation headroom.
+The compressor is -12 dBFS, 3:1, 6 dB knee, 3 ms attack and 120 ms release.
+The detector has instantaneous hop-peak attack and 20 ms decay; the limiter has
+immediate attack and 20 ms release. These gain time constants add no lookahead.
+Board alignment, audible sensitivity, timing and power remain unmeasured for this trial.
+See [SWD trial procedure](../DMIC_CLIPPING_SWD.md).
 
 See [R2 integration](../r2_custom_integration.md) for current ownership/recovery and evidence limits.
 
