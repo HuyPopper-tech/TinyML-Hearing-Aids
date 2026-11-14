@@ -17,8 +17,9 @@ extern "C" {
 
 typedef int (*deepfir_fft_callback)(float *buffer, uint32_t length, uint8_t inverse, void *context);
 typedef struct {
-    // Foreground audio owner; analysis history is reset together with model context.
+    // Foreground audio owner; reset with model context. Oldest sample is at history_position.
     float history[256], window[256];
+    uint32_t history_position; // Next 16-sample write; always a multiple of 16 in [0, 240].
     double scale;
     int32_t zero_point;
     deepfir_fft_callback fft;
@@ -56,7 +57,7 @@ void deepfir_feature_reset(deepfir_feature_state_t *state);
 int deepfir_feature_pcm16(const int16_t *pcm, uint32_t count, int16_t *feature, void *context);
 /**
  * @brief Extract features from an already normalized hop without a second PCM conversion.
- * @param pcm Separate caller-owned 16-float input, PCM16 divided by 32768.
+ * @param pcm Separate caller-owned 16-float normalized hop, including conditioned PCM24.
  * @param count Must equal 16.
  * @param feature Caller-owned 387-code destination in bin/channel order.
  * @param context Sole foreground-owned deepfir_feature_state_t.

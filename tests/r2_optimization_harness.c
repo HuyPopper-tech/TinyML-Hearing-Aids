@@ -183,7 +183,8 @@ static int frame_check_fft(float *frame, uint32_t length, uint8_t inverse, void 
         return -1;
     }
     for (unsigned i = 0; i < 256; ++i) {
-        if (frame[2 * i] != state->history[i] * state->window[i] || frame[2 * i + 1] != 0) {
+        if (frame[2 * i] != state->history[(state->history_position + i) & 255u] *
+                            state->window[i] || frame[2 * i + 1] != 0) {
             return -2;
         }
     }

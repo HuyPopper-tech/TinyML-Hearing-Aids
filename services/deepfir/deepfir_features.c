@@ -28,6 +28,7 @@ void deepfir_feature_reset(deepfir_feature_state_t *state) {
         return;
     }
     memset(state->history, 0, sizeof(state->history));
+    state->history_position = 0;
     for (index = 0; index < 256u; ++index) {
         // Symmetric Hamming uses N-1; a periodic window changes the exported frontend.
         state->window[index] =
@@ -145,7 +146,8 @@ int deepfir_feature_float(const float *pcm, uint32_t count, int16_t *feature, vo
     float spectrum[512];
     uint32_t index;
     if (!state || !pcm || !feature || count != 16u || !state->fft || !(state->scale > 0.0f) ||
-        !isfinite(state->scale) || state->zero_point < -32768 || state->zero_point > 32767) {
+        !isfinite(state->scale) || state->zero_point < -32768 || state->zero_point > 32767 ||
+        state->history_position >= 256u || state->history_position % 16u != 0u) {
         return -1;
     }
     for (index = 0; index < count; ++index) {
@@ -153,23 +155,32 @@ int deepfir_feature_float(const float *pcm, uint32_t count, int16_t *feature, vo
             return -2;
         }
     }
-    // Shift only past samples: startup zeros and the current 16 samples form a causal frame.
-    memmove(state->history, state->history + 16, 240u * sizeof(float));
-    memcpy(state->history + 240u, pcm, 16u * sizeof(float));
+    // The ring changes storage only: FFT input remains oldest-to-newest, with startup zeros.
+    memcpy(state->history + state->history_position, pcm, 16u * sizeof(float));
+    state->history_position = (state->history_position + 16u) & 255u;
+    uint32_t source = state->history_position;
+    for (uint32_t start = 0; start < 256u;) {
+        const uint32_t available = 256u - source;
+        const uint32_t remaining = 256u - start;
+        const uint32_t segment = available < remaining ? available : remaining;
 #if DEEPFIR_DSP_HAS_MVEF
-    for (index = 0u; index < 256u; index += 4u) {
-        float32x4x2_t complex_values;
-        complex_values.val[0] =
-            vmulq_f32(vld1q_f32(state->history + index), vld1q_f32(state->window + index));
-        complex_values.val[1] = vdupq_n_f32(0.0f);
-        vst2q_f32(spectrum + index * 2u, complex_values);
-    }
+        for (index = 0u; index < segment; index += 4u) {
+            float32x4x2_t complex_values;
+            complex_values.val[0] = vmulq_f32(vld1q_f32(state->history + source + index),
+                                             vld1q_f32(state->window + start + index));
+            complex_values.val[1] = vdupq_n_f32(0.0f);
+            vst2q_f32(spectrum + (start + index) * 2u, complex_values);
+        }
 #else
-    for (index = 0; index < 256u; ++index) {
-        spectrum[index * 2u] = state->history[index] * state->window[index];
-        spectrum[index * 2u + 1u] = 0.0f;
-    }
+        for (index = 0; index < segment; ++index) {
+            spectrum[(start + index) * 2u] =
+                state->history[source + index] * state->window[start + index];
+            spectrum[(start + index) * 2u + 1u] = 0.0f;
+        }
 #endif
+        start += segment;
+        source = 0;
+    }
     if (state->fft(spectrum, 256u, 0u, state->fft_context) != 0) {
         return -2;
     }
