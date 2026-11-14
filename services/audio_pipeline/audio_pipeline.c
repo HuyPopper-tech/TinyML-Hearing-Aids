@@ -13,7 +13,6 @@
 #include "services/deepfir/deepfir_inference_service.h"
 #include "drivers/audio_transport/audio_transport.h"
 #include "services/audio_pipeline/audio_pipeline.h"
-#include "common/audio_pcm.h"
 
 #ifndef M55M1_ENABLE_DAC_I2S_OUTPUT
 #define M55M1_ENABLE_DAC_I2S_OUTPUT 0
@@ -24,6 +23,9 @@
 #ifndef M55M1_AUDIO_RELEASE_PROBE
 #define M55M1_AUDIO_RELEASE_PROBE 0
 #endif
+
+#define AUDIO_PIPELINE_PCM24_MIN (-8388608)
+#define AUDIO_PIPELINE_PCM24_MAX 8388607
 #ifndef M55M1_AUDIO_UART_PCM_CAPTURE
 #define M55M1_AUDIO_UART_PCM_CAPTURE 0
 #endif
@@ -55,7 +57,7 @@ static void record_input_levels(const int32_t *samples) {
         if (magnitude > peak) {
             peak = magnitude;
         }
-        if (sample == AUDIO_PCM24_MIN || sample == AUDIO_PCM24_MAX) {
+        if (sample == AUDIO_PIPELINE_PCM24_MIN || sample == AUDIO_PIPELINE_PCM24_MAX) {
             ++clips;
         }
     }
@@ -481,9 +483,12 @@ static void capture_store_hop(const int32_t *input, const int16_t *output, uint3
 
     for (uint32_t index = 0U; index < AUDIO_TRANSPORT_SAMPLES_PER_BLOCK; ++index) {
         const uint32_t destination = g_capture_sample_count + index;
-        g_capture_input[destination] = audio_pcm24_to_pcm16(input[index]);
+        // Legacy PCM16 export discards low eight bits, rounding negatives downward.
+        const int32_t sample = input[index];
+        g_capture_input[destination] = (int16_t)((sample - (sample < 0 ? 255 : 0)) / 256);
         g_capture_output[destination] = output[index];
-        if ((input[index] == AUDIO_PCM24_MIN) || (input[index] == AUDIO_PCM24_MAX)) {
+        if ((input[index] == AUDIO_PIPELINE_PCM24_MIN) ||
+            (input[index] == AUDIO_PIPELINE_PCM24_MAX)) {
             ++g_capture_input_clips;
         }
         if ((output[index] == INT16_MIN) || (output[index] == INT16_MAX)) {
@@ -555,7 +560,7 @@ static void record_pcm24_stats(const int32_t *samples, uint32_t *peak, uint32_t 
         if (magnitude > *peak) {
             *peak = magnitude;
         }
-        if (sample == AUDIO_PCM24_MIN || sample == AUDIO_PCM24_MAX) {
+        if (sample == AUDIO_PIPELINE_PCM24_MIN || sample == AUDIO_PIPELINE_PCM24_MAX) {
             ++*clip_samples;
         }
     }

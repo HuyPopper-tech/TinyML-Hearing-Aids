@@ -8,6 +8,13 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class Pcm24Tests(unittest.TestCase):
+    def test_pcm24_operations_are_owned_without_a_generic_header(self):
+        self.assertFalse((ROOT/'common/audio_pcm.h').exists())
+        for folder in ('app', 'board', 'drivers', 'services'):
+            for path in (ROOT/folder).rglob('*'):
+                if path.suffix in ('.c', '.cpp', '.h'):
+                    self.assertNotIn('common/audio_pcm.h', path.read_text(), str(path))
+
     def test_dma32_descriptor_and_foreground_signed_capture(self):
         board = (ROOT / 'board/m55m1_audio.c').read_text()
         descriptor = board[board.index('static void m55m1_audio_configure_dmic_descriptor('):
@@ -19,7 +26,6 @@ class Pcm24Tests(unittest.TestCase):
         #include <stdbool.h>
         #include <stddef.h>
         #include <stdint.h>
-        #include "common/audio_pcm.h"
         #define M55M1_AUDIO_LPPDMA_CH 0
         #define LPPDMA_OP_SCATTER 1u
         #define LPPDMA_REQ_SINGLE 2u
@@ -87,28 +93,41 @@ class Pcm24Tests(unittest.TestCase):
         '''
         self.compile_and_run(code)
 
-    def test_fifo_sign_normalization_and_export(self):
+    def test_actual_pcm16_export_preserves_all_pcm24_codes(self):
+        pipeline = (ROOT/'services/audio_pipeline/audio_pipeline.c').read_text()
+        function = pipeline[pipeline.index('static void capture_store_hop('):]
+        function = function[:function.index('\n#endif')]
         code = r'''
         #include <assert.h>
-        #include "common/audio_pcm.h"
+        #include <stdbool.h>
+        #include <stdint.h>
+        #include <math.h>
+        #define AUDIO_TRANSPORT_SAMPLES_PER_BLOCK 16
+        #define AUDIO_PIPELINE_CAPTURE_SAMPLE_COUNT 32
+        #define AUDIO_PIPELINE_PCM24_MIN (-8388608)
+        #define AUDIO_PIPELINE_PCM24_MAX 8388607
+        static bool g_capture_has_sequence;
+        static uint32_t g_capture_last_sequence, g_capture_sequence_gaps, g_capture_sample_count;
+        static uint32_t g_capture_input_clips, g_capture_output_clips;
+        static int16_t g_capture_input[16], g_capture_output[16];
+        static void capture_send_packet(uint32_t status) { (void)status; assert(0); }
+        ''' + function + r'''
         int main(void) {
-            assert(audio_pcm24_decode(0) == 0);
-            assert(audio_pcm24_decode(0x007fffff) == 8388607);
-            assert(audio_pcm24_decode(0x00800000) == -8388608);
-            assert(audio_pcm24_decode(0xff800000) == -8388608);
-            assert(audio_pcm24_decode(0x00ffffff) == -1);
-            assert(audio_pcm24_decode(0xffffffff) == -1);
-            assert(audio_pcm24_to_float(-8388608) == -1.0f);
-            assert(audio_pcm24_to_float(1) == 1.0f / 8388608.0f);
-            assert(audio_pcm24_to_float(8388607) < 1.0f);
-            for (int32_t x = -32768; x <= 32767; ++x) {
-                assert(audio_pcm24_to_float(x * 256) == (float)x / 32768.0f);
-                assert(audio_pcm24_to_pcm16(x * 256) == x);
+            int32_t input[16];
+            int16_t output[16] = {0};
+            uint32_t sequence = 0;
+            for (int32_t base=-8388608; base<8388607; base+=16) {
+                for (unsigned i=0; i<16; ++i) input[i] = base+(int32_t)i;
+                g_capture_sample_count = 0;
+                capture_store_hop(input,output,sequence++);
+                for (unsigned i=0; i<16; ++i) {
+                    assert(g_capture_input[i] == (int16_t)floor((double)input[i]/256.0));
+                    assert(g_capture_output[i] == 0);
+                }
+                assert(g_capture_sample_count == 16);
             }
-            assert(audio_pcm24_to_pcm16(-1) == -1);
-            assert(audio_pcm24_to_pcm16(255) == 0);
-            assert(audio_pcm24_to_pcm16(8388607) == 32767);
-            return 0;
+            assert(g_capture_input_clips == 2 && g_capture_output_clips == 0);
+            assert(g_capture_sequence_gaps == 0);
         }
         '''
         self.compile_and_run(code)
@@ -119,7 +138,7 @@ class Pcm24Tests(unittest.TestCase):
             binary = Path(directory) / 'pcm24.exe'
             source.write_text(code)
             built = subprocess.run(['gcc', '-std=c11', '-Wall', '-Wextra', '-Werror',
-                                    '-I', str(ROOT), str(source), '-o', str(binary)],
+                                    '-I', str(ROOT), str(source), '-lm', '-o', str(binary)],
                                    capture_output=True, text=True)
             self.assertEqual(built.returncode, 0, built.stdout + built.stderr)
             run = subprocess.run([str(binary)], capture_output=True, text=True)

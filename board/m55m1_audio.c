@@ -10,7 +10,6 @@
 #include "board/m55m1_audio.h"
 #include "board/m55m1_timebase.h"
 #include "board/m55m1_power.h"
-#include "common/audio_pcm.h"
 #include "NuMicro.h"
 
 #ifndef M55M1_ENABLE_DAC_I2S_OUTPUT
@@ -706,7 +705,9 @@ bool m55m1_audio_dmic_take_block_timed(int32_t *destination, uint16_t sample_cou
     g_dmic_state.block_ready = false;
     __DMB();
     for (index = 0U; index < sample_count; ++index) {
-        destination[index] = audio_pcm24_decode(g_dmic_buffers[completed_slot][index]);
+        // The upper FIFO byte is unspecified; decode the right-aligned signed payload.
+        const uint32_t payload = g_dmic_buffers[completed_slot][index] & 0x00ffffffU;
+        destination[index] = (int32_t)(payload ^ 0x00800000U) - 8388608;
     }
     __DMB();
     DMIC_ENABLE_LPPDMA(DMIC0);

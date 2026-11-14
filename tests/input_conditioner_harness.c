@@ -373,6 +373,16 @@ static int fft(float *buffer, uint32_t length, uint8_t inverse, void *context) {
     return 0;
 }
 
+static int check_raw_normalization(const float *pcm, uint32_t count, int16_t *out, void *context) {
+    const int32_t *raw = context;
+    (void)out;
+    assert(count == 16);
+    for (unsigned i = 0; i < count; ++i) {
+        assert(pcm[i] == (float)raw[i] / 8388608.0f);
+    }
+    return -93; // Stop after observing normalization, before inference/FIR.
+}
+
 static void adapter_integration(void) {
     static deepfir_model_adapter_t adapter;
     deepfir_input_conditioner_t state;
@@ -421,6 +431,20 @@ static void adapter_integration(void) {
     assert(deepfir_model_adapter_process_float(&adapter, expected_pcm, 16, output));
     deepfir_model_adapter_reset(&adapter);
     assert(deepfir_model_adapter_process_float(&adapter, expected_pcm, 16, output) == 0);
+    // Preserve the old helper's exhaustive PCM16-grid check through the real adapter.
+    adapter.feature = check_raw_normalization;
+    adapter.feature_context = input;
+    for (unsigned low = 0; low <= 255; low += 255) {
+        for (int32_t base = -32768; base <= 32752; base += 16) {
+            for (unsigned i = 0; i < 16; ++i) {
+                input[i] = (base + (int32_t)i) * 256 + (int32_t)low;
+            }
+            deepfir_model_adapter_reset(&adapter);
+            assert(deepfir_model_adapter_process_pcm24(&adapter, input, 16, output) == -93);
+            assert(adapter.faulted);
+        }
+    }
+    puts("raw PCM24 normalization: 131072 PCM16-grid/low-bit values exact through actual adapter");
 }
 
 int main(void) {

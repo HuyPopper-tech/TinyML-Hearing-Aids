@@ -88,7 +88,7 @@ static int capture_pcm24_feature(const float *pcm, uint32_t count, int16_t *feat
     (void)feature;
     assert(count == 16);
     for (unsigned i = 0; i < count; ++i) {
-        assert(pcm[i] == audio_pcm24_to_float(expected[i]));
+        assert(pcm[i] == (float)expected[i] / 8388608.0f);
     }
     return -73;
 }

@@ -9,7 +9,6 @@
 
 #include "deepfir_model_adapter.h"
 #include "deepfir_reconstruction.h"
-#include "common/audio_pcm.h"
 
 #ifndef M55M1_DEEPFIR_MVE
 #define M55M1_DEEPFIR_MVE 0
@@ -406,7 +405,7 @@ int deepfir_model_adapter_process_pcm24(deepfir_model_adapter_t *adapter, const 
         return -1;
     }
     for (uint32_t index = 0U; index < sample_count; ++index) {
-        if (pcm24[index] < AUDIO_PCM24_MIN || pcm24[index] > AUDIO_PCM24_MAX) {
+        if (pcm24[index] < -8388608 || pcm24[index] > 8388607) {
             return -1;
         }
     }
@@ -417,7 +416,7 @@ int deepfir_model_adapter_process_pcm24(deepfir_model_adapter_t *adapter, const 
     }
 #else
     for (uint32_t index = 0U; index < sample_count; ++index) {
-        pcm[index] = audio_pcm24_to_float(pcm24[index]);
+        pcm[index] = (float)pcm24[index] / 8388608.0f;
     }
 #endif
     return process_pcm_float(adapter, pcm, sample_count, output);

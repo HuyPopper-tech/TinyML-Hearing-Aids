@@ -8,7 +8,6 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "common/audio_pcm.h"
 #include "deepfir_dsp.h"
 #include "deepfir_input_conditioner.h"
 
@@ -85,7 +84,7 @@ int deepfir_input_conditioner_process(deepfir_input_conditioner_t *state,
         return -1;
     }
     for (uint32_t i = 0; i < count; ++i) {
-        if (input[i] < AUDIO_PCM24_MIN || input[i] > AUDIO_PCM24_MAX) {
+        if (input[i] < -8388608 || input[i] > 8388607) {
             return -1;
         }
     }
@@ -96,7 +95,7 @@ int deepfir_input_conditioner_process(deepfir_input_conditioner_t *state,
     }
 #else
     for (uint32_t i = 0; i < count; ++i) {
-        pcm[i] = audio_pcm24_to_float(input[i]);
+        pcm[i] = (float)input[i] / 8388608.0f;
     }
 #endif
     deepfir_input_conditioner_t next = *state;
