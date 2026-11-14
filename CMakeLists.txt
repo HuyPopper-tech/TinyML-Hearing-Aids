@@ -55,7 +55,23 @@ option(M55M1_MODEL_IN_SRAM "Place the model image in SRAM at runtime" ON)
 
 include(${PROJ_ROOT}/cmake/model_package.cmake)
 
-set(M55M1_DMIC_GAIN_DB 12 CACHE STRING "DMIC hardware DSP gain in dB")
+set(M55M1_DMIC_GAIN_DB 12 CACHE STRING "DMIC DSP gain: whole dB in [-127, 36]")
+set(M55M1_SOFTWARE_GAIN_DB 21 CACHE STRING "Pre-compressor software gain: whole dB in [0, 36]")
+set(M55M1_DAC_GAIN_DB -9 CACHE STRING "DAC startup digital volume and ceiling: whole dB in [-63, 0]")
+
+function(m55m1_validate_gain setting minimum maximum)
+    # Canonical integers avoid C octal literals and malformed compile definitions.
+    if(NOT "${${setting}}" MATCHES "^-?(0|[1-9][0-9]?[0-9]?)$" OR
+       "${${setting}}" LESS minimum OR "${${setting}}" GREATER maximum)
+        message(FATAL_ERROR "${setting} must be a whole-dB integer in [${minimum}, ${maximum}]; got '${${setting}}'")
+    endif()
+    message(STATUS "${setting}=${${setting}} dB (range [${minimum}, ${maximum}])")
+endfunction()
+
+# The bundled BSP encodes -128 dB incorrectly; keep that endpoint unavailable.
+m55m1_validate_gain(M55M1_DMIC_GAIN_DB -127 36)
+m55m1_validate_gain(M55M1_SOFTWARE_GAIN_DB 0 36)
+m55m1_validate_gain(M55M1_DAC_GAIN_DB -63 0)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(M55M1_RUNTIME_TELEMETRY_VALUE 1)
@@ -92,6 +108,8 @@ set(M55M1_DEFS
     NVT_DCACHE_ON=${M55M1_ENABLE_DCACHE_VALUE}
     DEBUG_PORT_UART_IDX=${M55M1_DEBUG_UART_IDX}
     M55M1_DMIC_GAIN_DB=${M55M1_DMIC_GAIN_DB}
+    M55M1_SOFTWARE_GAIN_DB=${M55M1_SOFTWARE_GAIN_DB}
+    M55M1_DAC_GAIN_DB=${M55M1_DAC_GAIN_DB}
     M55M1_RUNTIME_TELEMETRY=${M55M1_RUNTIME_TELEMETRY_VALUE}
     ETHOSU_LOG_SEVERITY=-1)
 

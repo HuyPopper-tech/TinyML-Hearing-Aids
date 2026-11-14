@@ -44,7 +44,8 @@ void deepfir_input_conditioner_reset_stream(deepfir_input_conditioner_t *state);
  * @param state Initialized foreground state; must not overlap either buffer.
  * @param input Borrowed sign-extended PCM24, [-8388608, 8388607].
  * @param count Must equal 16; buffers must be separate and non-overlapping.
- * @param output Normalized floats with +21 dB preamp, -12 dBFS/3:1/6 dB knee,
+ * @param output Normalized floats with build-configured preamp (default +21 dB),
+ * -12 dBFS/3:1/6 dB knee,
  * compressor 3/120 ms attack/release (10-90%), 20 ms detector decay and
  * independent immediate -1 dBFS limiter with 20 ms release.
  * @return 0 on success, -1 for invalid arguments/state; no mutation on failure.

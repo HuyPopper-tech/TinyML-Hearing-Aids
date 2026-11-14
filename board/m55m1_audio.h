@@ -32,11 +32,20 @@ void m55m1_audio_record_startup_event(audio_startup_phase_t phase, uint32_t cycl
 const volatile audio_startup_trace_t *m55m1_audio_get_startup_trace(void);
 #endif
 
-// Whole-dB DAC ceiling and startup level; this is not a calibrated acoustic limit.
-#define M55M1_AUDIO_SAFE_MAX_GAIN_DB (-9)
-// Whole-dB digital DMIC gain; CMake may override this default (hardware maximum: +36 dB).
+// Whole-dB DAC startup level and runtime ceiling; not a calibrated acoustic limit.
+#ifndef M55M1_DAC_GAIN_DB
+#define M55M1_DAC_GAIN_DB (-9)
+#endif
+#if M55M1_DAC_GAIN_DB < -63 || M55M1_DAC_GAIN_DB > 0
+#error "M55M1_DAC_GAIN_DB must be in [-63, 0]"
+#endif
+#define M55M1_AUDIO_SAFE_MAX_GAIN_DB M55M1_DAC_GAIN_DB
+// Whole-dB DMIC DSP gain; exclude -128 dB, misencoded by the bundled BSP.
 #ifndef M55M1_DMIC_GAIN_DB
 #define M55M1_DMIC_GAIN_DB 12
+#endif
+#if M55M1_DMIC_GAIN_DB < -127 || M55M1_DMIC_GAIN_DB > 36
+#error "M55M1_DMIC_GAIN_DB must be in [-127, 36]"
 #endif
 
 typedef enum {
