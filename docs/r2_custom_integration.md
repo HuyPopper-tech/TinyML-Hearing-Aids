@@ -1,5 +1,11 @@
 # Tích hợp DeepFIR R2 trên custom M55M1 — 2026-11-08
 
+Current input trial (2026-11-14): PCM24/16 kHz, DMIC +12 dB, software +21 dB
+with shared pre-frontend/FIR compression (3/120 ms) and independent peak limiting.
+Raw model replay stays unchanged. Frontend ring storage preserves the causal frame;
+normal Release omits service stage timing while retaining deadline/SWD statistics.
+See [current verification and board acceptance limits](verification/2026-11-14-pipeline-cleanup.md).
+
 ## Current status — 2026-11-09
 
 Ordinary Debug and Release share the continuous custom-board pipeline and terminal
@@ -101,7 +107,13 @@ là next-input state sau feedback.
 | Stereo ping/pong + silence | DAC driver/PDMA | chỉ sửa slot đã trả; gate DMA + bounded busy/TD check + barriers |
 
 `deepfir_reconstruction.c` là DSP stateless ở services, không nằm trong models.
-Frontend dùng pcm/32768, Hamming đối xứng mẫu số255, FFT256 forward không chuẩn
+Production capture trial (2026-11-14): FIFO24/DMA32, signed PCM24 in `int32_t`,
+normalized by 8388608 before the shared frontend/FIR. PCM16 replay retains
+`pcm/32768`; `PCM24 = PCM16 * 256` gives identical normalized values.
+The model tensor ABI and PCM16 playback remain unchanged. This capture change
+has host/build validation only; earlier PCM16 board timing does not validate it.
+
+Frontend uses normalized PCM, Hamming đối xứng mẫu số255, FFT256 forward không chuẩn
 hóa, magnitude/real/imag theo contract; previous ban đầu zero. Reconstruction
 giữ real DC/Nyquist, imaginary endpoints zero, Hermitian inverse128 positive/128,
 roll+64 và taper. FIR cũ/mới cùng history/input, midpoint-Hann16; reset delta64.
