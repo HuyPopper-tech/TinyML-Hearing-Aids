@@ -56,7 +56,9 @@ alignas(16) static deepfir_feature_state_t g_feature_state
     __attribute__((section(".bss.DTCM.ZeroInit")));
 alignas(16) static deepfir_cmsis_fft_context_t g_fft_context
     __attribute__((section(".bss.DTCM.ZeroInit")));
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
 static deepfir_inference_timing_t g_last_timing;
+#endif
 alignas(16) static deepfir_input_conditioner_t g_input_conditioner
     __attribute__((section(".bss.DTCM.ZeroInit")));
 static bool g_initialized;
@@ -280,8 +282,8 @@ int timed_fft_callback(float *buffer, uint32_t length, uint8_t inverse, void *co
 
 int feature_callback(const float *pcm, uint32_t sample_count, int16_t *feature, void *context) {
     DEEPFIR_TRACE_HOP(DEEPFIR_HOP_FRONTEND_BEGIN, 0);
-    const uint32_t start = audio_transport_cycles_now();
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
+    const uint32_t start = audio_transport_cycles_now();
     g_feature_start_cycle = start;
     g_feature_fft_called = false;
     g_last_timing.pre_fft_us = 0U;
@@ -289,14 +291,14 @@ int feature_callback(const float *pcm, uint32_t sample_count, int16_t *feature, 
     g_last_timing.post_fft_us = 0U;
 #endif
     const int status = deepfir_feature_float(pcm, sample_count, feature, context);
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     const uint32_t end = audio_transport_cycles_now();
     g_last_timing.feature_us = elapsed_us(start, end);
-    DEEPFIR_TRACE_HOP(DEEPFIR_HOP_FRONTEND_END, status);
-#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     if (g_feature_fft_called) {
         g_last_timing.post_fft_us = elapsed_us(g_feature_fft_end_cycle, end);
     }
 #endif
+    DEEPFIR_TRACE_HOP(DEEPFIR_HOP_FRONTEND_END, status);
     return status;
 }
 
@@ -312,12 +314,17 @@ int infer_callback(const deepfir_tensor_map_t *inputs, uint32_t input_count,
                     inputs[index].elements * sizeof(int16_t));
     }
     DEEPFIR_TRACE_HOP(DEEPFIR_HOP_INVOKE_BEGIN, 0);
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     const uint32_t start = audio_transport_cycles_now();
+#endif
     const TfLiteStatus status = g_interpreter->Invoke();
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     const uint32_t end = audio_transport_cycles_now();
     g_last_timing.invoke_us = elapsed_us(start, end);
+#endif
     DEEPFIR_TRACE_HOP(DEEPFIR_HOP_INVOKE_END, static_cast<int>(status));
 
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     ethosu_runtime_stats_t runtime_stats = {};
     if (ethosu_runtime_get_stats(&runtime_stats) == ETHOSU_RUNTIME_OK) {
         g_last_timing.npu_us = audio_transport_cycles_to_us(runtime_stats.last_duration_cycles);
@@ -327,6 +334,7 @@ int infer_callback(const deepfir_tensor_map_t *inputs, uint32_t input_count,
     g_last_timing.invoke_overhead_us = g_last_timing.invoke_us > g_last_timing.npu_us
                                            ? g_last_timing.invoke_us - g_last_timing.npu_us
                                            : 0U;
+#endif
     if (status != kTfLiteOk) {
         return -2;
     }
@@ -609,7 +617,9 @@ extern "C" void deepfir_inference_reset(void) {
     deepfir_feature_reset(&g_feature_state);
     deepfir_model_adapter_reset(&g_adapter);
     deepfir_input_conditioner_reset_stream(&g_input_conditioner);
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     g_last_timing = {};
+#endif
 }
 
 static int process_input(const int16_t *input, uint32_t sample_count, float *output) {
@@ -649,10 +659,14 @@ static bool process_audio(const Sample *input, int16_t *output, uint32_t sample_
     g_hop_trace_overflow = false;
 #endif
     float output_float[DEEPFIR_DSP_HOP];
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     const uint32_t start = audio_transport_cycles_now();
+#endif
     const int status = process_input(input, sample_count, output_float);
     if (status != 0) {
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
         g_last_timing.total_us = elapsed_us(start, audio_transport_cycles_now());
+#endif
         DEEPFIR_TRACE_HOP(DEEPFIR_HOP_ADAPTER_FAIL, status);
         g_faulted = true;
         g_processing = false;
@@ -662,7 +676,9 @@ static bool process_audio(const Sample *input, int16_t *output, uint32_t sample_
     const uint32_t pcm_start = audio_transport_cycles_now();
 #endif
     if (deepfir_pcm16_render_hop(output_float, output) != 0) {
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
         g_last_timing.total_us = elapsed_us(start, audio_transport_cycles_now());
+#endif
 #if M55M1_RUNTIME_TELEMETRY
         for (uint32_t index = 0U; index < sample_count; ++index) {
             if (!std::isfinite(output_float[index])) {
@@ -678,12 +694,10 @@ static bool process_audio(const Sample *input, int16_t *output, uint32_t sample_
     DEEPFIR_TRACE_HOP(DEEPFIR_HOP_PCM_DONE, 0);
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     g_last_timing.pcm_us = elapsed_us(pcm_start, audio_transport_cycles_now());
-#endif
     g_last_timing.total_us = elapsed_us(start, audio_transport_cycles_now());
     const uint32_t accounted = g_last_timing.feature_us + g_last_timing.invoke_us;
     g_last_timing.dsp_us =
         g_last_timing.total_us > accounted ? g_last_timing.total_us - accounted : 0U;
-#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     const uint32_t mapped_infer_us = elapsed_us(g_adapter_stage_cycles[DEEPFIR_PROBE_BEFORE_INFER],
                                                 g_adapter_stage_cycles[DEEPFIR_PROBE_AFTER_INFER]);
     g_last_timing.bridge_us =
@@ -722,7 +736,11 @@ extern "C" void deepfir_inference_report_trace(void) {
 
 extern "C" void deepfir_inference_get_last_timing(deepfir_inference_timing_t *timing) {
     if (timing != nullptr) {
+#if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
         *timing = g_last_timing;
+#else
+        *timing = {};
+#endif
     }
 }
 

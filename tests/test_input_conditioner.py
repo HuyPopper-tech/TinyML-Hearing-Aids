@@ -46,7 +46,6 @@ class InputConditionerTests(unittest.TestCase):
         static deepfir_feature_state_t g_feature_state;
         static deepfir_model_adapter_t g_adapter;
         static deepfir_input_conditioner_t g_input_conditioner;
-        static deepfir_inference_timing_t g_last_timing;
         static unsigned features_reset, adapter_reset, invoked;
         static float expected[16];
         extern "C" void deepfir_feature_reset(deepfir_feature_state_t *) { ++features_reset; }

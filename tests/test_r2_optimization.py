@@ -50,7 +50,7 @@ class R2OptimizationTests(unittest.TestCase):
                 self.assertRegex(report.stdout, r'CPU-only DeepFIR DTCM\s*:\s*' +
                                  re.escape(f'{expected:,} B'))
 
-    def test_service_render_failure_atomicity_and_single_total_conversion(self):
+    def test_release_render_atomicity_without_stage_timing(self):
         source = (ROOT/'services/deepfir/deepfir_inference_service.cpp').read_text()
         process = source[source.index('template <typename Sample>'):
                          source.index('extern "C" bool deepfir_inference_process(')]
@@ -62,7 +62,6 @@ class R2OptimizationTests(unittest.TestCase):
         #include "services/deepfir/deepfir_inference_service.h"
         #include "services/deepfir/deepfir_dsp.h"
         static bool g_initialized = true, g_faulted, g_processing;
-        static deepfir_inference_timing_t g_last_timing;
         static unsigned conversions, cycles;
         static int failure, bad_lane;
         uint32_t audio_transport_cycles_now() { return ++cycles; }
@@ -81,16 +80,15 @@ class R2OptimizationTests(unittest.TestCase):
             int32_t input[16] = {};
             int16_t output[16], before[16];
             assert(process_audio(input, output, 16));
-            assert(conversions == 1 && !g_faulted && !g_processing);
+            assert(conversions == 0 && cycles == 0 && !g_faulted && !g_processing);
             for (unsigned i=0; i<16; ++i) assert(output[i] == 16384);
             for (failure=1; failure<=2; ++failure) {
                 for (bad_lane=0; bad_lane<16; ++bad_lane) {
                     g_faulted = false; conversions = 0;
-                    g_last_timing.total_us = 999;
                     std::memset(output, 0x35, sizeof(output));
                     std::memcpy(before, output, sizeof(output));
                     assert(!process_audio(input, output, 16));
-                    assert(conversions == 1 && g_last_timing.total_us != 999);
+                    assert(conversions == 0 && cycles == 0);
                     assert(g_faulted && !g_processing);
                     assert(!std::memcmp(output, before, sizeof(output)));
                     assert(!process_audio(input, output, 16)); // Latched until reset.

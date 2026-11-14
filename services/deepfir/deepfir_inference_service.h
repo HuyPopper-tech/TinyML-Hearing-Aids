@@ -75,7 +75,7 @@ bool deepfir_inference_process(const int16_t *input, int16_t *output, uint32_t s
 bool deepfir_inference_process_pcm24(const int32_t *input, int16_t *output, uint32_t sample_count);
 
 /**
- * @brief Read the last foreground stage timing sample.
+ * @brief Read the last Debug/Release Probe stage timing; ordinary Release returns zero.
  * @param timing Destination; ignored when NULL.
  * @return None.
  */
