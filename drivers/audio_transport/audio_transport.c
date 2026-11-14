@@ -162,7 +162,7 @@ void audio_transport_stop_safe(void) {
 #endif
 }
 
-bool audio_transport_take_capture(int16_t destination[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
+bool audio_transport_take_capture(int32_t destination[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
                                   audio_transport_capture_timing_t *timing) {
     m55m1_audio_dmic_block_timing_t board_timing;
 

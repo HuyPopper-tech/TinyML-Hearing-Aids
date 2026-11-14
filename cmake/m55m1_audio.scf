@@ -84,6 +84,8 @@ LR_ROM __RO_BASE __RO_SIZE {
 #endif
 
     SRAM_NONCACHEABLE SRAM_NONCACHEABLE_START SRAM_NONCACHEABLE_SIZE {
+        ; SWD reads RAM directly; CPU-cached statistics can otherwise appear stale.
+        audio_pipeline.o (.bss.audio_pipeline_stats)
         .ANY (NonCacheable.Init)
         .ANY (.bss.NonCacheable.ZeroInit)
     }

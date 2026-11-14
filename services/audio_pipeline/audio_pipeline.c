@@ -13,6 +13,7 @@
 #include "services/deepfir/deepfir_inference_service.h"
 #include "drivers/audio_transport/audio_transport.h"
 #include "services/audio_pipeline/audio_pipeline.h"
+#include "common/audio_pcm.h"
 
 #ifndef M55M1_ENABLE_DAC_I2S_OUTPUT
 #define M55M1_ENABLE_DAC_I2S_OUTPUT 0
@@ -31,7 +32,7 @@
 #endif
 
 typedef struct {
-    int16_t capture[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK];
+    int32_t capture[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK];
     int16_t playback[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK];
 } audio_working_set_t;
 
@@ -40,7 +41,28 @@ static audio_working_set_t g_audio_working_set;
 static bool g_initialized;
 static bool g_running;
 static uint32_t g_expected_sequence;
-static audio_pipeline_stats_t g_stats;
+// Foreground writes; SWD reads while halted. Linker places this in non-cacheable RAM.
+// Preserve counters across stream restarts.
+static volatile audio_pipeline_stats_t g_stats
+    __attribute__((section(".bss.audio_pipeline_stats")));
+
+static void record_input_levels(const int32_t *samples) {
+    uint32_t peak = g_stats.input_peak;
+    uint32_t clips = 0U;
+    for (uint32_t index = 0U; index < AUDIO_TRANSPORT_SAMPLES_PER_BLOCK; ++index) {
+        const int32_t sample = samples[index];
+        const uint32_t magnitude = (uint32_t)(sample < 0 ? -sample : sample);
+        if (magnitude > peak) {
+            peak = magnitude;
+        }
+        if (sample == AUDIO_PCM24_MIN || sample == AUDIO_PCM24_MAX) {
+            ++clips;
+        }
+    }
+    g_stats.input_peak = peak;
+    g_stats.input_clip_samples += clips;
+    g_stats.input_samples += AUDIO_TRANSPORT_SAMPLES_PER_BLOCK;
+}
 
 #if M55M1_RUNTIME_TELEMETRY
 // Foreground-only: boot and fault-report drains run only while DMA is stopped.
@@ -450,7 +472,7 @@ static void capture_send_packet(uint32_t status) {
     }
 }
 
-static void capture_store_hop(const int16_t *input, const int16_t *output, uint32_t sequence) {
+static void capture_store_hop(const int32_t *input, const int16_t *output, uint32_t sequence) {
     if (g_capture_has_sequence && (sequence != g_capture_last_sequence + 1U)) {
         ++g_capture_sequence_gaps;
     }
@@ -459,9 +481,9 @@ static void capture_store_hop(const int16_t *input, const int16_t *output, uint3
 
     for (uint32_t index = 0U; index < AUDIO_TRANSPORT_SAMPLES_PER_BLOCK; ++index) {
         const uint32_t destination = g_capture_sample_count + index;
-        g_capture_input[destination] = input[index];
+        g_capture_input[destination] = audio_pcm24_to_pcm16(input[index]);
         g_capture_output[destination] = output[index];
-        if ((input[index] == INT16_MIN) || (input[index] == INT16_MAX)) {
+        if ((input[index] == AUDIO_PCM24_MIN) || (input[index] == AUDIO_PCM24_MAX)) {
             ++g_capture_input_clips;
         }
         if ((output[index] == INT16_MIN) || (output[index] == INT16_MAX)) {
@@ -525,6 +547,19 @@ typedef struct {
 
 static uint32_t g_frame_count;
 static audio_pipeline_debug_stats_t g_debug_stats;
+
+static void record_pcm24_stats(const int32_t *samples, uint32_t *peak, uint32_t *clip_samples) {
+    for (uint32_t index = 0U; index < AUDIO_TRANSPORT_SAMPLES_PER_BLOCK; ++index) {
+        const int32_t sample = samples[index];
+        const uint32_t magnitude = (uint32_t)(sample < 0 ? -sample : sample);
+        if (magnitude > *peak) {
+            *peak = magnitude;
+        }
+        if (sample == AUDIO_PCM24_MIN || sample == AUDIO_PCM24_MAX) {
+            ++*clip_samples;
+        }
+    }
+}
 
 static void record_pcm_stats(const int16_t *samples, uint32_t *peak, uint32_t *clip_samples) {
     for (uint32_t index = 0U; index < AUDIO_TRANSPORT_SAMPLES_PER_BLOCK; ++index) {
@@ -896,16 +931,17 @@ void audio_pipeline_poll(void) {
     g_stats.process_end_cycle = 0U;
     g_stats.published_cycle = 0U;
     g_stats.process_start_cycle = audio_transport_cycles_now();
+    record_input_levels(g_audio_working_set.capture);
 
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     ++g_frame_count;
 #if M55M1_AUDIO_RELEASE_PROBE
     g_debug_stats.capture_last_sequence = timing.sequence;
 #endif
-    record_pcm_stats(g_audio_working_set.capture, &g_debug_stats.input_peak,
+    record_pcm24_stats(g_audio_working_set.capture, &g_debug_stats.input_peak,
                      &g_debug_stats.input_clip_samples);
 #endif
-    if (!deepfir_inference_process(g_audio_working_set.capture, g_audio_working_set.playback,
+    if (!deepfir_inference_process_pcm24(g_audio_working_set.capture, g_audio_working_set.playback,
                                    AUDIO_TRANSPORT_SAMPLES_PER_BLOCK)) {
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
         ++g_debug_stats.model_failures;

@@ -33,10 +33,10 @@ const volatile audio_startup_trace_t *m55m1_audio_get_startup_trace(void);
 #endif
 
 // Whole-dB DAC ceiling and startup level; this is not a calibrated acoustic limit.
-#define M55M1_AUDIO_SAFE_MAX_GAIN_DB (-12)
+#define M55M1_AUDIO_SAFE_MAX_GAIN_DB (-9)
 // Whole-dB digital DMIC gain; CMake may override this default (hardware maximum: +36 dB).
 #ifndef M55M1_DMIC_GAIN_DB
-#define M55M1_DMIC_GAIN_DB 36
+#define M55M1_DMIC_GAIN_DB 12
 #endif
 
 typedef enum {
@@ -165,25 +165,25 @@ void m55m1_audio_dmic_stop(void);
 
 /**
  * @brief Copy the completed capture block.
- * @param destination Caller storage.
+ * @param destination Caller storage for sign-extended PCM24 (-8388608..8388607).
  * @param sample_count Exact configured count.
  * @return True when a block was consumed.
  *
  * Foreground-only; the DMA ISR remains the producer. The caller retains
  * ownership of destination.
  */
-bool m55m1_audio_dmic_take_block(int16_t *destination, uint16_t sample_count);
+bool m55m1_audio_dmic_take_block(int32_t *destination, uint16_t sample_count);
 
 /**
  * @brief Copy a block and its capture tag.
- * @param destination Caller storage.
+ * @param destination Caller storage for sign-extended PCM24 (-8388608..8388607).
  * @param sample_count Exact configured count.
  * @param timing Output sequence/timestamp.
  * @return True when a block and timing tag were consumed.
  *
  * Foreground-only. The caller retains ownership of both output buffers.
  */
-bool m55m1_audio_dmic_take_block_timed(int16_t *destination, uint16_t sample_count,
+bool m55m1_audio_dmic_take_block_timed(int32_t *destination, uint16_t sample_count,
                                        m55m1_audio_dmic_block_timing_t *timing);
 
 /**

@@ -135,7 +135,6 @@ add_link_options(
     --info ${ARMCLANG_INFO_STR}
     --strict
     --diag_suppress=L6439W,L6314W
-    "$<$<CONFIG:RELEASE>:--no_debug>"
 )
 
 # =============================================================================

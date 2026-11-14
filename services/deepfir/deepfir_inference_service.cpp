@@ -22,6 +22,7 @@
 #include "services/deepfir/deepfir_model_binding.h"
 #include "services/deepfir/deepfir_cmsis_fft_adapter.h"
 #include "services/deepfir/deepfir_inference_service.h"
+#include "services/deepfir/deepfir_input_conditioner.h"
 #include "services/deepfir/deepfir_model_package.h"
 #include "services/deepfir/deepfir_model_adapter.h"
 #include "services/deepfir/deepfir_tensor_binding.h"
@@ -48,10 +49,16 @@ alignas(tflite::MicroMutableOpResolver<1>) static uint8_t
 static tflite::MicroMutableOpResolver<1> *g_resolver;
 static TfLiteTensor *g_inputs[DEEPFIR_MODEL_INPUT_COUNT];
 static TfLiteTensor *g_outputs[DEEPFIR_MODEL_OUTPUT_COUNT];
-static deepfir_model_adapter_t g_adapter;
-static deepfir_feature_state_t g_feature_state;
-static deepfir_cmsis_fft_context_t g_fft_context;
+// CPU-only histories: the bridge copies inputs to the NPU-visible SRAM arena before Invoke.
+alignas(16) static deepfir_model_adapter_t g_adapter
+    __attribute__((section(".bss.DTCM.ZeroInit")));
+alignas(16) static deepfir_feature_state_t g_feature_state
+    __attribute__((section(".bss.DTCM.ZeroInit")));
+alignas(16) static deepfir_cmsis_fft_context_t g_fft_context
+    __attribute__((section(".bss.DTCM.ZeroInit")));
 static deepfir_inference_timing_t g_last_timing;
+alignas(16) static deepfir_input_conditioner_t g_input_conditioner
+    __attribute__((section(".bss.DTCM.ZeroInit")));
 static bool g_initialized;
 static bool g_faulted;
 static bool g_processing;
@@ -589,6 +596,7 @@ extern "C" bool deepfir_inference_init(void) {
     }
 #endif
     DEEPFIR_TRACE_INIT("state.reset", "BEGIN", 0);
+    deepfir_input_conditioner_reset(&g_input_conditioner);
     g_initialized = true;
     deepfir_inference_reset();
     return true;
@@ -600,11 +608,26 @@ extern "C" void deepfir_inference_reset(void) {
     }
     deepfir_feature_reset(&g_feature_state);
     deepfir_model_adapter_reset(&g_adapter);
+    deepfir_input_conditioner_reset_stream(&g_input_conditioner);
     g_last_timing = {};
 }
 
-extern "C" bool deepfir_inference_process(const int16_t *input, int16_t *output,
-                                          uint32_t sample_count) {
+static int process_input(const int16_t *input, uint32_t sample_count, float *output) {
+    return deepfir_model_adapter_process_pcm16(&g_adapter, input, sample_count, output);
+}
+
+static int process_input(const int32_t *input, uint32_t sample_count, float *output) {
+    float conditioned[DEEPFIR_DSP_HOP];
+    const int status = deepfir_input_conditioner_process(&g_input_conditioner, input,
+                                                        sample_count, conditioned);
+    if (status != 0) {
+        return status;
+    }
+    return deepfir_model_adapter_process_float(&g_adapter, conditioned, sample_count, output);
+}
+
+template <typename Sample>
+static bool process_audio(const Sample *input, int16_t *output, uint32_t sample_count) {
     if (!g_initialized || g_faulted || g_processing || input == nullptr || output == nullptr ||
         sample_count != DEEPFIR_DSP_HOP) {
         return false;
@@ -627,29 +650,31 @@ extern "C" bool deepfir_inference_process(const int16_t *input, int16_t *output,
 #endif
     float output_float[DEEPFIR_DSP_HOP];
     const uint32_t start = audio_transport_cycles_now();
-    const int status =
-        deepfir_model_adapter_process_pcm16(&g_adapter, input, sample_count, output_float);
-    g_last_timing.total_us = elapsed_us(start, audio_transport_cycles_now());
+    const int status = process_input(input, sample_count, output_float);
     if (status != 0) {
+        g_last_timing.total_us = elapsed_us(start, audio_transport_cycles_now());
         DEEPFIR_TRACE_HOP(DEEPFIR_HOP_ADAPTER_FAIL, status);
         g_faulted = true;
         g_processing = false;
         return false;
     }
-    int16_t rendered[DEEPFIR_DSP_HOP];
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     const uint32_t pcm_start = audio_transport_cycles_now();
 #endif
-    for (uint32_t index = 0U; index < sample_count; ++index) {
-        if (!std::isfinite(output_float[index])) {
-            DEEPFIR_TRACE_HOP(DEEPFIR_HOP_PCM_NONFINITE, static_cast<int>(index));
-            g_faulted = true;
-            g_processing = false;
-            return false;
+    if (deepfir_pcm16_render_hop(output_float, output) != 0) {
+        g_last_timing.total_us = elapsed_us(start, audio_transport_cycles_now());
+#if M55M1_RUNTIME_TELEMETRY
+        for (uint32_t index = 0U; index < sample_count; ++index) {
+            if (!std::isfinite(output_float[index])) {
+                DEEPFIR_TRACE_HOP(DEEPFIR_HOP_PCM_NONFINITE, static_cast<int>(index));
+                break;
+            }
         }
-        rendered[index] = deepfir_pcm16_from_float(output_float[index]);
+#endif
+        g_faulted = true;
+        g_processing = false;
+        return false;
     }
-    std::memcpy(output, rendered, sizeof(rendered));
     DEEPFIR_TRACE_HOP(DEEPFIR_HOP_PCM_DONE, 0);
 #if M55M1_RUNTIME_TELEMETRY || M55M1_AUDIO_RELEASE_PROBE
     g_last_timing.pcm_us = elapsed_us(pcm_start, audio_transport_cycles_now());
@@ -677,6 +702,16 @@ extern "C" bool deepfir_inference_process(const int16_t *input, int16_t *output,
 #endif
     g_processing = false;
     return true;
+}
+
+extern "C" bool deepfir_inference_process(const int16_t *input, int16_t *output,
+                                          uint32_t sample_count) {
+    return process_audio(input, output, sample_count);
+}
+
+extern "C" bool deepfir_inference_process_pcm24(const int32_t *input, int16_t *output,
+                                                uint32_t sample_count) {
+    return process_audio(input, output, sample_count);
 }
 
 extern "C" void deepfir_inference_report_trace(void) {

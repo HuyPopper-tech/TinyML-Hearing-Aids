@@ -15,6 +15,12 @@ extern "C" {
 #endif
 
 typedef struct {
+    /** Contiguous DMIC hops observed before inference; cumulative until board reset. */
+    uint64_t input_samples;
+    /** Exact PCM24 endpoints (-8388608 or +8388607), not all distortion. */
+    uint64_t input_clip_samples;
+    /** Largest absolute PCM24 code observed, in the range 0..8388608. */
+    uint32_t input_peak;
     uint32_t sequence_faults;
     uint32_t deadline_misses;
     uint32_t model_faults;

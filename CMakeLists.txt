@@ -55,7 +55,7 @@ option(M55M1_MODEL_IN_SRAM "Place the model image in SRAM at runtime" ON)
 
 include(${PROJ_ROOT}/cmake/model_package.cmake)
 
-set(M55M1_DMIC_GAIN_DB 36 CACHE STRING "DMIC hardware DSP gain in dB")
+set(M55M1_DMIC_GAIN_DB 12 CACHE STRING "DMIC hardware DSP gain in dB")
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(M55M1_RUNTIME_TELEMETRY_VALUE 1)
@@ -101,6 +101,11 @@ set(M55M1_DEVICE_SOURCES
 set_source_files_properties(
     ${PROJ_ROOT}/libs/Device/Nuvoton/M55M1/Source/system_M55M1.c
     PROPERTIES COMPILE_DEFINITIONS DEBUG_ENABLE_SEMIHOST=0)
+
+# Keep typed SWD statistics available in Release without changing optimization.
+set_source_files_properties(
+    ${PROJ_ROOT}/services/audio_pipeline/audio_pipeline.c
+    PROPERTIES COMPILE_OPTIONS "$<$<CONFIG:Release>:-g>")
 
 file(GLOB_RECURSE M55M1_STDDRIVER_SOURCES CONFIGURE_DEPENDS
     "${PROJ_ROOT}/libs/StdDriver/src/*.c")
@@ -186,8 +191,10 @@ else()
     set(M55M1_ENABLE_DAC_I2S_OUTPUT_VALUE 0)
 endif()
 
-list(APPEND M55M1_APP_SOURCES ${M55M1_MODEL_SOURCES})
+list(APPEND M55M1_APP_SOURCES ${M55M1_MODEL_SOURCES}
+    ${PROJ_ROOT}/services/deepfir/deepfir_input_conditioner.c)
 set_source_files_properties(
+    ${PROJ_ROOT}/services/deepfir/deepfir_input_conditioner.c
     ${PROJ_ROOT}/services/deepfir/deepfir_features.c
     ${PROJ_ROOT}/services/deepfir/deepfir_dsp.c
     ${PROJ_ROOT}/services/deepfir/deepfir_model_adapter.c
@@ -195,6 +202,8 @@ set_source_files_properties(
     ${PROJ_ROOT}/services/deepfir/deepfir_tensor_binding.c
     ${PROJ_ROOT}/services/deepfir/deepfir_inference_service.cpp
     PROPERTIES COMPILE_OPTIONS "-fno-finite-math-only")
+set_property(SOURCE ${PROJ_ROOT}/services/deepfir/deepfir_inference_service.cpp
+    APPEND PROPERTY COMPILE_OPTIONS "$<$<CONFIG:Release>:-g>")
 if(M55M1_RUNTIME_TELEMETRY_VALUE OR M55M1_AUDIO_RELEASE_PROBE_VALUE OR
    M55M1_AUDIO_UART_PCM_CAPTURE_VALUE)
     set(M55M1_DEBUG_UART_ENABLED_VALUE 1)

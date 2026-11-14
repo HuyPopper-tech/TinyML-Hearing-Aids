@@ -72,12 +72,12 @@ class DeepfirUartCaptureFirmwareTests(unittest.TestCase):
             void audio_transport_wait_for_work(void) {}
             void audio_transport_stop_safe(void) { ++stops; }
             bool audio_transport_take_capture(
-                int16_t destination[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
+                int32_t destination[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
                 audio_transport_capture_timing_t *timing)
             {
                 ++frame;
                 for (uint32_t index = 0U; index < AUDIO_TRANSPORT_SAMPLES_PER_BLOCK; ++index) {
-                    destination[index] = (int16_t)(frame * AUDIO_TRANSPORT_SAMPLES_PER_BLOCK + index);
+                    destination[index] = (int32_t)(frame * AUDIO_TRANSPORT_SAMPLES_PER_BLOCK + index) * 256;
                 }
                 timing->sequence = frame;
                 timing->completed_cycle = frame * 1000U;
@@ -103,12 +103,12 @@ class DeepfirUartCaptureFirmwareTests(unittest.TestCase):
             uint32_t audio_transport_cycles_to_us(uint32_t cycles) { return cycles; }
             bool deepfir_inference_init(void) { return true; }
             void deepfir_inference_reset(void) {}
-            bool deepfir_inference_process(const int16_t *input, int16_t *output,
+            bool deepfir_inference_process_pcm24(const int32_t *input, int16_t *output,
                                            uint32_t count)
             {
                 if (fail_inference && frame == 12U) return false;
                 for (uint32_t index = 0U; index < count; ++index) {
-                    output[index] = (int16_t)(input[index] + 100);
+                    output[index] = (int16_t)(input[index] / 256 + 100);
                 }
                 return true;
             }

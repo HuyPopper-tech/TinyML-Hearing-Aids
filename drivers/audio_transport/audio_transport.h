@@ -29,7 +29,7 @@ const volatile audio_startup_trace_t *audio_transport_get_startup_trace(void);
 #define AUDIO_TRANSPORT_SAMPLE_RATE_HZ 16000UL
 #define AUDIO_TRANSPORT_SAMPLES_PER_BLOCK 16U
 #ifndef M55M1_DMIC_GAIN_DB
-#define M55M1_DMIC_GAIN_DB 36
+#define M55M1_DMIC_GAIN_DB 24
 #endif
 // Active build's whole-dB DMIC gain, also used by capture metadata.
 #define AUDIO_TRANSPORT_MICROPHONE_DSP_GAIN_DB M55M1_DMIC_GAIN_DB
@@ -148,14 +148,14 @@ void audio_transport_stop_safe(void);
 
 /**
  * @brief Take a completed DMIC block and timestamp.
- * @param destination Exact-size caller buffer.
+ * @param destination Exact-size caller buffer of sign-extended PCM24 codes.
  * @param timing Output capture tag.
  * @return True when a completed capture block was copied.
  *
  * Foreground-only; the ISR publishes blocks. Both destinations remain
  * caller-owned.
  */
-bool audio_transport_take_capture(int16_t destination[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
+bool audio_transport_take_capture(int32_t destination[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
                                   audio_transport_capture_timing_t *timing);
 
 /**

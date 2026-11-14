@@ -142,7 +142,7 @@ class TLV320DAC3100DriverTests(unittest.TestCase):
         ):
             self.assertIn(required, transport)
         for required in (
-            "deepfir_inference_process(",
+            "deepfir_inference_process_pcm24(",
             "audio_transport_submit_tagged(",
         ):
             self.assertIn(required, pipeline)

@@ -52,7 +52,9 @@ void deepfir_inference_get_memory(deepfir_inference_memory_t *memory);
 bool deepfir_inference_init(void);
 
 /**
- * @brief Reset recurrent, feature, and FIR streaming state at a stream boundary.
+ * @brief Reset input dynamics, recurrent, feature and FIR state at a stream boundary.
+ * @note Preserves conditioner lifetime counters, peaks, minimum gain and latest
+ * complete RMS window; discards its partial window. Call with audio stopped.
  * @return None.
  */
 void deepfir_inference_reset(void);
@@ -65,6 +67,12 @@ void deepfir_inference_reset(void);
  * @return True when the hop completed successfully.
  */
 bool deepfir_inference_process(const int16_t *input, int16_t *output, uint32_t sample_count);
+
+/** Foreground production hop: 16 sign-extended PCM24 input codes, PCM16 output.
+ * Fixed input preamp/compressor/peak guard feeds the same float hop to frontend/FIR.
+ * Input/output must be separate caller-owned storage. Shares the single stream
+ * state with the PCM16 replay API; reset before changing streams/formats. */
+bool deepfir_inference_process_pcm24(const int32_t *input, int16_t *output, uint32_t sample_count);
 
 /**
  * @brief Read the last foreground stage timing sample.

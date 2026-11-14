@@ -39,7 +39,7 @@ class CustomCaptureTests(unittest.TestCase):
             #define CLK_DMICSEL_DMIC0SEL_APLL1_DIV2 1
             #define CLK_DMICDIV_DMIC0DIV(n) ((n) - 1)
             #define SYS_DMIC0RST 7
-            #define DMIC_FIFOWIDTH_16 0
+            #define DMIC_FIFOWIDTH_24 1
             #define DMIC_CTL_CHEN2_Msk 4
             #define DMIC_CTL_SWRST_Msk (1u << 24)
             #define DMIC_DIV_DMCLKDIV_Pos 8
@@ -78,7 +78,7 @@ class CustomCaptureTests(unittest.TestCase):
             #define SET_DMIC1_DAT_PA2() (pins |= 2)
             #define SET_DMIC1_CLK_PB2() (pins |= 4)
             #define SET_DMIC1_DAT_PB3() (pins |= 8)
-            #define DMIC_SetFIFOWidth(d, width) ((void)(d), (void)(width))
+            #define DMIC_SetFIFOWidth(d, width) assert((d) == DMIC0 && (width) == 1)
             #define DMIC_SetDSPGainVolume(d, ch, gain) \
                 assert((d) == DMIC0 && (ch) == 4 && (gain) == M55M1_DMIC_GAIN_DB)
             #define DMIC_SET_DOWNSAMPLE(d, osr) do { \

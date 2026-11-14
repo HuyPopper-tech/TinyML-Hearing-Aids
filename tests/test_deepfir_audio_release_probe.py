@@ -34,8 +34,8 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
             static char last_log[1024];
             static char result_log[1024];
             static const char *failure = "";
-            static const int16_t capture[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK] = {
-                -32768, 32767, -10, 5, 0, 12, -1234, 4567,
+            static const int32_t capture[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK] = {
+                -8388608, 8388607, -10, 5, 0, 12, -1234, 4567,
                 1000, -1000, 987, -2, 44, -45, -18, 19,
             };
 
@@ -65,7 +65,7 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
             }
             #endif
             bool audio_transport_take_capture(
-                int16_t destination[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
+                int32_t destination[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
                 audio_transport_capture_timing_t *timing)
             {
                 ++frame;
@@ -112,7 +112,7 @@ class DeepfirAudioReleaseProbeTests(unittest.TestCase):
             }
             bool deepfir_inference_init(void) { return true; }
             void deepfir_inference_reset(void) {}
-            bool deepfir_inference_process(const int16_t *input, int16_t *output,
+            bool deepfir_inference_process_pcm24(const int32_t *input, int16_t *output,
                                            uint32_t count)
             {
                 (void)input;

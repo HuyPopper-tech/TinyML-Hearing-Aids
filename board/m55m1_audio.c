@@ -10,6 +10,7 @@
 #include "board/m55m1_audio.h"
 #include "board/m55m1_timebase.h"
 #include "board/m55m1_power.h"
+#include "common/audio_pcm.h"
 #include "NuMicro.h"
 
 #ifndef M55M1_ENABLE_DAC_I2S_OUTPUT
@@ -49,8 +50,10 @@ typedef struct {
  * LPPDMA accesses this ring while the data cache is enabled. Its descriptors
  * and sample slots must therefore be non-cacheable, otherwise a microphone
  * block can be replayed from stale cache lines instead of physical SRAM.
+ * Each aligned word holds a right-aligned 24-bit payload. Foreground gates
+ * requests and waits for DMA idle before decoding; barriers bracket the copy.
  */
-static NVT_NONCACHEABLE int16_t g_dmic_buffers[2][M55M1_AUDIO_MAX_SAMPLES_PER_BLOCK];
+static NVT_NONCACHEABLE uint32_t g_dmic_buffers[2][M55M1_AUDIO_MAX_SAMPLES_PER_BLOCK];
 static NVT_NONCACHEABLE LPDSCT_T g_dmic_descriptors[2] __ALIGNED(4);
 static m55m1_audio_dmic_state_t g_dmic_state;
 static m55m1_audio_clock_snapshot_t g_clock_snapshot;
@@ -324,7 +327,7 @@ static void m55m1_audio_configure_dmic_descriptor(uint8_t slot) {
     const uint8_t next_slot = (uint8_t)(slot ^ 1U);
 
     g_dmic_descriptors[slot].CTL =
-        LPPDMA_OP_SCATTER | LPPDMA_REQ_SINGLE | LPPDMA_WIDTH_16 | LPPDMA_SAR_FIX | LPPDMA_DAR_INC |
+        LPPDMA_OP_SCATTER | LPPDMA_REQ_SINGLE | LPPDMA_WIDTH_32 | LPPDMA_SAR_FIX | LPPDMA_DAR_INC |
         LPPDMA_TBINTDIS_ENABLE |
         (((uint32_t)g_dmic_state.samples_per_block - 1UL) << LPPDMA_DSCT_CTL_TXCNT_Pos);
     g_dmic_descriptors[slot].SA = (uint32_t)(uintptr_t)&DMIC0->FIFO;
@@ -561,7 +564,7 @@ bool m55m1_audio_dmic_prepare(m55m1_audio_profile_t profile) {
     SYS_LockReg();
 
     DMIC_Open(DMIC0);
-    DMIC_SetFIFOWidth(DMIC0, DMIC_FIFOWIDTH_16);
+    DMIC_SetFIFOWidth(DMIC0, DMIC_FIFOWIDTH_24);
     DMIC_SetDSPGainVolume(DMIC0, DMIC_CTL_CHEN2_Msk, M55M1_DMIC_GAIN_DB);
     /*
      * MP34DT05 requires a 1.2..3.25 MHz PDM clock in normal operation. The
@@ -660,7 +663,7 @@ void m55m1_audio_dmic_stop(void) {
     __set_PRIMASK(primask);
 }
 
-bool m55m1_audio_dmic_take_block(int16_t *destination, uint16_t sample_count) {
+bool m55m1_audio_dmic_take_block(int32_t *destination, uint16_t sample_count) {
     return m55m1_audio_dmic_take_block_timed(destination, sample_count, NULL);
 }
 
@@ -668,7 +671,7 @@ bool m55m1_audio_dmic_block_pending(void) {
     return g_dmic_state.block_ready;
 }
 
-bool m55m1_audio_dmic_take_block_timed(int16_t *destination, uint16_t sample_count,
+bool m55m1_audio_dmic_take_block_timed(int32_t *destination, uint16_t sample_count,
                                        m55m1_audio_dmic_block_timing_t *timing) {
     uint32_t primask;
     uint32_t index;
@@ -703,7 +706,7 @@ bool m55m1_audio_dmic_take_block_timed(int16_t *destination, uint16_t sample_cou
     g_dmic_state.block_ready = false;
     __DMB();
     for (index = 0U; index < sample_count; ++index) {
-        destination[index] = g_dmic_buffers[completed_slot][index];
+        destination[index] = audio_pcm24_decode(g_dmic_buffers[completed_slot][index]);
     }
     __DMB();
     DMIC_ENABLE_LPPDMA(DMIC0);

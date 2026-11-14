@@ -210,12 +210,12 @@ class DeepfirAudioRuntimeDebugTests(unittest.TestCase):
             void audio_transport_stop_safe(void) { audio_running = false; ++stops; }
             const volatile audio_startup_trace_t *audio_transport_get_startup_trace(void) { return NULL; }
             bool audio_transport_take_capture(
-                int16_t destination[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
+                int32_t destination[AUDIO_TRANSPORT_SAMPLES_PER_BLOCK],
                                               audio_transport_capture_timing_t *timing)
             {
                 ++frame;
-                memset(destination, 0, AUDIO_TRANSPORT_SAMPLES_PER_BLOCK * sizeof(int16_t));
-                destination[0] = 32767;
+                memset(destination, 0, AUDIO_TRANSPORT_SAMPLES_PER_BLOCK * sizeof(*destination));
+                destination[0] = 8388607;
                 timing->sequence = frame;
                 timing->completed_cycle = frame * 1000U;
                 return frame <= 60006U;
@@ -251,7 +251,7 @@ class DeepfirAudioRuntimeDebugTests(unittest.TestCase):
             void deepfir_inference_report_trace(void) {
                 if (audio_running) { fprintf(stderr, "trace before DMA stop"); exit(98); }
             }
-            bool deepfir_inference_process(const int16_t *input, int16_t *output,
+            bool deepfir_inference_process_pcm24(const int32_t *input, int16_t *output,
                                            uint32_t count)
             {
                 (void)input;
