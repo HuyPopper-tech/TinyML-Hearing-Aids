@@ -123,6 +123,16 @@ int deepfir_model_adapter_process_hop(deepfir_model_adapter_t *adapter, const in
  */
 int deepfir_model_adapter_process_pcm16(deepfir_model_adapter_t *adapter, const int16_t *pcm16,
                                         uint32_t sample_count, float *output);
+/** Same lifecycle as PCM16; input is 16 sign-extended PCM24 codes in
+ * [-8388608, 8388607]. Normalization by 2^23 feeds both frontend and FIR.
+ * Invalid range/overlap returns -1 before callbacks or output writes. */
+int deepfir_model_adapter_process_pcm24(deepfir_model_adapter_t *adapter, const int32_t *pcm24,
+                                        uint32_t sample_count, float *output);
+/** Same lifecycle as PCM16; borrow a finite normalized float hop for both
+ * frontend and FIR. Separate input/output must not overlap adapter storage.
+ * Invalid input returns -1 before callbacks, state changes or output writes. */
+int deepfir_model_adapter_process_float(deepfir_model_adapter_t *adapter, const float *pcm,
+                                        uint32_t sample_count, float *output);
 /**
  * @brief Requantize encoded recurrent state without changing channel coordinates.
  * @param code Signed INT16 model output code.

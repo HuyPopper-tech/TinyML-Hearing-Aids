@@ -75,6 +75,8 @@ class R2NativeTests(unittest.TestCase):
         cls.lib.test_feedback.argtypes = [ct.c_int, ct.c_int]
         cls.lib.test_feedback.restype = ct.c_int
         cls.lib.test_step.argtypes = [ct.c_void_p, ct.c_void_p]
+        cls.lib.test_step24.argtypes = [ct.c_void_p, ct.c_void_p]
+        cls.lib.test_feature_context.argtypes = [ct.c_void_p]
         cls.lib.test_taps.argtypes = [ct.c_void_p, ct.c_void_p, ct.c_void_p]
         cls.lib.test_features.argtypes = [ct.c_void_p, ct.c_void_p]
         cls.lib.test_context.restype = ct.c_int
@@ -129,6 +131,51 @@ class R2NativeTests(unittest.TestCase):
             expected = np.clip(np.sign(codes)*np.floor(np.abs(codes)+.5), -32768, 32767).astype(np.int16)
             self.assertLessEqual(np.max(np.abs(actual.astype(int)-expected)), 1)
         self.assertEqual(self.lib.test_context(), 0)
+
+    def test_pcm24_equivalence_low_bits_and_validation(self):
+        rng = np.random.default_rng(24)
+        hops = rng.integers(-32768, 32768, (24, 16), dtype=np.int16)
+        hops[0, :2] = [-32768, 32767]
+        expected = []
+        out = np.empty(16, dtype=np.float32)
+        context = np.empty(774, dtype=np.int16)
+        for hop in hops:
+            self.assertEqual(self.lib.test_step(hop.ctypes.data, out.ctypes.data), 0)
+            self.lib.test_feature_context(context.ctypes.data)
+            expected.append((out.copy(), context.copy()))
+        self.lib.test_reset()
+        for hop, (reference, features) in zip(hops, expected):
+            pcm24 = hop.astype(np.int32) * 256
+            self.assertEqual(self.lib.test_step24(pcm24.ctypes.data, out.ctypes.data), 0)
+            self.lib.test_feature_context(context.ctypes.data)
+            np.testing.assert_array_equal(out, reference)
+            np.testing.assert_array_equal(context, features)
+        self.lib.test_reset()
+        # A sub-PCM16 impulse must survive into waveform/FIR output.
+        pcm24 = np.zeros(16, dtype=np.int32)
+        pcm24[0] = 1
+        rendered = []
+        for index in range(12):
+            self.assertEqual(self.lib.test_step24(pcm24.ctypes.data, out.ctypes.data), 0)
+            rendered.extend(out.copy())
+            pcm24.fill(0)
+        self.assertGreater(np.max(np.abs(rendered)), 0)
+        self.lib.test_reset()
+        for invalid in [-8388609, 8388608]:
+            pcm24.fill(0)
+            pcm24[0] = invalid
+            out.fill(1234)
+            self.assertEqual(self.lib.test_step24(pcm24.ctypes.data, out.ctypes.data), -1)
+            np.testing.assert_array_equal(out, 1234)
+        pcm24.fill(0)
+        self.assertEqual(self.lib.test_step24(pcm24.ctypes.data, pcm24.ctypes.data), -1)
+        self.assertEqual(self.lib.test_step24(pcm24.ctypes.data, out.ctypes.data), 0)
+        self.lib.test_failure(1)
+        out.fill(1234)
+        self.assertNotEqual(self.lib.test_step24(pcm24.ctypes.data, out.ctypes.data), 0)
+        np.testing.assert_array_equal(out, 1234)
+        self.lib.test_failure(0)
+        self.assertEqual(self.lib.test_step24(pcm24.ctypes.data, out.ctypes.data), -2)
 
     def test_fir_crossfade_pcm_fault_latch_and_no_partial_publish(self):
         self.assertEqual(self.lib.test_fir_pcm(), 0)

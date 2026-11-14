@@ -83,6 +83,23 @@ static int inject_fft(float *buffer, uint32_t n, uint8_t inverse, void *context)
     return 0;
 }
 
+static int capture_pcm24_feature(const float *pcm, uint32_t count, int16_t *feature, void *context) {
+    const int32_t *expected = context;
+    (void)feature;
+    assert(count == 16);
+    for (unsigned i = 0; i < count; ++i) {
+        assert(pcm[i] == audio_pcm24_to_float(expected[i]));
+    }
+    return -73;
+}
+
+static int never_infer(const deepfir_tensor_map_t *in, uint32_t ni, deepfir_tensor_map_t *out,
+                       uint32_t no, void *context) {
+    (void)in; (void)ni; (void)out; (void)no; (void)context;
+    assert(0 && "failed feature must not invoke");
+    return -74;
+}
+
 int main(void) {
     quantizer();
     static deepfir_model_adapter_t adapter, saved;
@@ -90,6 +107,19 @@ int main(void) {
     saved = adapter;
     assert(deepfir_model_adapter_prepare_mve(&adapter));
     assert(memcmp(&saved, &adapter, sizeof(saved)) == 0);
+    const int32_t pcm24[16] = {-8388608, 8388607, -1, 1, 255, -255, 256, -256,
+                              1234567, -1234567, 32767, -32768, 0, 17, -17, 4194304};
+    float normalized_output[16];
+    for (unsigned i = 0; i < 16; ++i) { normalized_output[i] = 1234; }
+    adapter.feature = capture_pcm24_feature;
+    adapter.feature_context = (void *)pcm24;
+    adapter.infer_mapped = never_infer;
+    adapter.fft = inject_fft;
+    assert(deepfir_model_adapter_process_pcm24(&adapter, pcm24, 16, normalized_output) == -73);
+    assert(adapter.faulted);
+    for (unsigned i = 0; i < 16; ++i) { assert(normalized_output[i] == 1234); }
+    puts("native lane model: PCM24 endpoints/low bits normalization PASS");
+    adapter = saved;
     for (int base = -32768; base <= 32764; base += 4) {
         int16_t source[6] = {1234, base, base + 1, base + 2, base + 3, 1234};
         for (unsigned state = 0; state < 2; ++state) {

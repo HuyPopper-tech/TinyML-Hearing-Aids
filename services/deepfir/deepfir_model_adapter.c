@@ -9,6 +9,7 @@
 
 #include "deepfir_model_adapter.h"
 #include "deepfir_reconstruction.h"
+#include "common/audio_pcm.h"
 
 #ifndef M55M1_DEEPFIR_MVE
 #define M55M1_DEEPFIR_MVE 0
@@ -331,9 +332,44 @@ int deepfir_model_adapter_process_hop(deepfir_model_adapter_t *adapter, const in
     return 0;
 }
 
+static int process_pcm_float(deepfir_model_adapter_t *adapter, const float *pcm,
+                             uint32_t sample_count, float *output) {
+    int16_t *current_feature = adapter->feature_context_buffer + DEEPFIR_MODEL_FEATURES;
+    const int status = adapter->feature(pcm, sample_count, current_feature, adapter->feature_context);
+    if (status != 0) {
+        adapter->faulted = 1;
+        return status;
+    }
+    return deepfir_model_adapter_process_hop(adapter, current_feature, pcm, sample_count, output);
+}
+
+int deepfir_model_adapter_process_float(deepfir_model_adapter_t *adapter, const float *pcm,
+                                        uint32_t sample_count, float *output) {
+    if (!adapter || !pcm || !output || !adapter->feature || sample_count != DEEPFIR_DSP_HOP) {
+        return -1;
+    }
+    if (adapter->faulted || !adapter->qparams_ready || !adapter->infer_mapped || !adapter->fft) {
+        return -2;
+    }
+    const uintptr_t a = (uintptr_t)adapter;
+    const uintptr_t p = (uintptr_t)pcm;
+    const uintptr_t o = (uintptr_t)output;
+    const size_t bytes = DEEPFIR_DSP_HOP * sizeof(float);
+    if ((p <= o ? o - p < bytes : p - o < bytes) ||
+        (a <= p ? p - a < sizeof(*adapter) : a - p < bytes) ||
+        (a <= o ? o - a < sizeof(*adapter) : a - o < bytes)) {
+        return -1;
+    }
+    for (uint32_t i = 0; i < sample_count; ++i) {
+        if (!isfinite(pcm[i])) {
+            return -1;
+        }
+    }
+    return process_pcm_float(adapter, pcm, sample_count, output);
+}
+
 int deepfir_model_adapter_process_pcm16(deepfir_model_adapter_t *adapter, const int16_t *pcm16,
                                         uint32_t sample_count, float *output) {
-    int status;
     if (!adapter || !pcm16 || !output || !adapter->feature || sample_count != DEEPFIR_DSP_HOP) {
         return -1;
     }
@@ -353,13 +389,36 @@ int deepfir_model_adapter_process_pcm16(deepfir_model_adapter_t *adapter, const 
             pcm[index] = (float)pcm16[index] / 32768.0f;
         }
 #endif
-        int16_t *current_feature = adapter->feature_context_buffer + DEEPFIR_MODEL_FEATURES;
-        status = adapter->feature(pcm, sample_count, current_feature, adapter->feature_context);
-        if (status != 0) {
-            adapter->faulted = 1;
-            return status;
-        }
-        return deepfir_model_adapter_process_hop(adapter, current_feature, pcm, sample_count,
-                                                 output);
+        return process_pcm_float(adapter, pcm, sample_count, output);
     }
+}
+
+int deepfir_model_adapter_process_pcm24(deepfir_model_adapter_t *adapter, const int32_t *pcm24,
+                                        uint32_t sample_count, float *output) {
+    if (!adapter || !pcm24 || !output || !adapter->feature || sample_count != DEEPFIR_DSP_HOP) {
+        return -1;
+    }
+    if (adapter->faulted || !adapter->qparams_ready || !adapter->infer_mapped || !adapter->fft) {
+        return -2;
+    }
+    if ((uintptr_t)output < (uintptr_t)pcm24 + sample_count * sizeof(*pcm24) &&
+        (uintptr_t)pcm24 < (uintptr_t)output + sample_count * sizeof(*output)) {
+        return -1;
+    }
+    for (uint32_t index = 0U; index < sample_count; ++index) {
+        if (pcm24[index] < AUDIO_PCM24_MIN || pcm24[index] > AUDIO_PCM24_MAX) {
+            return -1;
+        }
+    }
+    float pcm[DEEPFIR_DSP_HOP];
+#if DEEPFIR_ADAPTER_HAS_MVEF
+    for (uint32_t index = 0U; index < sample_count; index += 4U) {
+        vst1q_f32(pcm + index, vcvtq_n_f32_s32(vld1q_s32(pcm24 + index), 23));
+    }
+#else
+    for (uint32_t index = 0U; index < sample_count; ++index) {
+        pcm[index] = audio_pcm24_to_float(pcm24[index]);
+    }
+#endif
+    return process_pcm_float(adapter, pcm, sample_count, output);
 }

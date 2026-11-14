@@ -85,6 +85,12 @@ void test_failure(int value) {
 int test_step(const int16_t *pcm, float *out) {
     return deepfir_model_adapter_process_pcm16(&adapter, pcm, 16, out);
 }
+int test_step24(const int32_t *pcm, float *out) {
+    return deepfir_model_adapter_process_pcm24(&adapter, pcm, 16, out);
+}
+void test_feature_context(int16_t *out) {
+    memcpy(out, adapter.feature_context_buffer, sizeof(adapter.feature_context_buffer));
+}
 int test_feedback(int lane, int code) {
     return deepfir_state_feedback((int16_t)code, DF_FEEDBACK_MULTIPLIER[lane],
                                   DF_FEEDBACK_SHIFT[lane], 0, 0);
