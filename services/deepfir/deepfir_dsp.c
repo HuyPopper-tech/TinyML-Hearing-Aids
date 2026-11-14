@@ -93,7 +93,7 @@ static int deepfir_dsp_process_scalar(deepfir_dsp_state_t *state, const float *s
 #if DEEPFIR_DSP_HAS_MVEF
 static bool g_mve_ready = true;
 
-// Four lanes are consecutive output samples; each lane accumulates taps 0..127.
+// Two four-lane output groups share tap loads; every lane still accumulates taps 0..127.
 __attribute__((noinline)) static int deepfir_dsp_process_mve(deepfir_dsp_state_t *state,
                                                              const float *samples,
                                                              const float *next_taps,
@@ -107,20 +107,33 @@ __attribute__((noinline)) static int deepfir_dsp_process_mve(deepfir_dsp_state_t
     // Reset and every completed hop leave previous_taps equal to current_taps.
     memcpy(state->current_taps, next_taps, sizeof(state->current_taps));
 
-    for (uint32_t sample = 0u; sample < DEEPFIR_DSP_HOP; sample += 4u) {
-        const float32x4_t blend = vld1q_f32(state->crossfade_blend + sample);
-        const float32x4_t previous_weight = vsubq_f32(vdupq_n_f32(1.0f), blend);
+    for (uint32_t sample = 0u; sample < DEEPFIR_DSP_HOP; sample += 8u) {
         float32x4_t previous_sum = vdupq_n_f32(0.0f);
         float32x4_t current_sum = vdupq_n_f32(0.0f);
+        float32x4_t previous_sum_next = vdupq_n_f32(0.0f);
+        float32x4_t current_sum_next = vdupq_n_f32(0.0f);
 
         for (uint32_t tap_index = 0u; tap_index < DEEPFIR_DSP_TAPS; ++tap_index) {
             const float32x4_t history =
                 vld1q_f32(extended + DEEPFIR_DSP_TAPS - 1u + sample - tap_index);
-            previous_sum = vfmaq_n_f32(previous_sum, history, state->previous_taps[tap_index]);
-            current_sum = vfmaq_n_f32(current_sum, history, state->current_taps[tap_index]);
+            const float32x4_t history_next =
+                vld1q_f32(extended + DEEPFIR_DSP_TAPS - 1u + sample + 4u - tap_index);
+            const float previous_tap = state->previous_taps[tap_index];
+            const float current_tap = state->current_taps[tap_index];
+            previous_sum = vfmaq_n_f32(previous_sum, history, previous_tap);
+            current_sum = vfmaq_n_f32(current_sum, history, current_tap);
+            previous_sum_next = vfmaq_n_f32(previous_sum_next, history_next, previous_tap);
+            current_sum_next = vfmaq_n_f32(current_sum_next, history_next, current_tap);
         }
+        const float32x4_t blend = vld1q_f32(state->crossfade_blend + sample);
+        const float32x4_t previous_weight = vsubq_f32(vdupq_n_f32(1.0f), blend);
         vst1q_f32(output + sample, vaddq_f32(vmulq_f32(previous_sum, previous_weight),
                                              vmulq_f32(current_sum, blend)));
+        const float32x4_t blend_next = vld1q_f32(state->crossfade_blend + sample + 4u);
+        const float32x4_t previous_weight_next = vsubq_f32(vdupq_n_f32(1.0f), blend_next);
+        vst1q_f32(output + sample + 4u,
+                    vaddq_f32(vmulq_f32(previous_sum_next, previous_weight_next),
+                                vmulq_f32(current_sum_next, blend_next)));
     }
 
     memmove(state->history + DEEPFIR_DSP_HOP, state->history,
@@ -219,4 +232,41 @@ int16_t deepfir_pcm16_from_float(float value) {
         return -32768;
     }
     return (int16_t)(scaled >= 0.0f ? scaled + 0.5f : scaled - 0.5f);
+}
+
+int deepfir_pcm16_render_hop(const float *input, int16_t *output) {
+    if (input == NULL || output == NULL ||
+        ((uintptr_t)output < (uintptr_t)input + DEEPFIR_DSP_HOP * sizeof(*input) &&
+         (uintptr_t)input < (uintptr_t)output + DEEPFIR_DSP_HOP * sizeof(*output))) {
+        return -1;
+    }
+    // Stage privately so a bad lane never publishes a partial hop.
+    int16_t rendered[DEEPFIR_DSP_HOP];
+#if DEEPFIR_DSP_HAS_MVEF
+    for (uint32_t index = 0u; index < DEEPFIR_DSP_HOP; index += 4u) {
+        const float32x4_t values = vld1q_f32(input + index);
+        const uint32x4_t exponent = vandq_u32(vreinterpretq_u32_f32(values),
+                                              vdupq_n_u32(0x7f800000u));
+        if (vcmpeqq_n_u32(exponent, 0x7f800000u) != 0u) {
+            return -2;
+        }
+        float32x4_t scaled = vmulq_n_f32(values, 32768.0f);
+        scaled = vpselq_f32(vdupq_n_f32(32767.0f), scaled,
+                             vcmpgtq_n_f32(scaled, 32767.0f));
+        scaled = vpselq_f32(vdupq_n_f32(-32768.0f), scaled,
+                             vcmpltq_n_f32(scaled, -32768.0f));
+        const float32x4_t offset = vpselq_f32(vdupq_n_f32(-0.5f), vdupq_n_f32(0.5f),
+                                               vcmpltq_n_f32(scaled, 0.0f));
+        vstrhq_s32(rendered + index, vcvtq_s32_f32(vaddq_f32(scaled, offset)));
+    }
+#else
+    for (uint32_t index = 0u; index < DEEPFIR_DSP_HOP; ++index) {
+        if (!isfinite(input[index])) {
+            return -2;
+        }
+        rendered[index] = deepfir_pcm16_from_float(input[index]);
+    }
+#endif
+    memcpy(output, rendered, sizeof(rendered));
+    return 0;
 }

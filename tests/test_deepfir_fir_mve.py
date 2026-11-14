@@ -81,6 +81,15 @@ class DeepfirFirMveTests(unittest.TestCase):
             )
             self.assertIsNotNone(match, "Release has no MVE FIR kernel")
             self.assertRegex(match.group(), r"(?i)\bvfma\.f32\s+q\d")
+            tap_loops = [loop for loop in re.findall(
+                r"(?ms)^\.LBB\d+_\d+:[^\n]*Inner Loop Header(?:(?!^\.LBB).)*?^\s+le\s+[^\n]+",
+                match.group()) if 'vfma.f32' in loop]
+            self.assertTrue(tap_loops, 'No low-overhead FIR tap loop')
+            for loop in tap_loops:
+                # Two output groups share each pair of scalar tap loads.
+                self.assertEqual(len(re.findall(r'\bvfma\.f32\b', loop)), 4, loop)
+                self.assertEqual(len(re.findall(r'(?m)^\s+ldr(?:\.w)?\s', loop)), 2, loop)
+                self.assertNotRegex(loop, r'\[sp\b|Spill|Reload')
 
 
 if __name__ == "__main__":

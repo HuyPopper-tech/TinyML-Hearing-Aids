@@ -31,6 +31,14 @@ typedef struct {
  */
 int16_t deepfir_pcm16_from_float(float value);
 /**
+ * @brief Render 16 normalized samples with the scalar PCM16 rounding contract.
+ * @param input Borrowed float hop; must not overlap output.
+ * @param output Caller-owned 16-code destination, unchanged on failure.
+ * @return 0 on success, -1 for NULL/overlap, -2 for any non-finite input.
+ * @note Foreground only; no retained state or partial publication.
+ */
+int deepfir_pcm16_render_hop(const float *input, int16_t *output);
+/**
  * @brief Zero causal analysis history and prepare the symmetric Hamming window.
  * @param state Foreground-owned context; ignored when NULL.
  * @pre Audio is stopped; fft/qparams are configured separately.

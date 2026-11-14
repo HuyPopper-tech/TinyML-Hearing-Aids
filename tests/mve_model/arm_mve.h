@@ -56,6 +56,7 @@ MVE_MODEL_UNARY(vdupq_n_f32, float32x4_t, float, a)
 MVE_MODEL_UNARY(vdupq_n_s32, int32x4_t, int32_t, a)
 MVE_MODEL_UNARY(vdupq_n_u32, uint32x4_t, uint32_t, a)
 MVE_MODEL_UNARY(vld1q_f32, float32x4_t, const float *, a[i])
+MVE_MODEL_UNARY(vld1q_s32, int32x4_t, const int32_t *, a[i])
 MVE_MODEL_UNARY(vldrhq_s32, int32x4_t, const int16_t *, a[i])
 MVE_MODEL_UNARY(vabsq_f32, float32x4_t, float32x4_t, fabsf(a.lane[i]))
 MVE_MODEL_UNARY(vabsq_s32, int32x4_t, int32x4_t, a.lane[i] < 0 ? -a.lane[i] : a.lane[i])
@@ -63,6 +64,8 @@ MVE_MODEL_UNARY(vnegq_s32, int32x4_t, int32x4_t, -a.lane[i])
 MVE_MODEL_UNARY(vcvtq_s32_f32, int32x4_t, float32x4_t, (int32_t)a.lane[i])
 MVE_MODEL_UNARY(vcvtq_f32_s32, float32x4_t, int32x4_t, (float)a.lane[i])
 MVE_MODEL_BINARY(vmulq_n_f32, float32x4_t, float32x4_t, float, a.lane[i] * b)
+MVE_MODEL_BINARY(vcvtq_n_f32_s32, float32x4_t, int32x4_t, int,
+                 (float)a.lane[i] / (float)(UINT32_C(1) << b))
 MVE_MODEL_BINARY(vmulq_f32, float32x4_t, float32x4_t, float32x4_t, a.lane[i] * b.lane[i])
 MVE_MODEL_BINARY(vaddq_n_f32, float32x4_t, float32x4_t, float, a.lane[i] + b)
 MVE_MODEL_BINARY(vaddq_f32, float32x4_t, float32x4_t, float32x4_t, a.lane[i] + b.lane[i])
@@ -105,6 +108,12 @@ static inline int32x4_t vqrdmulhq_s32(int32x4_t a, int32x4_t b) {
     }
 MVE_MODEL_SELECT(vpselq_f32, float32x4_t)
 MVE_MODEL_SELECT(vpselq_s32, int32x4_t)
+static inline float32x4_t vfmaq_n_f32(float32x4_t a, float32x4_t b, float c) {
+    for (unsigned i = 0; i < 4; ++i) {
+        a.lane[i] = fmaf(b.lane[i], c, a.lane[i]);
+    }
+    return a;
+}
 static inline void vstrhq_s32(int16_t *p, int32x4_t a) {
     for (unsigned i = 0; i < 4; ++i) {
         p[i] = (int16_t)a.lane[i];
